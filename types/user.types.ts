@@ -3,12 +3,20 @@ import { Types } from 'mongoose';
 /**
  * User roles in the system
  */
-export type UserRole = 'super_admin' | 'manager' | 'staff';
+export type UserRole = 'root' | 'super_admin' | 'manager' | 'staff';
 
 /**
- * Staff permissions
+ * System permissions
  */
-export type StaffPermission =
+export type SystemPermission =
+  | 'manage_users'
+  | 'manage_establishments'
+  | 'manage_accommodations'
+  | 'manage_bookings'
+  | 'manage_payments'
+  | 'view_reports'
+  | 'manage_system'
+  | 'manage_settings'
   | 'view_bookings'
   | 'create_bookings'
   | 'edit_bookings'
@@ -24,8 +32,12 @@ export type StaffPermission =
   | 'view_expenses'
   | 'create_expenses'
   | 'view_employees'
-  | 'manage_attendance'
-  | 'view_reports';
+  | 'manage_attendance';
+
+/**
+ * Legacy alias for backward compatibility
+ */
+export type StaffPermission = SystemPermission;
 
 /**
  * User profile information
@@ -61,7 +73,7 @@ export interface CreateUserInput {
   email: string;
   password: string;
   role: UserRole;
-  permissions?: StaffPermission[];
+  permissions?: SystemPermission[];
   establishmentId?: string;
   profile: UserProfile;
   isActive?: boolean;
@@ -74,7 +86,7 @@ export interface UpdateUserInput {
   email?: string;
   password?: string;
   role?: UserRole;
-  permissions?: StaffPermission[];
+  permissions?: SystemPermission[];
   establishmentId?: string;
   profile?: Partial<UserProfile>;
   isActive?: boolean;
@@ -87,7 +99,7 @@ export interface UserResponse {
   id: string;
   email: string;
   role: UserRole;
-  permissions?: StaffPermission[];
+  permissions?: SystemPermission[];
   establishmentId?: string;
   profile: UserProfile;
   isActive: boolean;

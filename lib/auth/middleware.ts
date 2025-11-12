@@ -1,196 +1,152 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { verifyAccessToken } from './jwt';
-import type { JWTPayload, UserRole } from '@/types/user.types';
+import { verifyAccessToken } from '@/lib/auth/jwt';
+import { AuthService } from '@/services/Auth.service';
+import type { SystemPermission, UserRole } from '@/types/user.types';
 
 /**
- * Extract token from Authorization header
+ * Interface pour les données utilisateur dans la requête
  */
-export function extractToken(request: NextRequest): string | null {
-  const authHeader = request.headers.get('authorization');
-
-  if (!authHeader || !authHeader.startsWith('Bearer ')) {
-    return null;
-  }
-
-  return authHeader.substring(7);
+export interface AuthenticatedRequest extends NextRequest {
+  user?: {
+    userId: string;
+    email: string;
+    role: UserRole;
+    establishmentId?: string;
+  };
 }
 
 /**
- * Verify authentication token
+ * Middleware d'authentification
  */
-export function verifyAuth(request: NextRequest): JWTPayload | null {
+export async function authenticateUser(request: NextRequest): Promise<{
+  success: boolean;
+  user?: {
+    userId: string;
+    email: string;
+    role: UserRole;
+    establishmentId?: string;
+  };
+  error?: string;
+}> {
   try {
-    const token = extractToken(request);
-
-    if (!token) {
-      return null;
+    const authHeader = request.headers.get('authorization');
+    
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      return { success: false, error: 'Token d\'authentification manquant' };
     }
 
-    return verifyAccessToken(token);
+    const token = authHeader.substring(7);
+    
+    // Vérifier le token JWT
+    const payload = verifyAccessToken(token);
+    
+    // Vérifier que l'utilisateur existe toujours et est actif
+    const user = await AuthService.getUserById(payload.userId);
+    
+    if (!user || !user.isActive) {
+      return { success: false, error: 'Utilisateur non trouvé ou inactif' };
+    }
+
+    return {
+      success: true,
+      user: {
+        userId: payload.userId,
+        email: payload.email,
+        role: payload.role,
+        establishmentId: payload.establishmentId,
+      },
+    };
   } catch (error) {
-    return null;
+    return { 
+      success: false, 
+      error: error instanceof Error ? error.message : 'Erreur d\'authentification' 
+    };
   }
 }
 
 /**
- * Middleware to require authentication
+ * Middleware de vérification des permissions
  */
-export function requireAuth(handler: (request: NextRequest, user: JWTPayload) => Promise<NextResponse>) {
-  return async (request: NextRequest): Promise<NextResponse> => {
-    const user = verifyAuth(request);
-
-    if (!user) {
-      return NextResponse.json(
-        {
-          success: false,
-          error: {
-            code: 'UNAUTHORIZED',
-            message: 'Authentication required',
-          },
-        },
-        { status: 401 }
-      );
-    }
-
-    return handler(request, user);
+export async function requirePermission(
+  request: NextRequest,
+  requiredPermission: SystemPermission
+): Promise<{
+  success: boolean;
+  user?: {
+    userId: string;
+    email: string;
+    role: UserRole;
+    establishmentId?: string;
   };
+  error?: string;
+}> {
+  // D'abord authentifier l'utilisateur
+  const authResult = await authenticateUser(request);
+  
+  if (!authResult.success || !authResult.user) {
+    return authResult;
+  }
+
+  // Vérifier la permission
+  const hasPermission = await AuthService.hasPermission(
+    authResult.user.userId,
+    requiredPermission
+  );
+
+  if (!hasPermission) {
+    return {
+      success: false,
+      error: `Permission '${requiredPermission}' requise`,
+    };
+  }
+
+  return authResult;
 }
 
 /**
- * Middleware to require specific role
+ * Middleware pour vérifier les rôles
  */
-export function requireRole(
-  roles: UserRole | UserRole[],
-  handler: (request: NextRequest, user: JWTPayload) => Promise<NextResponse>
-) {
-  const allowedRoles = Array.isArray(roles) ? roles : [roles];
-
-  return async (request: NextRequest): Promise<NextResponse> => {
-    const user = verifyAuth(request);
-
-    if (!user) {
-      return NextResponse.json(
-        {
-          success: false,
-          error: {
-            code: 'UNAUTHORIZED',
-            message: 'Authentication required',
-          },
-        },
-        { status: 401 }
-      );
-    }
-
-    if (!allowedRoles.includes(user.role)) {
-      return NextResponse.json(
-        {
-          success: false,
-          error: {
-            code: 'FORBIDDEN',
-            message: 'You do not have permission to access this resource',
-          },
-        },
-        { status: 403 }
-      );
-    }
-
-    return handler(request, user);
+export async function requireRole(
+  request: NextRequest,
+  allowedRoles: UserRole[]
+): Promise<{
+  success: boolean;
+  user?: {
+    userId: string;
+    email: string;
+    role: UserRole;
+    establishmentId?: string;
   };
+  error?: string;
+}> {
+  // D'abord authentifier l'utilisateur
+  const authResult = await authenticateUser(request);
+  
+  if (!authResult.success || !authResult.user) {
+    return authResult;
+  }
+
+  // Vérifier le rôle
+  if (!allowedRoles.includes(authResult.user.role)) {
+    return {
+      success: false,
+      error: `Rôle non autorisé. Rôles requis: ${allowedRoles.join(', ')}`,
+    };
+  }
+
+  return authResult;
 }
 
 /**
- * Middleware to require super admin role
+ * Helper pour créer des réponses d'erreur d'authentification
  */
-export function requireSuperAdmin(
-  handler: (request: NextRequest, user: JWTPayload) => Promise<NextResponse>
-) {
-  return requireRole('super_admin', handler);
-}
-
-/**
- * Middleware to require manager or super admin role
- */
-export function requireManager(
-  handler: (request: NextRequest, user: JWTPayload) => Promise<NextResponse>
-) {
-  return requireRole(['super_admin', 'manager'], handler);
-}
-
-/**
- * Middleware to check if user belongs to the same establishment
- */
-export function requireSameEstablishment(
-  getEstablishmentId: (request: NextRequest) => string | null,
-  handler: (request: NextRequest, user: JWTPayload) => Promise<NextResponse>
-) {
-  return async (request: NextRequest): Promise<NextResponse> => {
-    const user = verifyAuth(request);
-
-    if (!user) {
-      return NextResponse.json(
-        {
-          success: false,
-          error: {
-            code: 'UNAUTHORIZED',
-            message: 'Authentication required',
-          },
-        },
-        { status: 401 }
-      );
-    }
-
-    // Super admin can access all establishments
-    if (user.role === 'super_admin') {
-      return handler(request, user);
-    }
-
-    const establishmentId = getEstablishmentId(request);
-
-    if (!establishmentId) {
-      return NextResponse.json(
-        {
-          success: false,
-          error: {
-            code: 'BAD_REQUEST',
-            message: 'Establishment ID is required',
-          },
-        },
-        { status: 400 }
-      );
-    }
-
-    // Check if user belongs to the establishment
-    if (user.establishmentId !== establishmentId) {
-      return NextResponse.json(
-        {
-          success: false,
-          error: {
-            code: 'FORBIDDEN',
-            message: 'You do not have access to this establishment',
-          },
-        },
-        { status: 403 }
-      );
-    }
-
-    return handler(request, user);
-  };
-}
-
-/**
- * Create error response
- */
-export function createErrorResponse(
-  code: string,
-  message: string,
-  status: number = 500
-): NextResponse {
+export function createAuthErrorResponse(error: string, status: number = 401): NextResponse {
   return NextResponse.json(
     {
       success: false,
       error: {
-        code,
-        message,
+        message: error,
+        code: status === 401 ? 'UNAUTHORIZED' : 'FORBIDDEN',
       },
     },
     { status }
@@ -198,15 +154,80 @@ export function createErrorResponse(
 }
 
 /**
- * Create success response
+ * Wrapper pour les API routes avec authentification
  */
-export function createSuccessResponse(data: any, message?: string, status: number = 200): NextResponse {
-  return NextResponse.json(
-    {
-      success: true,
-      data,
-      ...(message && { message }),
-    },
-    { status }
-  );
+export function withAuth(
+  handler: (
+    request: NextRequest,
+    user: {
+      userId: string;
+      email: string;
+      role: UserRole;
+      establishmentId?: string;
+    }
+  ) => Promise<NextResponse>
+) {
+  return async (request: NextRequest): Promise<NextResponse> => {
+    const authResult = await authenticateUser(request);
+    
+    if (!authResult.success || !authResult.user) {
+      return createAuthErrorResponse(authResult.error || 'Authentification échouée');
+    }
+
+    return handler(request, authResult.user);
+  };
+}
+
+/**
+ * Wrapper pour les API routes avec vérification de permission
+ */
+export function withPermission(
+  requiredPermission: SystemPermission,
+  handler: (
+    request: NextRequest,
+    user: {
+      userId: string;
+      email: string;
+      role: UserRole;
+      establishmentId?: string;
+    }
+  ) => Promise<NextResponse>
+) {
+  return async (request: NextRequest): Promise<NextResponse> => {
+    const authResult = await requirePermission(request, requiredPermission);
+    
+    if (!authResult.success || !authResult.user) {
+      const status = authResult.error?.includes('Permission') ? 403 : 401;
+      return createAuthErrorResponse(authResult.error || 'Accès refusé', status);
+    }
+
+    return handler(request, authResult.user);
+  };
+}
+
+/**
+ * Wrapper pour les API routes avec vérification de rôle
+ */
+export function withRole(
+  allowedRoles: UserRole[],
+  handler: (
+    request: NextRequest,
+    user: {
+      userId: string;
+      email: string;
+      role: UserRole;
+      establishmentId?: string;
+    }
+  ) => Promise<NextResponse>
+) {
+  return async (request: NextRequest): Promise<NextResponse> => {
+    const authResult = await requireRole(request, allowedRoles);
+    
+    if (!authResult.success || !authResult.user) {
+      const status = authResult.error?.includes('Rôle') ? 403 : 401;
+      return createAuthErrorResponse(authResult.error || 'Accès refusé', status);
+    }
+
+    return handler(request, authResult.user);
+  };
 }

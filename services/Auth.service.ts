@@ -1,11 +1,13 @@
 import UserModel from '@/models/User.model';
 import { generateTokens, verifyRefreshToken } from '@/lib/auth/jwt';
+import { hasUserPermission } from '@/lib/auth/permissions';
 import type {
   LoginCredentials,
   AuthTokens,
   JWTPayload,
   CreateUserInput,
   UserResponse,
+  SystemPermission,
 } from '@/types/user.types';
 import { connectDB } from '@/lib/db';
 import bcrypt from 'bcryptjs';
@@ -271,7 +273,7 @@ export class AuthService {
   /**
    * Check if user has permission
    */
-  static async hasPermission(userId: string, permission: string): Promise<boolean> {
+  static async hasPermission(userId: string, permission: SystemPermission): Promise<boolean> {
     await connectDB();
 
     const user = await UserModel.findById(userId);
@@ -280,40 +282,33 @@ export class AuthService {
       return false;
     }
 
-    // Super admin has all permissions
-    if (user.role === 'super_admin') {
-      return true;
+    // Utiliser le nouveau système de permissions
+    return hasUserPermission(user.role, user.permissions as SystemPermission[], permission);
+  }
+
+  /**
+   * Get user permissions
+   */
+  static async getUserPermissions(userId: string): Promise<SystemPermission[]> {
+    await connectDB();
+
+    const user = await UserModel.findById(userId);
+
+    if (!user || !user.isActive) {
+      return [];
     }
 
-    // Manager has most permissions for their establishment
-    if (user.role === 'manager') {
-      const managerPermissions = [
-        'view_bookings',
-        'create_bookings',
-        'edit_bookings',
-        'view_clients',
-        'create_clients',
-        'edit_clients',
-        'view_accommodations',
-        'edit_accommodations',
-        'view_invoices',
-        'create_invoices',
-        'process_payments',
-        'view_expenses',
-        'create_expenses',
-        'view_employees',
-        'manage_attendance',
-        'view_reports',
-      ];
-      return managerPermissions.includes(permission);
-    }
+    // Combiner les permissions du rôle avec les permissions personnalisées
+    const rolePermissions = hasUserPermission(user.role, undefined, 'manage_system')
+      ? Object.values(require('@/lib/auth/permissions').ROLE_PERMISSIONS[user.role] || [])
+      : require('@/lib/auth/permissions').ROLE_PERMISSIONS[user.role] || [];
 
-    // Staff has specific permissions
-    if (user.role === 'staff' && (user as any).permissions) {
-      return (user as any).permissions.includes(permission as any);
-    }
+    const customPermissions = user.permissions as SystemPermission[] || [];
 
-    return false;
+    // Fusionner et dédupliquer
+    const allPermissions = [...new Set([...rolePermissions, ...customPermissions])];
+
+    return allPermissions;
   }
 }
 
