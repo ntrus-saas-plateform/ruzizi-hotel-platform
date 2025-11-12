@@ -8,10 +8,11 @@ export async function POST(
 ) {
   const resolvedParams = await params;
   try {
-    const user = await verifyAuth(request);
-    if (!user) {
+    const authResult = await verifyAuth(request);
+    if (!authResult.success || !authResult.user) {
       return NextResponse.json({ error: 'Non autorisé' }, { status: 401 });
     }
+    const user = authResult.user;
 
     // Les utilisateurs peuvent changer leur propre mot de passe
     // Les super_admin peuvent changer n'importe quel mot de passe

@@ -15,13 +15,18 @@ export {
 } from './jwt';
 
 export {
-  extractToken,
   verifyAuth,
   requireAuth,
   requireRole,
   requireSuperAdmin,
   requireManager,
-  requireSameEstablishment,
   createErrorResponse,
   createSuccessResponse,
+  withAuth,
+  withRole,
+  withPermission,
+  authenticateUser,
+  requirePermission,
+  createAuthErrorResponse,
+  requireAdmin,
 } from './middleware';

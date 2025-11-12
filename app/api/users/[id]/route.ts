@@ -8,10 +8,11 @@ export async function GET(
 ) {
   const resolvedParams = await params;
   try {
-    const user = await verifyAuth(request);
-    if (!user) {
+    const authResult = await verifyAuth(request);
+    if (!authResult.success || !authResult.user) {
       return NextResponse.json({ error: 'Non autorisé' }, { status: 401 });
     }
+    const user = authResult.user;
 
     // Les utilisateurs peuvent voir leur propre profil
     // Les super_admin et manager peuvent voir tous les profils
@@ -35,10 +36,11 @@ export async function PATCH(
 ) {
   const resolvedParams = await params;
   try {
-    const user = await verifyAuth(request);
-    if (!user) {
+    const authResult = await verifyAuth(request);
+    if (!authResult.success || !authResult.user) {
       return NextResponse.json({ error: 'Non autorisé' }, { status: 401 });
     }
+    const user = authResult.user;
 
     // Seuls les super_admin peuvent modifier les utilisateurs
     if (user.role !== 'super_admin') {
@@ -63,10 +65,11 @@ export async function DELETE(
 ) {
   const resolvedParams = await params;
   try {
-    const user = await verifyAuth(request);
-    if (!user) {
+    const authResult = await verifyAuth(request);
+    if (!authResult.success || !authResult.user) {
       return NextResponse.json({ error: 'Non autorisé' }, { status: 401 });
     }
+    const user = authResult.user;
 
     // Seuls les super_admin peuvent supprimer des utilisateurs
     if (user.role !== 'super_admin') {

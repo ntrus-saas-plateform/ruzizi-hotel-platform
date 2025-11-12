@@ -235,19 +235,19 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({
       success: true,
       data: {
-        id: booking._id.toString(),
-        bookingCode: booking.bookingCode,
-        status: booking.status,
-        totalAmount: booking.totalAmount,
-        checkInDate: booking.checkInDate,
-        checkOutDate: booking.checkOutDate,
+        id: (booking._id as any).toString(),
+        bookingCode: (booking as any).bookingCode,
+        status: (booking as any).status,
+        totalAmount: (booking as any).totalAmount,
+        checkInDate: (booking as any).checkInDate,
+        checkOutDate: (booking as any).checkOutDate,
         accommodation: {
-          id: accommodation._id.toString(),
+          id: (accommodation._id as any).toString(),
           name: accommodation.name,
           type: accommodation.type
         },
         establishment: {
-          id: establishment._id.toString(),
+          id: (establishment._id as any).toString(),
           name: establishment.name,
           location: establishment.location
         },
