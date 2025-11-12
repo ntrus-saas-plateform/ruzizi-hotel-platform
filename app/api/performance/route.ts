@@ -1,14 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { verifyAuth } from '@/lib/auth/middleware';
+import { withRole } from '@/lib/auth/middleware';
 import PerformanceService from '@/services/Performance.service';
 
-export async function GET(request: NextRequest) {
+/**
+ * GET /api/performance
+ * Get all performance evaluations (Manager or Super Admin)
+ */
+export const GET = withRole(['manager', 'super_admin'], async (request: NextRequest, user) => {
   try {
-    const user = await verifyAuth(request);
-    if (!user) {
-      return NextResponse.json({ error: 'Non autorisé' }, { status: 401 });
-    }
-
     const { searchParams } = new URL(request.url);
     const employeeId = searchParams.get('employeeId');
     const evaluatorId = searchParams.get('evaluatorId');
@@ -33,19 +32,14 @@ export async function GET(request: NextRequest) {
       { status: 500 }
     );
   }
-}
+});
 
-export async function POST(request: NextRequest) {
+/**
+ * POST /api/performance
+ * Create a new performance evaluation (Manager or Super Admin)
+ */
+export const POST = withRole(['manager', 'super_admin'], async (request: NextRequest, user) => {
   try {
-    const user = await verifyAuth(request);
-    if (!user) {
-      return NextResponse.json({ error: 'Non autorisé' }, { status: 401 });
-    }
-
-    if (user.role === 'staff') {
-      return NextResponse.json({ error: 'Accès refusé' }, { status: 403 });
-    }
-
     const data = await request.json();
     const performance = await PerformanceService.create({
       ...data,
@@ -59,4 +53,4 @@ export async function POST(request: NextRequest) {
       { status: 500 }
     );
   }
-}
+});

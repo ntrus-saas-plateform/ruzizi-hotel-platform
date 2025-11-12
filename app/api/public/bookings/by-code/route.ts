@@ -4,15 +4,36 @@ import BookingModel from '@/models/Booking.model';
 import AccommodationModel from '@/models/Accommodation.model';
 import EstablishmentModel from '@/models/Establishment.model';
 
-export async function GET(
-  request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
-  const resolvedParams = await params;
+/**
+ * GET /api/public/bookings/by-code?code=BOOKING_CODE&email=EMAIL
+ * Récupère une réservation par son code et email (pour la sécurité)
+ */
+export async function GET(request: NextRequest) {
   try {
     await connectDB();
 
-    const booking = await BookingModel.findById(resolvedParams.id)
+    const { searchParams } = new URL(request.url);
+    const bookingCode = searchParams.get('code');
+    const email = searchParams.get('email');
+
+    if (!bookingCode || !email) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: {
+            code: 'MISSING_PARAMETERS',
+            message: 'Code de réservation et email requis',
+          },
+        },
+        { status: 400 }
+      );
+    }
+
+    // Rechercher la réservation par code et email
+    const booking = await BookingModel.findOne({
+      bookingCode: bookingCode.toUpperCase(),
+      'clientInfo.email': email.toLowerCase()
+    })
       .populate('accommodationId', 'name type capacity amenities images')
       .populate('establishmentId', 'name location contact')
       .lean();
@@ -23,7 +44,7 @@ export async function GET(
           success: false,
           error: {
             code: 'NOT_FOUND',
-            message: 'Réservation non trouvée',
+            message: 'Aucune réservation trouvée avec ce code et cette adresse email',
           },
         },
         { status: 404 }
@@ -99,14 +120,30 @@ export async function GET(
       success: true,
       data: formattedBooking,
     });
+
   } catch (error: any) {
-    console.error('Error fetching booking:', error);
+    console.error('Error fetching booking by code:', error);
+    
+    // Gestion des erreurs spécifiques
+    if (error.name === 'CastError') {
+      return NextResponse.json(
+        {
+          success: false,
+          error: {
+            code: 'INVALID_CODE',
+            message: 'Code de réservation invalide',
+          },
+        },
+        { status: 400 }
+      );
+    }
+
     return NextResponse.json(
       {
         success: false,
         error: {
           code: 'INTERNAL_ERROR',
-          message: error.message || 'Erreur lors de la récupération de la réservation',
+          message: 'Erreur lors de la recherche de la réservation',
         },
       },
       { status: 500 }

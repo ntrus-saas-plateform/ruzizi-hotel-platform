@@ -1,21 +1,16 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { verifyAuth } from '@/lib/auth/middleware';
+import { withRole } from '@/lib/auth/middleware';
 import MaintenanceService from '@/services/Maintenance.service';
 
-export async function POST(
+export const POST = withRole(['manager', 'super_admin'], async (
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
-  const resolvedParams = await params;
+  user
+) => {
+  // Extract params from the URL
+  const url = new URL(request.url);
+  const pathSegments = url.pathname.split('/');
+  const id = pathSegments[pathSegments.indexOf('maintenance') + 1];
   try {
-    const user = await verifyAuth(request);
-    if (!user) {
-      return NextResponse.json({ error: 'Non autorisé' }, { status: 401 });
-    }
-
-    if (user.role === 'staff') {
-      return NextResponse.json({ error: 'Accès refusé' }, { status: 403 });
-    }
 
     const { assignedTo } = await request.json();
     if (!assignedTo) {
@@ -25,7 +20,7 @@ export async function POST(
       );
     }
 
-    const maintenance = await MaintenanceService.assign(resolvedParams.id, assignedTo);
+    const maintenance = await MaintenanceService.assign(id, assignedTo);
     return NextResponse.json(maintenance);
   } catch (error: any) {
     return NextResponse.json(
@@ -33,4 +28,4 @@ export async function POST(
       { status: 500 }
     );
   }
-}
+});

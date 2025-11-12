@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { verifyAuth } from '@/lib/auth/middleware';
+import { authenticateUser } from '@/lib/auth/middleware';
 import AuditService from '@/services/Audit.service';
 import { AuditEntity } from '@/types/audit.types';
 
@@ -9,12 +9,12 @@ export async function GET(
 ) {
   const resolvedParams = await params;
   try {
-    const user = await verifyAuth(request);
-    if (!user) {
+    const authResult = await authenticateUser(request);
+    if (!authResult.success || !authResult.user) {
       return NextResponse.json({ error: 'Non autorisé' }, { status: 401 });
     }
 
-    if (user.role === 'staff') {
+    if (authResult.user.role === 'staff') {
       return NextResponse.json({ error: 'Accès refusé' }, { status: 403 });
     }
 

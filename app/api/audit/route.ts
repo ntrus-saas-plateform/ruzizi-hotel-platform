@@ -1,18 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { verifyAuth } from '@/lib/auth/middleware';
+import { withRole } from '@/lib/auth/middleware';
 import AuditService from '@/services/Audit.service';
 
-export async function GET(request: NextRequest) {
+export const GET = withRole(['manager', 'super_admin'], async (request: NextRequest, user) => {
   try {
-    const user = await verifyAuth(request);
-    if (!user) {
-      return NextResponse.json({ error: 'Non autorisé' }, { status: 401 });
-    }
-
-    // Seuls les super_admin et manager peuvent voir les logs d'audit
-    if (user.role === 'staff') {
-      return NextResponse.json({ error: 'Accès refusé' }, { status: 403 });
-    }
 
     const { searchParams } = new URL(request.url);
     const userId = searchParams.get('userId');
@@ -40,4 +31,4 @@ export async function GET(request: NextRequest) {
       { status: 500 }
     );
   }
-}
+});

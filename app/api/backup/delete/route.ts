@@ -1,30 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { verifyAuth } from '@/lib/auth/middleware';
+import { withRole } from '@/lib/auth/middleware';
 import BackupService from '@/services/Backup.service';
 
-export async function DELETE(request: NextRequest) {
+export const DELETE = withRole(['super_admin'], async (request: NextRequest, user) => {
   try {
-    const user = await verifyAuth(request);
-    if (!user) {
-      return NextResponse.json({ error: 'Non autorisé' }, { status: 401 });
-    }
-
-    if (user.role !== 'super_admin') {
-      return NextResponse.json({ error: 'Accès refusé' }, { status: 403 });
-    }
-
     const { backupPath } = await request.json();
-
-    if (!backupPath) {
-      return NextResponse.json(
-        { error: 'Chemin du backup requis' },
-        { status: 400 }
-      );
-    }
-
-    const success = await BackupService.deleteBackup(backupPath);
-
-    if (success) {
+    
+    const result = await BackupService.deleteBackup(backupPath);
+    
+    if (result) {
       return NextResponse.json({ message: 'Backup supprimé avec succès' });
     } else {
       return NextResponse.json(
@@ -38,4 +22,4 @@ export async function DELETE(request: NextRequest) {
       { status: 500 }
     );
   }
-}
+});

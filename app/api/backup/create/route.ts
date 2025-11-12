@@ -1,26 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { verifyAuth } from '@/lib/auth/middleware';
+import { withRole } from '@/lib/auth/middleware';
 import BackupService from '@/services/Backup.service';
 
-export async function POST(request: NextRequest) {
+export const POST = withRole(['super_admin'], async (request: NextRequest, user) => {
   try {
-    const user = await verifyAuth(request);
-    if (!user) {
-      return NextResponse.json({ error: 'Non autorisé' }, { status: 401 });
-    }
-
-    // Seuls les super_admin peuvent créer des backups
-    if (user.role !== 'super_admin') {
-      return NextResponse.json({ error: 'Accès refusé' }, { status: 403 });
-    }
-
-    const { compress, collections } = await request.json();
-
-    const result = await BackupService.createBackup({
-      compress: compress !== false, // Par défaut true
-      collections,
-    });
-
+    const result = await BackupService.createBackup();
+    
     if (result.success) {
       return NextResponse.json({
         message: 'Backup créé avec succès',
@@ -40,4 +25,4 @@ export async function POST(request: NextRequest) {
       { status: 500 }
     );
   }
-}
+});

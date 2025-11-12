@@ -231,3 +231,60 @@ export function withRole(
     return handler(request, authResult.user);
   };
 }
+
+// Aliases pour compatibilité avec l'ancien code
+export const requireAuth = withAuth;
+export const verifyAuth = authenticateUser;
+
+export function createErrorResponse(code: string, message: string, status: number = 500): NextResponse {
+  return NextResponse.json(
+    {
+      success: false,
+      error: {
+        code,
+        message,
+      },
+    },
+    { status }
+  );
+}
+
+export const createSuccessResponse = (data: any, message?: string, status: number = 200) => 
+  NextResponse.json({ success: true, data, message }, { status });
+
+// Wrappers spécifiques pour les rôles
+export const requireManager = (
+  handler: (
+    request: NextRequest,
+    user: {
+      userId: string;
+      email: string;
+      role: UserRole;
+      establishmentId?: string;
+    }
+  ) => Promise<NextResponse>
+) => withRole(['manager', 'super_admin'], handler);
+
+export const requireAdmin = (
+  handler: (
+    request: NextRequest,
+    user: {
+      userId: string;
+      email: string;
+      role: UserRole;
+      establishmentId?: string;
+    }
+  ) => Promise<NextResponse>
+) => withRole(['super_admin'], handler);
+
+export const requireSuperAdmin = (
+  handler: (
+    request: NextRequest,
+    user: {
+      userId: string;
+      email: string;
+      role: UserRole;
+      establishmentId?: string;
+    }
+  ) => Promise<NextResponse>
+) => withRole(['super_admin'], handler);

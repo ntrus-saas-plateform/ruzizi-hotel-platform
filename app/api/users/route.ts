@@ -1,53 +1,50 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { verifyAuth } from '@/lib/auth/middleware';
+import { withRole } from '@/lib/auth/middleware';
 import UserService from '@/services/User.service';
 
-export async function GET(request: NextRequest) {
+/**
+ * GET /api/users
+ * Get all users (Super Admin only)
+ */
+export const GET = withRole(['super_admin'], async (request: NextRequest, user) => {
   try {
-    const user = await verifyAuth(request);
-    if (!user) {
-      return NextResponse.json({ error: 'Non autorisé' }, { status: 401 });
-    }
-
-    // Seuls les super_admin et manager peuvent voir les utilisateurs
-    if (user.role === 'staff') {
-      return NextResponse.json({ error: 'Accès refusé' }, { status: 403 });
-    }
-
     const { searchParams } = new URL(request.url);
-    const role = searchParams.get('role');
-    const establishmentId = searchParams.get('establishmentId');
-    const isActive = searchParams.get('isActive');
-    const search = searchParams.get('search');
+    const page = parseInt(searchParams.get('page') || '1');
+    const limit = parseInt(searchParams.get('limit') || '10');
+    const search = searchParams.get('search') || '';
 
-    const filters: any = {};
-    if (role) filters.role = role;
-    if (establishmentId) filters.establishmentId = establishmentId;
-    if (isActive) filters.isActive = isActive === 'true';
-    if (search) filters.search = search;
+    // Récupérer tous les utilisateurs
+    const allUsers = await UserService.getAll({ search });
 
-    const users = await UserService.getAll(filters);
-    return NextResponse.json(users);
+    // Implémenter la pagination côté API
+    const startIndex = (page - 1) * limit;
+    const endIndex = startIndex + limit;
+    const users = allUsers.slice(startIndex, endIndex);
+
+    // Retourner avec métadonnées de pagination
+    return NextResponse.json({
+      users,
+      pagination: {
+        page,
+        limit,
+        total: allUsers.length,
+        pages: Math.ceil(allUsers.length / limit)
+      }
+    });
   } catch (error: any) {
     return NextResponse.json(
       { error: error.message || 'Erreur serveur' },
       { status: 500 }
     );
   }
-}
+});
 
-export async function POST(request: NextRequest) {
+/**
+ * POST /api/users
+ * Create a new user (Super Admin only)
+ */
+export const POST = withRole(['super_admin'], async (request: NextRequest, user) => {
   try {
-    const user = await verifyAuth(request);
-    if (!user) {
-      return NextResponse.json({ error: 'Non autorisé' }, { status: 401 });
-    }
-
-    // Seuls les super_admin peuvent créer des utilisateurs
-    if (user.role !== 'super_admin') {
-      return NextResponse.json({ error: 'Accès refusé' }, { status: 403 });
-    }
-
     const data = await request.json();
     const newUser = await UserService.create(data);
 
@@ -58,4 +55,4 @@ export async function POST(request: NextRequest) {
       { status: 500 }
     );
   }
-}
+});

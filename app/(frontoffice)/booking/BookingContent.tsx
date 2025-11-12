@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import MainClientForm from '@/components/booking/MainClientForm';
 import GuestForm from '@/components/booking/GuestForm';
 import EstablishmentSelector from '@/components/booking/EstablishmentSelector';
+import BookingSummary from '@/components/booking/BookingSummary';
 import type { CompleteClientInfo, GuestInfo } from '@/types/guest.types';
 import type { AccommodationResponse } from '@/types/accommodation.types';
 
@@ -424,7 +425,6 @@ export default function BookingContent() {
                                         onChange={(e) => setNumberOfGuests(parseInt(e.target.value))}
                                         className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 bg-white shadow-sm appearance-none"
                                         required
-                                        max={selectedAccommodationData?.capacity.maxGuests || 10}
                                     >
                                         {Array.from({ length: selectedAccommodationData?.capacity.maxGuests || 10 }, (_, i) => i + 1).map((num) => (
                                             <option key={num} value={num}>
@@ -548,91 +548,17 @@ export default function BookingContent() {
                         {/* Étape 3: Récapitulatif et confirmation */}
                         {currentStep === 3 && selectedAccommodationData && (
                             <div className="space-y-8">
-                                {/* Récapitulatif de la réservation */}
-                                <div className="bg-gradient-to-r from-indigo-50 to-purple-50 rounded-xl p-6 border border-indigo-100">
-                                    <div className="flex items-center mb-6">
-                                        <div className="w-10 h-10 bg-gradient-to-br from-indigo-500 to-indigo-600 rounded-lg flex items-center justify-center mr-4">
-                                            <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                                            </svg>
-                                        </div>
-                                        <h2 className="text-2xl font-bold text-gray-900">Récapitulatif de votre réservation</h2>
-                                    </div>
-
-                                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                                        {/* Détails de l'hébergement */}
-                                        <div className="bg-white rounded-lg p-6 shadow-sm">
-                                            <h3 className="text-lg font-semibold text-gray-900 mb-4">Hébergement sélectionné</h3>
-                                            <div className="space-y-3">
-                                                <div>
-                                                    <span className="text-sm text-gray-500">Nom:</span>
-                                                    <p className="font-medium">{selectedAccommodationData.name}</p>
-                                                </div>
-                                                <div>
-                                                    <span className="text-sm text-gray-500">Type:</span>
-                                                    <p className="font-medium">{selectedAccommodationData.type}</p>
-                                                </div>
-                                                <div>
-                                                    <span className="text-sm text-gray-500">Capacité:</span>
-                                                    <p className="font-medium">{selectedAccommodationData.capacity.maxGuests} personnes</p>
-                                                </div>
-                                                <div>
-                                                    <span className="text-sm text-gray-500">Équipements:</span>
-                                                    <div className="flex flex-wrap gap-1 mt-1">
-                                                        {selectedAccommodationData.amenities.slice(0, 5).map((amenity, index) => (
-                                                            <span key={index} className="px-2 py-1 bg-gray-100 text-gray-700 text-xs rounded">
-                                                                {amenity}
-                                                            </span>
-                                                        ))}
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </div>
-
-                                        {/* Détails du séjour */}
-                                        <div className="bg-white rounded-lg p-6 shadow-sm">
-                                            <h3 className="text-lg font-semibold text-gray-900 mb-4">Détails du séjour</h3>
-                                            <div className="space-y-3">
-                                                <div>
-                                                    <span className="text-sm text-gray-500">Arrivée:</span>
-                                                    <p className="font-medium">{new Date(checkInDate).toLocaleDateString('fr-FR', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</p>
-                                                </div>
-                                                <div>
-                                                    <span className="text-sm text-gray-500">Départ:</span>
-                                                    <p className="font-medium">{new Date(checkOutDate).toLocaleDateString('fr-FR', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</p>
-                                                </div>
-                                                <div>
-                                                    <span className="text-sm text-gray-500">Durée:</span>
-                                                    <p className="font-medium">{numberOfNights} {numberOfNights === 1 ? 'nuit' : 'nuits'}</p>
-                                                </div>
-                                                <div>
-                                                    <span className="text-sm text-gray-500">Invités:</span>
-                                                    <p className="font-medium">{numberOfGuests} {numberOfGuests === 1 ? 'personne' : 'personnes'}</p>
-                                                </div>
-                                                {arrivalTime && (
-                                                    <div>
-                                                        <span className="text-sm text-gray-500">Heure d'arrivée:</span>
-                                                        <p className="font-medium">{arrivalTime}</p>
-                                                    </div>
-                                                )}
-                                            </div>
-                                        </div>
-                                    </div>
-
-                                    {/* Prix total */}
-                                    <div className="mt-6 p-4 bg-amber-50 rounded-lg border border-amber-200">
-                                        <div className="flex justify-between items-center">
-                                            <div>
-                                                <p className="text-sm text-gray-600">Prix par {selectedAccommodationData.pricingMode === 'nightly' ? 'nuit' : selectedAccommodationData.pricingMode === 'monthly' ? 'mois' : 'heure'}:</p>
-                                                <p className="text-lg font-semibold text-gray-900">{selectedAccommodationData.pricing.basePrice.toLocaleString()} BIF</p>
-                                            </div>
-                                            <div className="text-right">
-                                                <p className="text-sm text-gray-600">Prix total:</p>
-                                                <p className="text-2xl font-bold text-amber-600">{calculateTotalPrice().toLocaleString()} BIF</p>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
+                                <BookingSummary
+                                    accommodation={selectedAccommodationData}
+                                    checkInDate={checkInDate}
+                                    checkOutDate={checkOutDate}
+                                    numberOfNights={numberOfNights}
+                                    numberOfGuests={numberOfGuests}
+                                    mainClient={mainClient}
+                                    totalAmount={calculateTotalPrice()}
+                                    specialRequests={specialRequests}
+                                    arrivalTime={arrivalTime}
+                                />
                             </div>
                         )}
 

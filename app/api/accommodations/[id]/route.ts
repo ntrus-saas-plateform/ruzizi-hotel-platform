@@ -52,7 +52,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
  * Update accommodation (Manager or Super Admin)
  */
 export async function PUT(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
-    return requireManager(async (req, user) => {
+    return requireManager(async (request: NextRequest, user) => {
         try {
             const { id } = await params;
             // Check if accommodation exists and user has access
@@ -74,7 +74,7 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
                 );
             }
 
-            const body = await req.json();
+            const body = await request.json();
 
             // Validate request body
             const validatedData = UpdateAccommodationSchema.parse(body);
