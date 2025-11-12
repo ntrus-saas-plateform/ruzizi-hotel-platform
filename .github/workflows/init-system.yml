@@ -1,0 +1,80 @@
+name: Initialisation du Système
+
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Environnement cible'
+        required: true
+        default: 'staging'
+        type: choice
+        options:
+          - staging
+          - production
+      force_recreate:
+        description: 'Forcer la recréation de l\'utilisateur root'
+        required: false
+        default: false
+        type: boolean
+
+env:
+  NODE_VERSION: '18.x'
+
+jobs:
+  init-system:
+    name: Initialisation du Système
+    runs-on: ubuntu-latest
+    environment: ${{ github.event.inputs.environment }}
+    
+    steps:
+      - name: 📥 Checkout du code
+        uses: actions/checkout@v4
+
+      - name: 🔧 Configuration de Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: 📦 Installation des dépendances
+        run: npm ci
+
+      - name: 🏗️ Build du script d'initialisation
+        run: npx tsc scripts/init-root-user.ts --outDir dist --target es2020 --module commonjs --esModuleInterop --resolveJsonModule
+
+      - name: 🔐 Initialisation de l'utilisateur root
+        run: node dist/scripts/init-root-user.js
+        env:
+          MONGODB_URI: ${{ secrets.MONGODB_URI }}
+          ROOT_USER_EMAIL: ${{ secrets.ROOT_USER_EMAIL }}
+          ROOT_USER_FIRSTNAME: ${{ secrets.ROOT_USER_FIRSTNAME }}
+          ROOT_USER_LASTNAME: ${{ secrets.ROOT_USER_LASTNAME }}
+          ROOT_USER_PHONE: ${{ secrets.ROOT_USER_PHONE }}
+          SMTP_HOST: ${{ secrets.SMTP_HOST }}
+          SMTP_PORT: ${{ secrets.SMTP_PORT }}
+          SMTP_SECURE: ${{ secrets.SMTP_SECURE }}
+          SMTP_USER: ${{ secrets.SMTP_USER }}
+          SMTP_PASS: ${{ secrets.SMTP_PASS }}
+          SMTP_FROM: ${{ secrets.SMTP_FROM }}
+          FRONTEND_URL: ${{ secrets.FRONTEND_URL }}
+          FORCE_RECREATE: ${{ github.event.inputs.force_recreate }}
+
+      - name: 📊 Rapport d'initialisation
+        run: |
+          echo "✅ Initialisation terminée avec succès"
+          echo "Environnement: ${{ github.event.inputs.environment }}"
+          echo "Utilisateur root: ${{ secrets.ROOT_USER_EMAIL }}"
+          echo "Force recreate: ${{ github.event.inputs.force_recreate }}"
+
+      - name: 📧 Notification
+        if: always()
+        uses: 8398a7/action-slack@v3
+        with:
+          status: ${{ job.status }}
+          text: |
+            Initialisation du système Ruzizi Hôtel
+            Environnement: ${{ github.event.inputs.environment }}
+            Statut: ${{ job.status }}
+          webhook_url: ${{ secrets.SLACK_WEBHOOK }}
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK }}

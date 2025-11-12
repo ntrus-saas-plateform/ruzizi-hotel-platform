@@ -1,341 +1,325 @@
 # 🏨 Ruzizi Hôtel Platform
 
-> Système complet de gestion hôtelière pour la chaîne Ruzizi Hôtel au Burundi
-
-[![TypeScript](https://img.shields.io/badge/TypeScript-100%25-blue)](https://www.typescriptlang.org/)
-[![Next.js](https://img.shields.io/badge/Next.js-14+-black)](https://nextjs.org/)
-[![MongoDB](https://img.shields.io/badge/MongoDB-Latest-green)](https://www.mongodb.com/)
-[![Status](https://img.shields.io/badge/Status-Production%20Ready-success)](https://github.com)
-
-## 📋 Table des matières
-
-- [Vue d'ensemble](#vue-densemble)
-- [Fonctionnalités](#fonctionnalités)
-- [Technologies](#technologies)
-- [Installation](#installation)
-- [Configuration](#configuration)
-- [Utilisation](#utilisation)
-- [Documentation](#documentation)
-- [Architecture](#architecture)
-- [Sécurité](#sécurité)
-- [Tests](#tests)
-- [Déploiement](#déploiement)
-
-## 🎯 Vue d'ensemble
-
-Ruzizi Hôtel Platform est une application web full-stack moderne conçue pour gérer efficacement une chaîne d'hôtels. Le système offre une solution complète pour la gestion des réservations, la facturation, le suivi des dépenses, et l'analyse des performances.
-
-### Caractéristiques principales
-
-- ✅ **Multi-établissements**: Gestion centralisée de plusieurs hôtels
-- ✅ **Réservations avancées**: En ligne, sur place, et clients de passage
-- ✅ **Gestion financière**: Facturation, paiements, et suivi des dépenses
-- ✅ **Analytics**: Tableaux de bord et rapports en temps réel
-- ✅ **Sécurité**: Authentification JWT et contrôle d'accès basé sur les rôles
-- ✅ **Responsive**: Interface adaptée mobile, tablette et desktop
+Système de gestion hôtelière moderne et complet pour la chaîne Ruzizi Hôtel au Burundi.
 
 ## ✨ Fonctionnalités
 
-### FrontOffice (Public)
-- 🏠 Page d'accueil attractive avec présentation de la chaîne
-- 🏨 Catalogue des établissements avec filtres
-- 🛏️ Détails des hébergements avec galeries photos
-- 📅 Système de réservation en ligne
-- 🔍 Suivi de réservation par code unique
+- 🏢 **Gestion multi-établissements** - Administration centralisée de plusieurs hôtels
+- 🛏️ **Gestion des hébergements** - Chambres, suites, et logements variés
+- 📅 **Système de réservation** - Interface moderne pour les clients
+- 👥 **Gestion des utilisateurs** - Rôles et permissions granulaires
+- 💳 **Gestion des paiements** - Intégration avec plusieurs moyens de paiement
+- 📊 **Rapports et analyses** - Tableaux de bord détaillés
+- 🌐 **Interface multilingue** - Support français/anglais
+- 📱 **Design responsive** - Optimisé pour tous les appareils
 
-### BackOffice (Administration)
-- 📊 Dashboard avec KPIs et statistiques
-- 🏢 Gestion des établissements
-- 🛏️ Gestion des hébergements (chambres, suites, maisons)
-- 📅 Gestion des réservations (standard + walk-in)
-- 💰 Facturation et paiements multiples
-- 👥 Gestion des clients avec historique
-- 💸 Suivi des dépenses par catégorie
-- 📈 Analytics financiers et taux d'occupation
-- 🔔 Système de notifications en temps réel
-
-### Fonctionnalités avancées
-- **Walk-in Management**: Réservations horaires avec gestion multi-créneaux
-- **Pricing Intelligent**: Calcul automatique selon le mode (nuitée/mensuel/horaire)
-- **Availability Checking**: Prévention des doubles réservations
-- **Multi-Payment**: Support de plusieurs méthodes de paiement
-- **Real-time Analytics**: Données financières en temps réel
-
-## 🛠️ Technologies
-
-### Frontend
-- **Next.js 14+** - Framework React avec App Router
-- **TypeScript** - Typage statique strict
-- **Tailwind CSS** - Styling moderne et responsive
-- **React Hooks** - Gestion d'état moderne
-
-### Backend
-- **Next.js API Routes** - API RESTful
-- **MongoDB** - Base de données NoSQL
-- **Mongoose** - ODM pour MongoDB
-- **JWT** - Authentification sécurisée
-- **Bcrypt** - Hachage des mots de passe
-
-### Validation & Sécurité
-- **Zod** - Validation de schémas
-- **Rate Limiting** - Protection contre les abus
-- **Input Sanitization** - Prévention XSS
-- **RBAC** - Contrôle d'accès basé sur les rôles
-
-## 🚀 Installation
+## 🚀 Démarrage Rapide
 
 ### Prérequis
-- Node.js 18+ 
-- MongoDB 5+
-- npm ou yarn
 
-### Étapes d'installation
+- Node.js 18+ 
+- Compte MongoDB Atlas (ou MongoDB local)
+- npm ou yarn
+- Docker (optionnel)
+
+### Installation Locale
 
 1. **Cloner le repository**
-```bash
-git clone <repository-url>
-cd ruzizi-hotel-platform
-```
+   ```bash
+   git clone https://github.com/votre-org/ruzizi-hotel-platform.git
+   cd ruzizi-hotel-platform
+   ```
 
 2. **Installer les dépendances**
+   ```bash
+   npm install
+   ```
+
+3. **Configuration de l'environnement**
+   ```bash
+   cp .env.example .env
+   # Éditer .env avec votre URI MongoDB Atlas
+   ```
+
+   **Configuration MongoDB Atlas :**
+   1. Créez un cluster sur [MongoDB Atlas](https://cloud.mongodb.com)
+   2. Créez un utilisateur de base de données
+   3. Autorisez votre IP dans Network Access
+   4. Copiez l'URI de connexion dans votre `.env` :
+   ```env
+   MONGODB_URI=mongodb+srv://username:password@cluster0.xxxxx.mongodb.net/ruzizi_hotel?retryWrites=true&w=majority
+   ```
+
+4. **Démarrage avec initialisation automatique**
+   ```bash
+   npm run dev:setup
+   ```
+   
+   Cette commande va :
+   - Vérifier votre configuration
+   - Créer automatiquement l'utilisateur root
+   - Envoyer les identifiants par email
+   - Démarrer le serveur de développement
+
+### Installation avec Docker
+
+#### Production (MongoDB Atlas)
 ```bash
-npm install
+cp .env.example .env
+# Configurer MONGODB_URI avec votre cluster Atlas
+docker-compose up -d
 ```
 
-3. **Configurer l'environnement**
+#### Développement (avec MongoDB local optionnel)
 ```bash
-cp .env.example .env.local
+cp .env.example .env
+# Pour utiliser MongoDB local en développement
+docker-compose -f docker-compose.dev.yml --profile local-db up -d
 ```
 
-Éditer `.env.local` avec vos configurations:
+#### Vérifier les logs
+```bash
+docker-compose logs -f app
+```
+
+## 🔐 Utilisateur Root
+
+L'utilisateur administrateur root est créé automatiquement au démarrage avec :
+
+- **Email** : Configuré via `ROOT_USER_EMAIL` (défaut: admin@ruzizihotel.com)
+- **Mot de passe** : Généré automatiquement et envoyé par email
+- **Permissions** : Accès complet au système
+
+### Variables d'environnement pour l'utilisateur root
+
 ```env
-MONGODB_URI=mongodb://localhost:27017/ruzizi-hotel
-JWT_SECRET=your-super-secret-jwt-key
-JWT_REFRESH_SECRET=your-refresh-secret-key
-NEXT_PUBLIC_API_URL=http://localhost:3000
-NODE_ENV=development
+ROOT_USER_EMAIL=admin@ruzizihotel.com
+ROOT_USER_FIRSTNAME=Administrateur
+ROOT_USER_LASTNAME=Root
+ROOT_USER_PHONE=+257 69 65 75 54
 ```
 
-4. **Démarrer MongoDB**
+### Configuration SMTP pour l'envoi d'emails
+
+```env
+SMTP_HOST=smtp.gmail.com
+SMTP_PORT=587
+SMTP_SECURE=false
+SMTP_USER=votre-email@gmail.com
+SMTP_PASS=votre-mot-de-passe-app
+SMTP_FROM=noreply@ruzizihotel.com
+```
+
+## 📋 Scripts Disponibles
+
+### Développement
 ```bash
-mongod
-# ou
-sudo service mongod start
+npm run dev              # Démarrer le serveur de développement
+npm run dev:setup        # Démarrage avec initialisation complète
+npm run init:root        # Créer/recréer l'utilisateur root
 ```
 
-5. **Lancer l'application**
+### Build et Production
 ```bash
-npm run dev
+npm run build           # Build de production
+npm run start           # Démarrer en mode production
+npm run type-check      # Vérification TypeScript
 ```
 
-L'application sera accessible sur `http://localhost:3000`
+### Tests et Qualité
+```bash
+npm run test            # Exécuter les tests
+npm run test:watch      # Tests en mode watch
+npm run test:coverage   # Tests avec couverture
+npm run lint            # Linting du code
+npm run format          # Formatage du code
+```
 
-## ⚙️ Configuration
-
-### Variables d'environnement
-
-| Variable | Description | Requis |
-|----------|-------------|--------|
-| `MONGODB_URI` | URI de connexion MongoDB | ✅ |
-| `JWT_SECRET` | Clé secrète pour JWT | ✅ |
-| `JWT_REFRESH_SECRET` | Clé pour refresh tokens | ✅ |
-| `NEXT_PUBLIC_API_URL` | URL de l'API | ✅ |
-| `NODE_ENV` | Environnement (development/production) | ✅ |
-
-### Rôles utilisateurs
-
-- **super_admin**: Accès complet à tous les établissements
-- **manager**: Accès limité à son établissement
-- **staff**: Accès limité selon les permissions
-
-## 📖 Utilisation
-
-### Première utilisation
-
-1. **Créer un compte super admin**
-   - Aller sur `/auth/register`
-   - Créer un compte avec le rôle `super_admin`
-
-2. **Créer un établissement**
-   - Se connecter au BackOffice
-   - Aller dans "Établissements" → "Nouveau"
-   - Remplir les informations
-
-3. **Ajouter des hébergements**
-   - Aller dans "Hébergements" → "Nouveau"
-   - Configurer les chambres/suites
-
-4. **Commencer à prendre des réservations**
-   - Via le FrontOffice (en ligne)
-   - Via le BackOffice (sur place)
-   - Via Walk-in (clients de passage)
-
-### Workflows principaux
-
-#### Réservation en ligne
-1. Client visite le site
-2. Sélectionne établissement et hébergement
-3. Choisit les dates
-4. Remplit ses informations
-5. Reçoit un code de réservation
-
-#### Facturation
-1. Réservation confirmée
-2. Facture générée automatiquement
-3. Enregistrement des paiements
-4. Suivi du solde
-
-#### Gestion Walk-in
-1. Client arrive sans réservation
-2. Sélection de l'hébergement
-3. Choix des créneaux horaires
-4. Paiement du tarif journalier complet
-5. Libération automatique après départ
-
-## 📚 Documentation
-
-Documentation complète disponible dans:
-- [`IMPLEMENTATION_SUMMARY.md`](./IMPLEMENTATION_SUMMARY.md) - Détails d'implémentation
-- [`QUICK_START.md`](./QUICK_START.md) - Guide de démarrage rapide
-- [`TEST_REPORT.md`](./TEST_REPORT.md) - Rapport de tests
-- [`PROJECT_COMPLETE.md`](./PROJECT_COMPLETE.md) - Résumé complet du projet
+### Docker
+```bash
+npm run docker:build    # Build de l'image Docker
+npm run docker:run      # Démarrer avec Docker Compose
+npm run docker:stop     # Arrêter les conteneurs
+npm run docker:logs     # Voir les logs
+npm run docker:clean    # Nettoyer complètement
+```
 
 ## 🏗️ Architecture
 
 ```
-┌─────────────────────────────────────────┐
-│           Client (Browser)               │
-│  ┌──────────────┐  ┌──────────────┐    │
-│  │ FrontOffice  │  │  BackOffice  │    │
-│  └──────────────┘  └──────────────┘    │
-└─────────────────────────────────────────┘
-                    │
-                    ▼
-┌─────────────────────────────────────────┐
-│         Next.js App Router               │
-│  ┌────────────────────────────────┐    │
-│  │      API Routes Layer           │    │
-│  └────────────────────────────────┘    │
-└─────────────────────────────────────────┘
-                    │
-                    ▼
-┌─────────────────────────────────────────┐
-│       Business Logic Layer               │
-│  ┌──────┐ ┌──────┐ ┌──────┐ ┌──────┐  │
-│  │ Auth │ │Booking│ │Invoice│ │ HR   │  │
-│  └──────┘ └──────┘ └──────┘ └──────┘  │
-└─────────────────────────────────────────┘
-                    │
-                    ▼
-┌─────────────────────────────────────────┐
-│         Data Access Layer                │
-│  ┌────────────────────────────────┐    │
-│  │    Mongoose Models & Schemas    │    │
-│  └────────────────────────────────┘    │
-└─────────────────────────────────────────┘
-                    │
-                    ▼
-┌─────────────────────────────────────────┐
-│          MongoDB Database                │
-└─────────────────────────────────────────┘
+ruzizi-hotel-platform/
+├── app/                    # Pages Next.js App Router
+│   ├── (frontoffice)/     # Interface client
+│   ├── api/               # API Routes
+│   └── backoffice/        # Interface administration
+├── components/            # Composants React
+│   ├── frontoffice/       # Composants client
+│   └── backoffice/        # Composants admin
+├── models/               # Modèles MongoDB
+├── services/             # Services métier
+├── types/                # Types TypeScript
+├── scripts/              # Scripts d'initialisation
+├── docker/               # Configuration Docker
+└── .github/              # GitHub Actions
 ```
 
-## 🔒 Sécurité
+## 🗄️ Configuration MongoDB Atlas
 
-### Mesures implémentées
-- ✅ Authentification JWT avec expiration
-- ✅ Hachage des mots de passe (bcrypt)
-- ✅ Contrôle d'accès basé sur les rôles (RBAC)
-- ✅ Validation des entrées (Zod)
-- ✅ Sanitization des données
-- ✅ Protection XSS
-- ✅ Rate limiting
-- ✅ CORS configuré
+### Étapes de configuration
 
-### Recommandations production
-- Utiliser HTTPS/SSL
-- Configurer des secrets JWT forts
-- Activer le rate limiting strict
-- Mettre en place un WAF
-- Configurer les backups automatiques
+1. **Créer un compte MongoDB Atlas**
+   - Rendez-vous sur [MongoDB Atlas](https://cloud.mongodb.com)
+   - Créez un compte gratuit
 
-## ✅ Tests
+2. **Créer un cluster**
+   - Choisissez le plan gratuit (M0)
+   - Sélectionnez une région proche (Europe recommandée)
+   - Nommez votre cluster (ex: `ruzizi-cluster`)
 
-### Tests effectués
-- ✅ Compilation TypeScript (0 erreurs)
-- ✅ Tests fonctionnels manuels
-- ✅ Tests d'intégration API
-- ✅ Tests de sécurité
-- ✅ Tests de performance
+3. **Configurer l'accès**
+   ```bash
+   # Créer un utilisateur de base de données
+   Username: ruzizi_admin
+   Password: [générer un mot de passe sécurisé]
+   
+   # Autoriser l'accès réseau
+   IP Address: 0.0.0.0/0 (pour développement)
+   # En production, limitez aux IPs spécifiques
+   ```
 
-### Lancer les tests
-```bash
-# Tests TypeScript
-npm run type-check
+4. **Obtenir l'URI de connexion**
+   ```env
+   # Format de l'URI
+   MONGODB_URI=mongodb+srv://ruzizi_admin:PASSWORD@ruzizi-cluster.xxxxx.mongodb.net/ruzizi_hotel?retryWrites=true&w=majority
+   ```
 
-# Build de production
-npm run build
+### Sécurité MongoDB Atlas
 
-# Linter
-npm run lint
+- ✅ **Chiffrement** automatique des données
+- 🔐 **Authentification** obligatoire
+- 🛡️ **Firewall** intégré avec whitelist IP
+- 📊 **Monitoring** et alertes inclus
+- 🔄 **Backups** automatiques
+
+## 🔧 Configuration
+
+### Variables d'environnement essentielles
+
+```env
+# Base de données MongoDB Atlas
+MONGODB_URI=mongodb+srv://username:password@cluster0.xxxxx.mongodb.net/ruzizi_hotel?retryWrites=true&w=majority
+
+# Authentification
+NEXTAUTH_SECRET=votre-secret-tres-securise
+JWT_SECRET=votre-jwt-secret
+
+# Application
+NODE_ENV=development
+FRONTEND_URL=http://localhost:3000
+
+# Utilisateur root (créé automatiquement)
+ROOT_USER_EMAIL=admin@ruzizihotel.com
+ROOT_USER_FIRSTNAME=Administrateur
+ROOT_USER_LASTNAME=Root
+
+# Email (recommandé pour recevoir les identifiants)
+SMTP_HOST=smtp.gmail.com
+SMTP_USER=votre-email@gmail.com
+SMTP_PASS=votre-mot-de-passe-app
+SMTP_FROM=noreply@ruzizihotel.com
 ```
 
-## 🚢 Déploiement
+## 🚀 Déploiement
 
-### Options de déploiement
+### Avec Docker (Recommandé)
 
-#### Vercel (Recommandé)
-```bash
-npm install -g vercel
-vercel
+1. **Configuration de production**
+   ```bash
+   cp .env.example .env.production
+   # Configurer pour la production
+   ```
+
+2. **Déploiement**
+   ```bash
+   docker-compose -f docker-compose.yml --env-file .env.production up -d
+   ```
+
+### Déploiement manuel
+
+1. **Build de production**
+   ```bash
+   npm run build
+   ```
+
+2. **Démarrage**
+   ```bash
+   npm start
+   ```
+
+## 🔄 CI/CD avec GitHub Actions
+
+Le projet inclut des workflows GitHub Actions pour :
+
+- ✅ **Tests automatiques** sur chaque push/PR
+- 🔒 **Analyse de sécurité** avec Trivy
+- 🏗️ **Build et push** des images Docker
+- 🚀 **Déploiement automatique** sur la branche main
+- 📧 **Notifications** Slack
+
+### Secrets GitHub requis
+
+```
+MONGODB_URI              # URI de la base de données
+ROOT_USER_EMAIL          # Email de l'admin root
+SMTP_HOST               # Serveur SMTP
+SMTP_USER               # Utilisateur SMTP
+SMTP_PASS               # Mot de passe SMTP
+DEPLOY_HOST             # Serveur de déploiement
+DEPLOY_USER             # Utilisateur SSH
+DEPLOY_SSH_KEY          # Clé SSH privée
+SLACK_WEBHOOK           # Webhook Slack (optionnel)
 ```
 
-#### Docker
-```bash
-docker build -t ruzizi-hotel .
-docker run -p 3000:3000 ruzizi-hotel
-```
+## 🛡️ Sécurité
 
-#### Serveur traditionnel
-```bash
-npm run build
-npm start
-```
+- 🔐 **Authentification JWT** avec refresh tokens
+- 🔒 **Hashage bcrypt** pour les mots de passe
+- 👤 **Système de rôles** granulaire
+- 🛡️ **Validation Zod** sur toutes les entrées
+- 🔍 **Audit logs** pour traçabilité
+- 🚫 **Rate limiting** sur les API
 
-### Checklist pré-déploiement
-- [ ] Variables d'environnement configurées
-- [ ] Base de données production configurée
-- [ ] Secrets JWT forts définis
-- [ ] HTTPS/SSL activé
-- [ ] Backups configurés
-- [ ] Monitoring en place
+## 📊 Monitoring
 
-## 📊 Statistiques du projet
-
-- **Lignes de code**: 15,000+
-- **Fichiers**: 120+
-- **Modèles**: 8
-- **Services**: 9
-- **API Routes**: 50+
-- **Pages**: 18+
-- **Composants**: 20+
+- 📈 **Métriques de performance** intégrées
+- 🚨 **Alertes automatiques** en cas d'erreur
+- 📋 **Logs structurés** avec rotation
+- 🔍 **Tracing distribué** pour debug
 
 ## 🤝 Contribution
 
-Ce projet est développé pour Ruzizi Hôtel. Pour toute question ou suggestion:
-- Email: contact@ruzizihotel.bi
-- Téléphone: +257 XX XX XX XX
+1. Fork le projet
+2. Créer une branche feature (`git checkout -b feature/nouvelle-fonctionnalite`)
+3. Commit les changements (`git commit -am 'Ajout nouvelle fonctionnalité'`)
+4. Push vers la branche (`git push origin feature/nouvelle-fonctionnalite`)
+5. Créer une Pull Request
 
-## 📄 Licence
+## 📝 Licence
 
-Propriété de Ruzizi Hôtel - Tous droits réservés
+Ce projet est sous licence MIT. Voir le fichier [LICENSE](LICENSE) pour plus de détails.
 
-## 🎉 Remerciements
+## 📞 Support
 
-Développé avec ❤️ pour Ruzizi Hôtel
+- 📧 **Email** : support@ruzizihotel.com
+- 📱 **Téléphone** : +257 69 65 75 54
+- 🌐 **Site web** : https://ruzizihotel.com
+
+## 🙏 Remerciements
+
+- L'équipe Ruzizi Hôtel pour leur confiance
+- La communauté open source pour les outils utilisés
+- Tous les contributeurs du projet
 
 ---
 
-**Status**: ✅ Production Ready  
-**Version**: 1.0.0  
-**Dernière mise à jour**: Novembre 2024
+**Développé avec ❤️ pour Ruzizi Hôtel**

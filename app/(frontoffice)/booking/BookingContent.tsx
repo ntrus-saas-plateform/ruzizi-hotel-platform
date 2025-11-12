@@ -339,49 +339,95 @@ export default function BookingContent() {
                         <MainClientForm client={mainClient} onChange={setMainClient} />
 
                         {guests.length > 0 && (
-                            <div>
-                                <h2 className="text-xl font-semibold text-gray-900 mb-4">
-                                    Invités / Accompagnants ({guests.length})
-                                </h2>
-                                <div className="space-y-4">
+                            <div className="bg-gradient-to-r from-purple-50 to-pink-50 rounded-xl p-6 border border-purple-100">
+                                <div className="flex items-center mb-6">
+                                    <div className="w-10 h-10 bg-gradient-to-br from-purple-500 to-purple-600 rounded-lg flex items-center justify-center mr-4">
+                                        <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z" />
+                                        </svg>
+                                    </div>
+                                    <h2 className="text-2xl font-bold text-gray-900">
+                                        Invités / Accompagnants ({guests.length})
+                                    </h2>
+                                </div>
+                                <div className="space-y-6">
                                     {guests.map((guest, index) => (
-                                        <GuestForm
-                                            key={index}
-                                            guest={guest}
-                                            index={index}
-                                            onChange={(updated) => updateGuest(index, updated)}
-                                            onRemove={() => removeGuest(index)}
-                                        />
+                                        <div key={index} className="bg-white rounded-lg p-4 shadow-sm border border-gray-100">
+                                            <GuestForm
+                                                guest={guest}
+                                                index={index}
+                                                onChange={(updated) => updateGuest(index, updated)}
+                                                onRemove={() => removeGuest(index)}
+                                            />
+                                        </div>
                                     ))}
                                 </div>
                             </div>
                         )}
 
-                        <div>
-                            <h2 className="text-xl font-semibold text-gray-900 mb-4">Demandes spéciales</h2>
-                            <textarea
-                                value={specialRequests}
-                                onChange={(e) => setSpecialRequests(e.target.value)}
-                                rows={4}
-                                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
-                                placeholder="Régime alimentaire, accessibilité, préférences de chambre, etc."
-                            />
+                        {/* Special Requests Section */}
+                        <div className="bg-gradient-to-r from-green-50 to-emerald-50 rounded-xl p-6 border border-green-100">
+                            <div className="flex items-center mb-6">
+                                <div className="w-10 h-10 bg-gradient-to-br from-green-500 to-green-600 rounded-lg flex items-center justify-center mr-4">
+                                    <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z" />
+                                    </svg>
+                                </div>
+                                <h2 className="text-2xl font-bold text-gray-900">Demandes spéciales</h2>
+                            </div>
+                            <div className="space-y-3">
+                                <label className="block text-sm font-semibold text-gray-700">
+                                    Avez-vous des demandes particulières pour votre séjour ?
+                                </label>
+                                <textarea
+                                    value={specialRequests}
+                                    onChange={(e) => setSpecialRequests(e.target.value)}
+                                    rows={5}
+                                    className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all duration-200 bg-white shadow-sm resize-none"
+                                    placeholder="Exemples : Régime alimentaire spécial, besoins d'accessibilité, préférences de chambre (étage élevé, vue mer), célébration spéciale (anniversaire, lune de miel), heure d'arrivée tardive, etc."
+                                />
+                                <p className="text-xs text-gray-500 flex items-center">
+                                    <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                    </svg>
+                                    Nous ferons de notre mieux pour répondre à vos demandes selon nos disponibilités.
+                                </p>
+                            </div>
                         </div>
 
-                        <div className="flex justify-between pt-6 border-t">
+                        {/* Action Buttons */}
+                        <div className="flex flex-col sm:flex-row justify-between items-center pt-8 border-t border-gray-200 space-y-4 sm:space-y-0">
                             <button
                                 type="button"
                                 onClick={() => router.back()}
-                                className="px-6 py-3 border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50"
+                                className="w-full sm:w-auto px-8 py-3 border-2 border-gray-300 text-gray-700 rounded-xl hover:bg-gray-50 hover:border-gray-400 transition-all duration-200 font-medium flex items-center justify-center space-x-2"
                             >
-                                Retour
+                                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+                                </svg>
+                                <span>Retour</span>
                             </button>
+                            
                             <button
                                 type="submit"
                                 disabled={loading}
-                                className="px-6 py-3 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed"
+                                className="w-full sm:w-auto px-8 py-3 bg-gradient-to-r from-amber-600 via-amber-700 to-amber-800 text-white rounded-xl hover:from-amber-700 hover:via-amber-800 hover:to-amber-900 disabled:from-gray-400 disabled:via-gray-500 disabled:to-gray-600 disabled:cursor-not-allowed transition-all duration-300 shadow-lg hover:shadow-xl font-semibold flex items-center justify-center space-x-2 transform hover:scale-105 disabled:transform-none"
                             >
-                                {loading ? 'Traitement...' : 'Confirmer la réservation'}
+                                {loading ? (
+                                    <>
+                                        <svg className="w-5 h-5 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                                        </svg>
+                                        <span>Traitement en cours...</span>
+                                    </>
+                                ) : (
+                                    <>
+                                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                        </svg>
+                                        <span>Confirmer la réservation</span>
+                                    </>
+                                )}
                             </button>
                         </div>
                     </form>

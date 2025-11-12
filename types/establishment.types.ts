@@ -11,6 +11,7 @@ export type PricingMode = 'nightly' | 'monthly';
 export interface Location {
   city: string;
   address: string;
+  country?: string;
   coordinates: {
     lat: number;
     lng: number;

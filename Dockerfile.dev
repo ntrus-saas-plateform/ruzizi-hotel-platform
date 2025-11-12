@@ -1,0 +1,30 @@
+# Dockerfile pour développement avec hot reload
+FROM node:18-alpine AS development
+
+# Installer les dépendances système
+RUN apk add --no-cache libc6-compat wget curl
+
+# Définir le répertoire de travail
+WORKDIR /app
+
+# Copier les fichiers de configuration
+COPY package*.json ./
+COPY tsconfig.json ./
+COPY next.config.js ./
+
+# Installer toutes les dépendances (dev + prod)
+RUN npm ci
+
+# Copier le code source
+COPY . .
+
+# Exposer le port
+EXPOSE 3000
+
+# Script de démarrage pour développement
+COPY docker-entrypoint.dev.sh ./
+RUN chmod +x docker-entrypoint.dev.sh
+
+# Commande de démarrage
+ENTRYPOINT ["./docker-entrypoint.dev.sh"]
+CMD ["npm", "run", "dev"]

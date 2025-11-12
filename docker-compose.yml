@@ -1,0 +1,116 @@
+version: '3.8'
+
+services:
+  # Application Next.js
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: runner
+    container_name: ruzizi-app
+    restart: unless-stopped
+    environment:
+      # Base de données MongoDB Atlas
+      MONGODB_URI: ${MONGODB_URI}
+      
+      # Configuration de l'application
+      NODE_ENV: ${NODE_ENV:-production}
+      NEXTAUTH_SECRET: ${NEXTAUTH_SECRET:-your-secret-key-here}
+      NEXTAUTH_URL: ${NEXTAUTH_URL:-http://localhost:3000}
+      
+      # Configuration de l'utilisateur root
+      ROOT_USER_EMAIL: ${ROOT_USER_EMAIL:-admin@ruzizihotel.com}
+      ROOT_USER_FIRSTNAME: ${ROOT_USER_FIRSTNAME:-Administrateur}
+      ROOT_USER_LASTNAME: ${ROOT_USER_LASTNAME:-Root}
+      ROOT_USER_PHONE: ${ROOT_USER_PHONE:-+257 69 65 75 54}
+      
+      # Configuration SMTP pour l'envoi d'emails
+      SMTP_HOST: ${SMTP_HOST:-smtp.gmail.com}
+      SMTP_PORT: ${SMTP_PORT:-587}
+      SMTP_SECURE: ${SMTP_SECURE:-false}
+      SMTP_USER: ${SMTP_USER}
+      SMTP_PASS: ${SMTP_PASS}
+      SMTP_FROM: ${SMTP_FROM:-noreply@ruzizihotel.com}
+      
+      # URL du frontend
+      FRONTEND_URL: ${FRONTEND_URL:-http://localhost:3000}
+      
+      # Clés JWT
+      JWT_SECRET: ${JWT_SECRET:-your-jwt-secret-key}
+      JWT_EXPIRES_IN: ${JWT_EXPIRES_IN:-7d}
+      
+      # Configuration de stockage (optionnel)
+      UPLOAD_DIR: ${UPLOAD_DIR:-/app/uploads}
+      MAX_FILE_SIZE: ${MAX_FILE_SIZE:-10485760}
+      
+    ports:
+      - "${APP_PORT:-3000}:3000"
+    volumes:
+      - app_uploads:/app/uploads
+      - app_logs:/app/logs
+    networks:
+      - ruzizi-network
+    depends_on:
+      - redis
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3000/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+
+  # Redis pour le cache (optionnel)
+  redis:
+    image: redis:7-alpine
+    container_name: ruzizi-redis
+    restart: unless-stopped
+    ports:
+      - "${REDIS_PORT:-6379}:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - ruzizi-network
+    command: redis-server --appendonly yes --requirepass ${REDIS_PASSWORD:-redis123}
+    healthcheck:
+      test: ["CMD", "redis-cli", "--raw", "incr", "ping"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Nginx reverse proxy (optionnel pour production)
+  nginx:
+    image: nginx:alpine
+    container_name: ruzizi-nginx
+    restart: unless-stopped
+    ports:
+      - "${NGINX_HTTP_PORT:-80}:80"
+      - "${NGINX_HTTPS_PORT:-443}:443"
+    volumes:
+      - ./docker/nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./docker/nginx/ssl:/etc/nginx/ssl:ro
+      - nginx_logs:/var/log/nginx
+    networks:
+      - ruzizi-network
+    depends_on:
+      - app
+    profiles:
+      - production
+
+# Volumes persistants
+volumes:
+  redis_data:
+    driver: local
+  app_uploads:
+    driver: local
+  app_logs:
+    driver: local
+  nginx_logs:
+    driver: local
+
+# Réseau personnalisé
+networks:
+  ruzizi-network:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.20.0.0/16

@@ -3,12 +3,17 @@ import bcrypt from 'bcryptjs';
 
 export interface IUser {
   _id: mongoose.Types.ObjectId;
-  name: string;
+  firstName: string;
+  lastName: string;
+  name?: string; // Computed field
   email: string;
+  phone?: string;
   password: string;
-  role: 'super_admin' | 'manager' | 'staff';
+  role: 'root' | 'super_admin' | 'manager' | 'staff';
   establishmentId?: mongoose.Types.ObjectId;
+  permissions: string[];
   isActive: boolean;
+  isEmailVerified: boolean;
   lastLogin?: Date;
   loginHistory: {
     timestamp: Date;
@@ -17,13 +22,20 @@ export interface IUser {
   }[];
   passwordResetToken?: string;
   passwordResetExpires?: Date;
+  emailVerificationToken?: string;
+  emailVerificationExpires?: Date;
   createdAt: Date;
   updatedAt: Date;
 }
 
 const UserSchema = new Schema<IUser>(
   {
-    name: {
+    firstName: {
+      type: String,
+      required: [true, 'Le prénom est requis'],
+      trim: true,
+    },
+    lastName: {
       type: String,
       required: [true, 'Le nom est requis'],
       trim: true,
@@ -36,6 +48,10 @@ const UserSchema = new Schema<IUser>(
       trim: true,
       match: [/^\S+@\S+\.\S+$/, 'Email invalide'],
     },
+    phone: {
+      type: String,
+      trim: true,
+    },
     password: {
       type: String,
       required: [true, 'Le mot de passe est requis'],
@@ -44,7 +60,7 @@ const UserSchema = new Schema<IUser>(
     },
     role: {
       type: String,
-      enum: ['super_admin', 'manager', 'staff'],
+      enum: ['root', 'super_admin', 'manager', 'staff'],
       default: 'staff',
       required: true,
     },
@@ -52,9 +68,26 @@ const UserSchema = new Schema<IUser>(
       type: Schema.Types.ObjectId,
       ref: 'Establishment',
     },
+    permissions: [{
+      type: String,
+      enum: [
+        'manage_users',
+        'manage_establishments',
+        'manage_accommodations',
+        'manage_bookings',
+        'manage_payments',
+        'view_reports',
+        'manage_system',
+        'manage_settings'
+      ]
+    }],
     isActive: {
       type: Boolean,
       default: true,
+    },
+    isEmailVerified: {
+      type: Boolean,
+      default: false,
     },
     lastLogin: {
       type: Date,
@@ -71,6 +104,14 @@ const UserSchema = new Schema<IUser>(
       select: false,
     },
     passwordResetExpires: {
+      type: Date,
+      select: false,
+    },
+    emailVerificationToken: {
+      type: String,
+      select: false,
+    },
+    emailVerificationExpires: {
       type: Date,
       select: false,
     },
@@ -104,10 +145,58 @@ UserSchema.methods.comparePassword = async function (candidatePassword: string):
   return bcrypt.compare(candidatePassword, this.password);
 };
 
+// Virtual pour le nom complet
+UserSchema.virtual('name').get(function() {
+  return `${this.firstName} ${this.lastName}`;
+});
+
 // Limiter l'historique de connexion à 50 entrées
 UserSchema.pre('save', function (next) {
   if (this.loginHistory && this.loginHistory.length > 50) {
     this.loginHistory = this.loginHistory.slice(-50);
+  }
+  next();
+});
+
+// Assigner les permissions par défaut selon le rôle
+UserSchema.pre('save', function (next) {
+  if (this.isModified('role') || this.isNew) {
+    switch (this.role) {
+      case 'root':
+        this.permissions = [
+          'manage_users',
+          'manage_establishments',
+          'manage_accommodations',
+          'manage_bookings',
+          'manage_payments',
+          'view_reports',
+          'manage_system',
+          'manage_settings'
+        ];
+        break;
+      case 'super_admin':
+        this.permissions = [
+          'manage_users',
+          'manage_establishments',
+          'manage_accommodations',
+          'manage_bookings',
+          'manage_payments',
+          'view_reports'
+        ];
+        break;
+      case 'manager':
+        this.permissions = [
+          'manage_accommodations',
+          'manage_bookings',
+          'view_reports'
+        ];
+        break;
+      case 'staff':
+        this.permissions = [
+          'manage_bookings'
+        ];
+        break;
+    }
   }
   next();
 });
