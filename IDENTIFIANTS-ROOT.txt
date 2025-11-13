@@ -1,0 +1,88 @@
+═══════════════════════════════════════════════════════════
+    IDENTIFIANTS ADMINISTRATEUR ROOT - RUZIZI HÔTEL
+═══════════════════════════════════════════════════════════
+
+🔐 INFORMATIONS DE CONNEXION
+─────────────────────────────────────────────────────────
+
+Email:          ntrus07@outlook.fr
+Mot de passe:   VERIFIEZ VOTRE EMAIL (ntrus07@outlook.fr)
+
+URL de connexion:
+http://localhost:3000/auth/login
+
+─────────────────────────────────────────────────────────
+
+📧 RECUPERATION DU MOT DE PASSE
+─────────────────────────────────────────────────────────
+
+Le mot de passe a ete envoye par email a: ntrus07@outlook.fr
+
+Verifiez:
+1. Votre boite de reception
+2. Le dossier spam/courrier indesirable
+3. L'objet de l'email: "Ruzizi Hôtel - Identifiants Administrateur Root"
+
+Si vous n'avez pas recu l'email:
+1. npm run delete:root
+2. npm run init:root
+3. Le mot de passe sera affiche dans la console
+
+─────────────────────────────────────────────────────────
+
+📋 DÉTAILS DU COMPTE
+─────────────────────────────────────────────────────────
+
+Nom:            Administrateur Root
+Téléphone:      +257 69 65 75 54
+Rôle:           root (Super Administrateur)
+Statut:         ✅ Actif
+Email vérifié:  ✅ Oui
+Date création:  13 Novembre 2025, 11:02:29
+
+─────────────────────────────────────────────────────────
+
+🔐 PERMISSIONS
+─────────────────────────────────────────────────────────
+
+✓ manage_users           - Gestion des utilisateurs
+✓ manage_establishments  - Gestion des établissements
+✓ manage_accommodations  - Gestion des hébergements
+✓ manage_bookings        - Gestion des réservations
+✓ manage_payments        - Gestion des paiements
+✓ view_reports           - Consultation des rapports
+✓ manage_system          - Administration système
+✓ manage_settings        - Configuration
+
+─────────────────────────────────────────────────────────
+
+⚠️  IMPORTANT - SÉCURITÉ
+─────────────────────────────────────────────────────────
+
+1. Changez ce mot de passe lors de votre première connexion
+2. Ne partagez JAMAIS ces identifiants
+3. Utilisez l'authentification à deux facteurs si disponible
+4. Déconnectez-vous toujours après utilisation
+5. Créez des comptes administrateurs séparés pour chaque personne
+6. Utilisez le compte root uniquement pour les tâches critiques
+
+─────────────────────────────────────────────────────────
+
+🛠️ COMMANDES UTILES
+─────────────────────────────────────────────────────────
+
+Vérifier l'utilisateur root:
+   npm run check:root
+
+Tester le login:
+   npm run test:login
+
+Recréer l'utilisateur root:
+   npm run delete:root
+   npm run init:root
+
+═══════════════════════════════════════════════════════════
+
+⚠️  GARDEZ CE FICHIER EN LIEU SÛR ET CONFIDENTIEL ⚠️
+
+═══════════════════════════════════════════════════════════

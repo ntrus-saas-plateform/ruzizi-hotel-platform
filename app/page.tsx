@@ -2,10 +2,12 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import Navigation from '@/components/frontoffice/Navigation';
 import HeroSection from '@/components/frontoffice/HeroSection';
 import EstablishmentCard from '@/components/frontoffice/EstablishmentCard';
 import MapSection from '@/components/frontoffice/MapSection';
 import ContactForm from '@/components/frontoffice/ContactForm';
+import Footer from '@/components/frontoffice/Footer';
 
 export default function HomePage() {
   const router = useRouter();
@@ -122,6 +124,9 @@ export default function HomePage() {
 
   return (
     <div className="min-h-screen">
+      {/* Navigation Header */}
+      <Navigation />
+      
       {/* Hero Section */}
       <HeroSection />
 
@@ -258,6 +263,9 @@ export default function HomePage() {
 
       {/* Contact Section */}
       <ContactForm />
+
+      {/* Footer */}
+      <Footer />
     </div>
   );
 }
