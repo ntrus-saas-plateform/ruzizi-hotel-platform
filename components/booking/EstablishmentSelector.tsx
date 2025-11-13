@@ -14,6 +14,9 @@ interface EstablishmentSelectorProps {
   numberOfGuests?: number;
 }
 
+type ViewMode = 'grid' | 'list';
+type SortOption = 'price-asc' | 'price-desc' | 'name-asc' | 'capacity-desc' | 'rating-desc';
+
 export default function EstablishmentSelector({
   selectedEstablishment,
   selectedAccommodation,
@@ -28,12 +31,18 @@ export default function EstablishmentSelector({
   const [loading, setLoading] = useState(false);
   const [accommodationsLoading, setAccommodationsLoading] = useState(false);
   const [language, setLanguage] = useState('fr');
+  const [viewMode, setViewMode] = useState<ViewMode>('grid');
+  const [sortBy, setSortBy] = useState<SortOption>('price-asc');
+  const [showFilters, setShowFilters] = useState(true);
 
   // Filtres pour les hébergements
   const [typeFilter, setTypeFilter] = useState<AccommodationType | ''>('');
   const [pricingModeFilter, setPricingModeFilter] = useState<AccommodationPricingMode | ''>('');
   const [priceRange, setPriceRange] = useState<{ min: number; max: number }>({ min: 0, max: 1000000 });
   const [searchTerm, setSearchTerm] = useState('');
+  const [minBedrooms, setMinBedrooms] = useState<number>(0);
+  const [minBathrooms, setMinBathrooms] = useState<number>(0);
+  const [selectedAmenities, setSelectedAmenities] = useState<string[]>([]);
 
   useEffect(() => {
     const savedLanguage = localStorage.getItem('language') || 'fr';
@@ -48,7 +57,7 @@ export default function EstablishmentSelector({
       setAccommodations([]);
       onAccommodationChange(null, null);
     }
-  }, [selectedEstablishment, typeFilter, pricingModeFilter, priceRange, searchTerm, checkInDate, checkOutDate, numberOfGuests]);
+  }, [selectedEstablishment, typeFilter, pricingModeFilter, priceRange, searchTerm, checkInDate, checkOutDate, numberOfGuests, minBedrooms, minBathrooms, selectedAmenities]);
 
   const content = {
     fr: {
@@ -83,7 +92,26 @@ export default function EstablishmentSelector({
       perNight: "par nuit",
       perMonth: "par mois",
       perHour: "par heure",
-      clearFilters: "Effacer les filtres"
+      clearFilters: "Effacer les filtres",
+      showFilters: "Afficher les filtres",
+      hideFilters: "Masquer les filtres",
+      sortBy: "Trier par",
+      priceLowToHigh: "Prix croissant",
+      priceHighToLow: "Prix décroissant",
+      nameAZ: "Nom (A-Z)",
+      capacityHighToLow: "Capacité décroissante",
+      ratingHighToLow: "Note décroissante",
+      gridView: "Vue grille",
+      listView: "Vue liste",
+      minBedrooms: "Chambres min.",
+      minBathrooms: "Salles de bain min.",
+      amenities: "Équipements",
+      results: "résultats",
+      selected: "Sélectionné",
+      viewDetails: "Voir détails",
+      selectThis: "Sélectionner",
+      area: "Superficie",
+      floor: "Étage"
     },
     en: {
       selectEstablishment: "Select an establishment",
@@ -117,7 +145,26 @@ export default function EstablishmentSelector({
       perNight: "per night",
       perMonth: "per month",
       perHour: "per hour",
-      clearFilters: "Clear filters"
+      clearFilters: "Clear filters",
+      showFilters: "Show filters",
+      hideFilters: "Hide filters",
+      sortBy: "Sort by",
+      priceLowToHigh: "Price: Low to High",
+      priceHighToLow: "Price: High to Low",
+      nameAZ: "Name (A-Z)",
+      capacityHighToLow: "Capacity: High to Low",
+      ratingHighToLow: "Rating: High to Low",
+      gridView: "Grid view",
+      listView: "List view",
+      minBedrooms: "Min. bedrooms",
+      minBathrooms: "Min. bathrooms",
+      amenities: "Amenities",
+      results: "results",
+      selected: "Selected",
+      viewDetails: "View details",
+      selectThis: "Select",
+      area: "Area",
+      floor: "Floor"
     }
   };
 
@@ -200,9 +247,67 @@ export default function EstablishmentSelector({
     setPricingModeFilter('');
     setPriceRange({ min: 0, max: 1000000 });
     setSearchTerm('');
+    setMinBedrooms(0);
+    setMinBathrooms(0);
+    setSelectedAmenities([]);
   };
 
-  const hasActiveFilters = typeFilter || pricingModeFilter || priceRange.min > 0 || priceRange.max < 1000000 || searchTerm;
+  const hasActiveFilters = typeFilter || pricingModeFilter || priceRange.min > 0 || priceRange.max < 1000000 || searchTerm || minBedrooms > 0 || minBathrooms > 0 || selectedAmenities.length > 0;
+
+  // Get all unique amenities from accommodations
+  const allAmenities = Array.from(new Set(accommodations.flatMap(acc => acc.amenities)));
+
+  const toggleAmenity = (amenity: string) => {
+    setSelectedAmenities(prev => 
+      prev.includes(amenity) 
+        ? prev.filter(a => a !== amenity)
+        : [...prev, amenity]
+    );
+  };
+
+  // Filter and sort accommodations
+  const getFilteredAndSortedAccommodations = () => {
+    let filtered = [...accommodations];
+
+    // Apply bedroom filter
+    if (minBedrooms > 0) {
+      filtered = filtered.filter(acc => acc.capacity.bedrooms >= minBedrooms);
+    }
+
+    // Apply bathroom filter
+    if (minBathrooms > 0) {
+      filtered = filtered.filter(acc => acc.capacity.bathrooms >= minBathrooms);
+    }
+
+    // Apply amenities filter
+    if (selectedAmenities.length > 0) {
+      filtered = filtered.filter(acc => 
+        selectedAmenities.every(amenity => acc.amenities.includes(amenity))
+      );
+    }
+
+    // Sort
+    filtered.sort((a, b) => {
+      switch (sortBy) {
+        case 'price-asc':
+          return a.pricing.basePrice - b.pricing.basePrice;
+        case 'price-desc':
+          return b.pricing.basePrice - a.pricing.basePrice;
+        case 'name-asc':
+          return a.name.localeCompare(b.name);
+        case 'capacity-desc':
+          return b.capacity.maxGuests - a.capacity.maxGuests;
+        case 'rating-desc':
+          return 0; // Placeholder for rating
+        default:
+          return 0;
+      }
+    });
+
+    return filtered;
+  };
+
+  const filteredAccommodations = getFilteredAndSortedAccommodations();
 
   return (
     <div className="space-y-8">
@@ -256,7 +361,7 @@ export default function EstablishmentSelector({
       {/* Sélection d'hébergement */}
       {selectedEstablishment && (
         <div className="bg-gradient-to-r from-amber-50 to-orange-50 rounded-xl p-6 border border-amber-100">
-          <div className="flex items-center justify-between mb-6">
+          <div className="flex flex-col lg:flex-row lg:items-center justify-between mb-6 space-y-4 lg:space-y-0">
             <div className="flex items-center">
               <div className="w-10 h-10 bg-gradient-to-br from-amber-500 to-amber-600 rounded-lg flex items-center justify-center mr-4">
                 <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -264,25 +369,93 @@ export default function EstablishmentSelector({
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 15v-4a2 2 0 012-2h4a2 2 0 012 2v4" />
                 </svg>
               </div>
-              <h3 className="text-xl font-bold text-gray-900">{t.selectAccommodation}</h3>
+              <div>
+                <h3 className="text-xl font-bold text-gray-900">{t.selectAccommodation}</h3>
+                <p className="text-sm text-gray-600">{filteredAccommodations.length} {t.results}</p>
+              </div>
             </div>
-            {hasActiveFilters && (
-              <button
-                onClick={clearFilters}
-                className="px-4 py-2 text-amber-600 hover:text-amber-700 font-medium flex items-center space-x-2 transition-colors"
+            
+            <div className="flex items-center space-x-3">
+              {/* View Toggle */}
+              <div className="flex bg-white rounded-lg border border-amber-200 p-1">
+                <button
+                  onClick={() => setViewMode('grid')}
+                  className={`px-3 py-2 rounded transition-all ${
+                    viewMode === 'grid' 
+                      ? 'bg-amber-600 text-white' 
+                      : 'text-gray-600 hover:text-amber-600'
+                  }`}
+                  title={t.gridView}
+                >
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
+                  </svg>
+                </button>
+                <button
+                  onClick={() => setViewMode('list')}
+                  className={`px-3 py-2 rounded transition-all ${
+                    viewMode === 'list' 
+                      ? 'bg-amber-600 text-white' 
+                      : 'text-gray-600 hover:text-amber-600'
+                  }`}
+                  title={t.listView}
+                >
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+                  </svg>
+                </button>
+              </div>
+
+              {/* Sort Dropdown */}
+              <select
+                value={sortBy}
+                onChange={(e) => setSortBy(e.target.value as SortOption)}
+                className="px-4 py-2 bg-white border border-amber-200 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 text-sm"
               >
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                <option value="price-asc">{t.priceLowToHigh}</option>
+                <option value="price-desc">{t.priceHighToLow}</option>
+                <option value="name-asc">{t.nameAZ}</option>
+                <option value="capacity-desc">{t.capacityHighToLow}</option>
+              </select>
+
+              {/* Filter Toggle */}
+              <button
+                onClick={() => setShowFilters(!showFilters)}
+                className="px-4 py-2 bg-white border border-amber-200 rounded-lg hover:bg-amber-50 transition-colors flex items-center space-x-2"
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
                 </svg>
-                <span>{t.clearFilters}</span>
+                <span className="text-sm font-medium">{showFilters ? t.hideFilters : t.showFilters}</span>
+                {hasActiveFilters && (
+                  <span className="w-2 h-2 bg-amber-600 rounded-full"></span>
+                )}
               </button>
-            )}
+
+              {hasActiveFilters && (
+                <button
+                  onClick={clearFilters}
+                  className="px-4 py-2 text-amber-600 hover:text-amber-700 font-medium flex items-center space-x-2 transition-colors"
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                  <span className="text-sm">{t.clearFilters}</span>
+                </button>
+              )}
+            </div>
           </div>
 
           {/* Filtres */}
-          <div className="mb-6 p-4 bg-white rounded-lg border border-amber-200">
-            <h4 className="font-semibold text-gray-900 mb-4">{t.filters}</h4>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          {showFilters && (
+            <div className="mb-6 p-6 bg-white rounded-lg border border-amber-200 shadow-sm">
+              <h4 className="font-semibold text-gray-900 mb-4 flex items-center">
+                <svg className="w-5 h-5 mr-2 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4" />
+                </svg>
+                {t.filters}
+              </h4>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
               {/* Type d'hébergement */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">{t.type}</label>
@@ -346,8 +519,61 @@ export default function EstablishmentSelector({
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500"
                 />
               </div>
+
+              {/* Min Bedrooms */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">{t.minBedrooms}</label>
+                <select
+                  value={minBedrooms}
+                  onChange={(e) => setMinBedrooms(parseInt(e.target.value))}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500"
+                >
+                  <option value="0">{t.all}</option>
+                  {[1, 2, 3, 4, 5].map(num => (
+                    <option key={num} value={num}>{num}+</option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Min Bathrooms */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">{t.minBathrooms}</label>
+                <select
+                  value={minBathrooms}
+                  onChange={(e) => setMinBathrooms(parseInt(e.target.value))}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500"
+                >
+                  <option value="0">{t.all}</option>
+                  {[1, 2, 3, 4].map(num => (
+                    <option key={num} value={num}>{num}+</option>
+                  ))}
+                </select>
+              </div>
             </div>
+
+            {/* Amenities Filter */}
+            {allAmenities.length > 0 && (
+              <div className="mt-4">
+                <label className="block text-sm font-medium text-gray-700 mb-3">{t.amenities}</label>
+                <div className="flex flex-wrap gap-2">
+                  {allAmenities.map((amenity) => (
+                    <button
+                      key={amenity}
+                      onClick={() => toggleAmenity(amenity)}
+                      className={`px-3 py-1.5 rounded-full text-sm font-medium transition-all ${
+                        selectedAmenities.includes(amenity)
+                          ? 'bg-amber-600 text-white shadow-md'
+                          : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                      }`}
+                    >
+                      {amenity}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
+          )}
 
           {/* Liste des hébergements */}
           {accommodationsLoading ? (
@@ -355,16 +581,16 @@ export default function EstablishmentSelector({
               <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-amber-600 mx-auto"></div>
               <p className="mt-2 text-gray-600">{t.loading}</p>
             </div>
-          ) : accommodations.length === 0 ? (
+          ) : filteredAccommodations.length === 0 ? (
             <div className="text-center py-8">
               <svg className="w-16 h-16 text-gray-400 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2H5a2 2 0 00-2-2z" />
               </svg>
               <p className="text-gray-600">{t.noAccommodations}</p>
             </div>
-          ) : (
+          ) : viewMode === 'grid' ? (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {accommodations.map((accommodation) => (
+              {filteredAccommodations.map((accommodation) => (
                 <div
                   key={accommodation.id}
                   onClick={() => onAccommodationChange(accommodation.id, accommodation)}
@@ -397,37 +623,57 @@ export default function EstablishmentSelector({
                   </div>
 
                   {/* Contenu */}
-                  <div className="p-4">
-                    <div className="flex items-start justify-between mb-2">
-                      <h4 className="font-bold text-gray-900">{accommodation.name}</h4>
-                      <span className="px-2 py-1 bg-amber-100 text-amber-800 text-xs rounded-full">
-                        {getTypeLabel(accommodation.type)}
-                      </span>
+                  <div className="p-5">
+                    <div className="flex items-start justify-between mb-3">
+                      <div className="flex-1">
+                        <h4 className="font-bold text-gray-900 text-lg mb-1">{accommodation.name}</h4>
+                        <span className="inline-block px-2 py-1 bg-amber-100 text-amber-800 text-xs rounded-full font-medium">
+                          {getTypeLabel(accommodation.type)}
+                        </span>
+                      </div>
+                      {selectedAccommodation === accommodation.id && (
+                        <div className="flex items-center space-x-1 text-green-600 font-medium text-sm">
+                          <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                            <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                          </svg>
+                          <span>{t.selected}</span>
+                        </div>
+                      )}
                     </div>
 
-                    <div className="space-y-2 mb-4">
-                      <div className="flex items-center text-sm text-gray-600">
-                        <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
-                        </svg>
-                        {accommodation.capacity.maxGuests} {accommodation.capacity.maxGuests === 1 ? t.guest : t.guests}
+                    {/* Capacity Info */}
+                    <div className="grid grid-cols-3 gap-3 mb-4 p-3 bg-gray-50 rounded-lg">
+                      <div className="text-center">
+                        <div className="flex items-center justify-center text-amber-600 mb-1">
+                          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                          </svg>
+                        </div>
+                        <div className="text-sm font-semibold text-gray-900">{accommodation.capacity.maxGuests}</div>
+                        <div className="text-xs text-gray-500">{t.guests}</div>
                       </div>
                       
                       {accommodation.capacity.bedrooms > 0 && (
-                        <div className="flex items-center text-sm text-gray-600">
-                          <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2H5a2 2 0 00-2-2z" />
-                          </svg>
-                          {accommodation.capacity.bedrooms} {accommodation.capacity.bedrooms === 1 ? t.bedroom : t.bedrooms}
+                        <div className="text-center">
+                          <div className="flex items-center justify-center text-amber-600 mb-1">
+                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2H5a2 2 0 00-2-2z" />
+                            </svg>
+                          </div>
+                          <div className="text-sm font-semibold text-gray-900">{accommodation.capacity.bedrooms}</div>
+                          <div className="text-xs text-gray-500">{t.bedrooms}</div>
                         </div>
                       )}
 
                       {accommodation.capacity.bathrooms > 0 && (
-                        <div className="flex items-center text-sm text-gray-600">
-                          <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 14v3m4-3v3m4-3v3M3 21h18M3 10h18M3 7l9-4 9 4M4 10h16v11H4V10z" />
-                          </svg>
-                          {accommodation.capacity.bathrooms} {accommodation.capacity.bathrooms === 1 ? t.bathroom : t.bathrooms}
+                        <div className="text-center">
+                          <div className="flex items-center justify-center text-amber-600 mb-1">
+                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 14v3m4-3v3m4-3v3M3 21h18M3 10h18M3 7l9-4 9 4M4 10h16v11H4V10z" />
+                            </svg>
+                          </div>
+                          <div className="text-sm font-semibold text-gray-900">{accommodation.capacity.bathrooms}</div>
+                          <div className="text-xs text-gray-500">{t.bathrooms}</div>
                         </div>
                       )}
                     </div>
@@ -435,15 +681,15 @@ export default function EstablishmentSelector({
                     {/* Équipements */}
                     {accommodation.amenities.length > 0 && (
                       <div className="mb-4">
-                        <div className="flex flex-wrap gap-1">
-                          {accommodation.amenities.slice(0, 3).map((amenity, index) => (
-                            <span key={index} className="px-2 py-1 bg-gray-100 text-gray-700 text-xs rounded">
+                        <div className="flex flex-wrap gap-1.5">
+                          {accommodation.amenities.slice(0, 4).map((amenity, index) => (
+                            <span key={index} className="px-2.5 py-1 bg-blue-50 text-blue-700 text-xs rounded-full font-medium">
                               {amenity}
                             </span>
                           ))}
-                          {accommodation.amenities.length > 3 && (
-                            <span className="px-2 py-1 bg-gray-100 text-gray-700 text-xs rounded">
-                              +{accommodation.amenities.length - 3}
+                          {accommodation.amenities.length > 4 && (
+                            <span className="px-2.5 py-1 bg-gray-100 text-gray-700 text-xs rounded-full font-medium">
+                              +{accommodation.amenities.length - 4}
                             </span>
                           )}
                         </div>
@@ -451,10 +697,163 @@ export default function EstablishmentSelector({
                     )}
 
                     {/* Prix */}
-                    <div className="text-right">
-                      <p className="text-lg font-bold text-amber-600">
-                        {getPricingText(accommodation)}
-                      </p>
+                    <div className="pt-4 border-t border-gray-200">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <p className="text-xs text-gray-500 mb-1">{getPricingModeLabel(accommodation.pricingMode)}</p>
+                          <p className="text-2xl font-bold text-amber-600">
+                            {accommodation.pricing.basePrice.toLocaleString()} {t.bif}
+                          </p>
+                        </div>
+                        <button
+                          onClick={() => onAccommodationChange(accommodation.id, accommodation)}
+                          className={`px-4 py-2 rounded-lg font-medium transition-all ${
+                            selectedAccommodation === accommodation.id
+                              ? 'bg-green-600 text-white'
+                              : 'bg-amber-600 text-white hover:bg-amber-700'
+                          }`}
+                        >
+                          {selectedAccommodation === accommodation.id ? t.selected : t.selectThis}
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            /* List View */
+            <div className="space-y-4">
+              {filteredAccommodations.map((accommodation) => (
+                <div
+                  key={accommodation.id}
+                  onClick={() => onAccommodationChange(accommodation.id, accommodation)}
+                  className={`bg-white rounded-lg border-2 cursor-pointer transition-all duration-200 overflow-hidden hover:shadow-lg ${
+                    selectedAccommodation === accommodation.id
+                      ? 'border-amber-500 shadow-lg'
+                      : 'border-gray-200 hover:border-amber-300'
+                  }`}
+                >
+                  <div className="flex flex-col md:flex-row">
+                    {/* Image */}
+                    <div className="md:w-64 h-48 md:h-auto bg-gray-200 relative overflow-hidden flex-shrink-0">
+                      {accommodation.images[0] ? (
+                        <img
+                          src={accommodation.images[0]}
+                          alt={accommodation.name}
+                          className="w-full h-full object-cover"
+                        />
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center">
+                          <svg className="w-16 h-16 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2H5a2 2 0 00-2-2z" />
+                          </svg>
+                        </div>
+                      )}
+                      <div className="absolute top-3 right-3">
+                        <span className="px-3 py-1 bg-green-500 text-white text-xs rounded-full font-medium shadow-lg">
+                          {t.available}
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* Content */}
+                    <div className="flex-1 p-6">
+                      <div className="flex items-start justify-between mb-4">
+                        <div className="flex-1">
+                          <div className="flex items-center space-x-3 mb-2">
+                            <h4 className="font-bold text-gray-900 text-xl">{accommodation.name}</h4>
+                            <span className="px-3 py-1 bg-amber-100 text-amber-800 text-xs rounded-full font-medium">
+                              {getTypeLabel(accommodation.type)}
+                            </span>
+                          </div>
+                        </div>
+                        {selectedAccommodation === accommodation.id && (
+                          <div className="flex items-center space-x-2 text-green-600 font-medium ml-4">
+                            <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 20 20">
+                              <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                            </svg>
+                            <span>{t.selected}</span>
+                          </div>
+                        )}
+                      </div>
+
+                      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
+                        <div className="flex items-center space-x-2 text-gray-700">
+                          <div className="w-10 h-10 bg-amber-50 rounded-lg flex items-center justify-center">
+                            <svg className="w-5 h-5 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                            </svg>
+                          </div>
+                          <div>
+                            <div className="text-sm font-semibold">{accommodation.capacity.maxGuests}</div>
+                            <div className="text-xs text-gray-500">{t.guests}</div>
+                          </div>
+                        </div>
+
+                        {accommodation.capacity.bedrooms > 0 && (
+                          <div className="flex items-center space-x-2 text-gray-700">
+                            <div className="w-10 h-10 bg-blue-50 rounded-lg flex items-center justify-center">
+                              <svg className="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2H5a2 2 0 00-2-2z" />
+                              </svg>
+                            </div>
+                            <div>
+                              <div className="text-sm font-semibold">{accommodation.capacity.bedrooms}</div>
+                              <div className="text-xs text-gray-500">{t.bedrooms}</div>
+                            </div>
+                          </div>
+                        )}
+
+                        {accommodation.capacity.bathrooms > 0 && (
+                          <div className="flex items-center space-x-2 text-gray-700">
+                            <div className="w-10 h-10 bg-purple-50 rounded-lg flex items-center justify-center">
+                              <svg className="w-5 h-5 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 14v3m4-3v3m4-3v3M3 21h18M3 10h18M3 7l9-4 9 4M4 10h16v11H4V10z" />
+                              </svg>
+                            </div>
+                            <div>
+                              <div className="text-sm font-semibold">{accommodation.capacity.bathrooms}</div>
+                              <div className="text-xs text-gray-500">{t.bathrooms}</div>
+                            </div>
+                          </div>
+                        )}
+
+
+                      </div>
+
+                      {/* Amenities */}
+                      {accommodation.amenities.length > 0 && (
+                        <div className="mb-4">
+                          <div className="flex flex-wrap gap-2">
+                            {accommodation.amenities.map((amenity, index) => (
+                              <span key={index} className="px-3 py-1 bg-gray-100 text-gray-700 text-xs rounded-full font-medium">
+                                {amenity}
+                              </span>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Price and Action */}
+                      <div className="flex items-center justify-between pt-4 border-t border-gray-200">
+                        <div>
+                          <p className="text-xs text-gray-500 mb-1">{getPricingModeLabel(accommodation.pricingMode)}</p>
+                          <p className="text-3xl font-bold text-amber-600">
+                            {accommodation.pricing.basePrice.toLocaleString()} <span className="text-lg">{t.bif}</span>
+                          </p>
+                        </div>
+                        <button
+                          onClick={() => onAccommodationChange(accommodation.id, accommodation)}
+                          className={`px-6 py-3 rounded-lg font-semibold transition-all shadow-md hover:shadow-lg ${
+                            selectedAccommodation === accommodation.id
+                              ? 'bg-green-600 text-white'
+                              : 'bg-amber-600 text-white hover:bg-amber-700'
+                          }`}
+                        >
+                          {selectedAccommodation === accommodation.id ? t.selected : t.selectThis}
+                        </button>
+                      </div>
                     </div>
                   </div>
                 </div>
