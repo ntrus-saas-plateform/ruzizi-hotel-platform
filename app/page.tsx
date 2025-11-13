@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import Navigation from '@/components/frontoffice/Navigation';
 import HeroSection from '@/components/frontoffice/HeroSection';
 import EstablishmentCard from '@/components/frontoffice/EstablishmentCard';
+import AccommodationsSection from '@/components/frontoffice/AccommodationsSection';
 import MapSection from '@/components/frontoffice/MapSection';
 import ContactForm from '@/components/frontoffice/ContactForm';
 import Footer from '@/components/frontoffice/Footer';
@@ -225,6 +226,9 @@ export default function HomePage() {
           )}
         </div>
       </section>
+
+      {/* Accommodations Section */}
+      <AccommodationsSection />
 
       {/* Features Section */}
       <section className="py-20 bg-gradient-to-br from-gray-50 via-white to-amber-50">
