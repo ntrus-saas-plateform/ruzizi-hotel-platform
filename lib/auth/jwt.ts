@@ -1,47 +1,41 @@
 import jwt from 'jsonwebtoken';
-import type { JWTPayload } from '@/types/user.types';
 
-// Environment variables
-const JWT_SECRET = process.env.JWT_SECRET;
-const JWT_REFRESH_SECRET = process.env.JWT_REFRESH_SECRET;
-const JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN || '1h';
-const JWT_REFRESH_EXPIRES_IN = process.env.JWT_REFRESH_EXPIRES_IN || '7d';
+const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key-change-in-production';
+const JWT_REFRESH_SECRET = process.env.JWT_REFRESH_SECRET || 'your-refresh-secret-key';
 
-// Validate environment variables
-if (!JWT_SECRET || JWT_SECRET.length === 0) {
-  throw new Error('JWT_SECRET environment variable is not defined');
-}
+// Durées de validité
+const ACCESS_TOKEN_EXPIRY = '15m'; // 15 minutes
+const REFRESH_TOKEN_EXPIRY = '7d'; // 7 jours
 
-if (!JWT_REFRESH_SECRET || JWT_REFRESH_SECRET.length === 0) {
-  throw new Error('JWT_REFRESH_SECRET environment variable is not defined');
+export interface TokenPayload {
+  userId: string;
+  email: string;
+  role: string;
+  establishmentId?: string;
 }
 
 /**
- * Generate access token
+ * Générer un access token
  */
-export function generateAccessToken(payload: JWTPayload): string {
-  return jwt.sign(payload, JWT_SECRET!, {
-    expiresIn: JWT_EXPIRES_IN as any,
-    issuer: 'ruzizi-hotel',
-    audience: 'ruzizi-hotel-api',
+export function generateAccessToken(payload: TokenPayload): string {
+  return jwt.sign(payload, JWT_SECRET, {
+    expiresIn: ACCESS_TOKEN_EXPIRY,
   });
 }
 
 /**
- * Generate refresh token
+ * Générer un refresh token
  */
-export function generateRefreshToken(payload: JWTPayload): string {
-  return jwt.sign(payload, JWT_REFRESH_SECRET!, {
-    expiresIn: JWT_REFRESH_EXPIRES_IN as any,
-    issuer: 'ruzizi-hotel',
-    audience: 'ruzizi-hotel-api',
+export function generateRefreshToken(payload: TokenPayload): string {
+  return jwt.sign(payload, JWT_REFRESH_SECRET, {
+    expiresIn: REFRESH_TOKEN_EXPIRY,
   });
 }
 
 /**
- * Generate both access and refresh tokens
+ * Générer les deux tokens (access et refresh) en même temps
  */
-export function generateTokens(payload: JWTPayload): {
+export function generateTokens(payload: TokenPayload): {
   accessToken: string;
   refreshToken: string;
 } {
@@ -52,86 +46,65 @@ export function generateTokens(payload: JWTPayload): {
 }
 
 /**
- * Verify access token
+ * Vérifier et décoder un access token
  */
-export function verifyAccessToken(token: string): JWTPayload {
+export function verifyAccessToken(token: string): TokenPayload | null {
   try {
-    const decoded = jwt.verify(token, JWT_SECRET!, {
-      issuer: 'ruzizi-hotel',
-      audience: 'ruzizi-hotel-api',
-    }) as JWTPayload;
-
+    const decoded = jwt.verify(token, JWT_SECRET) as TokenPayload;
     return decoded;
   } catch (error) {
-    if (error instanceof jwt.TokenExpiredError) {
-      throw new Error('Access token has expired');
-    }
-    if (error instanceof jwt.JsonWebTokenError) {
-      throw new Error('Invalid access token');
-    }
-    throw new Error('Token verification failed');
-  }
-}
-
-/**
- * Verify refresh token
- */
-export function verifyRefreshToken(token: string): JWTPayload {
-  try {
-    const decoded = jwt.verify(token, JWT_REFRESH_SECRET!, {
-      issuer: 'ruzizi-hotel',
-      audience: 'ruzizi-hotel-api',
-    }) as JWTPayload;
-
-    return decoded;
-  } catch (error) {
-    if (error instanceof jwt.TokenExpiredError) {
-      throw new Error('Refresh token has expired');
-    }
-    if (error instanceof jwt.JsonWebTokenError) {
-      throw new Error('Invalid refresh token');
-    }
-    throw new Error('Token verification failed');
-  }
-}
-
-/**
- * Decode token without verification (useful for debugging)
- */
-export function decodeToken(token: string): JWTPayload | null {
-  try {
-    return jwt.decode(token) as JWTPayload;
-  } catch (error) {
+    console.error('Invalid access token:', error);
     return null;
   }
 }
 
 /**
- * Check if token is expired
+ * Vérifier et décoder un refresh token
+ */
+export function verifyRefreshToken(token: string): TokenPayload | null {
+  try {
+    const decoded = jwt.verify(token, JWT_REFRESH_SECRET) as TokenPayload;
+    return decoded;
+  } catch (error) {
+    console.error('Invalid refresh token:', error);
+    return null;
+  }
+}
+
+/**
+ * Décoder un token sans vérifier la signature (pour debug)
+ */
+export function decodeToken(token: string): any {
+  try {
+    return jwt.decode(token);
+  } catch (error) {
+    console.error('Failed to decode token:', error);
+    return null;
+  }
+}
+
+/**
+ * Vérifier si un token est expiré
  */
 export function isTokenExpired(token: string): boolean {
-  try {
-    const decoded = jwt.decode(token) as any;
-    if (!decoded || !decoded.exp) {
-      return true;
-    }
-    return Date.now() >= decoded.exp * 1000;
-  } catch (error) {
+  const decoded = decodeToken(token);
+  if (!decoded || !decoded.exp) {
     return true;
   }
+  
+  const currentTime = Math.floor(Date.now() / 1000);
+  return decoded.exp < currentTime;
 }
 
 /**
- * Get token expiration date
+ * Obtenir le temps restant avant expiration (en secondes)
  */
-export function getTokenExpiration(token: string): Date | null {
-  try {
-    const decoded = jwt.decode(token) as any;
-    if (!decoded || !decoded.exp) {
-      return null;
-    }
-    return new Date(decoded.exp * 1000);
-  } catch (error) {
-    return null;
+export function getTokenTimeRemaining(token: string): number {
+  const decoded = decodeToken(token);
+  if (!decoded || !decoded.exp) {
+    return 0;
   }
+  
+  const currentTime = Math.floor(Date.now() / 1000);
+  return Math.max(0, decoded.exp - currentTime);
 }

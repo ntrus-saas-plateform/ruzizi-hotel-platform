@@ -1,63 +1,62 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { AuthService } from '@/services/Auth.service';
+import { verifyRefreshToken, generateAccessToken } from '@/lib/auth/jwt';
 
-/**
- * POST /api/auth/refresh
- * Refresh access token using refresh token
- */
 export async function POST(request: NextRequest) {
   try {
-    const body = await request.json();
-    const { refreshToken } = body;
+    // Récupérer le refresh token depuis les cookies
+    const refreshToken = request.cookies.get('refresh-token')?.value;
 
     if (!refreshToken) {
       return NextResponse.json(
-        {
-          success: false,
-          error: {
-            code: 'MISSING_TOKEN',
-            message: 'Refresh token is required',
-          },
-        },
-        { status: 400 }
+        { error: { message: 'No refresh token provided' } },
+        { status: 401 }
       );
     }
 
-    // Refresh tokens
-    const tokens = await AuthService.refreshToken(refreshToken);
+    // Vérifier le refresh token
+    const payload = verifyRefreshToken(refreshToken);
 
-    return NextResponse.json(
-      {
-        success: true,
-        data: tokens,
-        message: 'Token refreshed successfully',
-      },
-      { status: 200 }
-    );
-  } catch (error) {
-    if (error instanceof Error) {
-      const isTokenError = error.message.includes('Token') || error.message.includes('expired');
-
+    if (!payload) {
       return NextResponse.json(
-        {
-          success: false,
-          error: {
-            code: isTokenError ? 'INVALID_TOKEN' : 'SERVER_ERROR',
-            message: error.message,
-          },
-        },
-        { status: isTokenError ? 401 : 500 }
+        { error: { message: 'Invalid refresh token' } },
+        { status: 401 }
       );
     }
 
-    return NextResponse.json(
-      {
-        success: false,
-        error: {
-          code: 'SERVER_ERROR',
-          message: 'An unexpected error occurred',
-        },
+    // Générer un nouveau access token
+    const newAccessToken = generateAccessToken({
+      userId: payload.userId,
+      email: payload.email,
+      role: payload.role,
+      establishmentId: payload.establishmentId,
+    });
+
+    // Créer la réponse avec le nouveau token
+    const response = NextResponse.json({
+      success: true,
+      message: 'Token refreshed successfully',
+      user: {
+        id: payload.userId,
+        email: payload.email,
+        role: payload.role,
+        establishmentId: payload.establishmentId,
       },
+    });
+
+    // Définir le nouveau access token dans les cookies
+    response.cookies.set('auth-token', newAccessToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      maxAge: 15 * 60, // 15 minutes
+      path: '/',
+    });
+
+    return response;
+  } catch (error) {
+    console.error('Token refresh error:', error);
+    return NextResponse.json(
+      { error: { message: 'Failed to refresh token' } },
       { status: 500 }
     );
   }

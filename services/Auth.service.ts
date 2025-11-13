@@ -118,6 +118,10 @@ export class AuthService {
       // Verify refresh token
       const payload = verifyRefreshToken(refreshToken);
 
+      if (!payload) {
+        throw new Error('Invalid or expired refresh token');
+      }
+
       // Find user to ensure they still exist and are active
       const user = await UserModel.findById(payload.userId);
 

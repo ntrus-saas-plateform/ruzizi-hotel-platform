@@ -11,7 +11,7 @@ export {
   verifyRefreshToken,
   decodeToken,
   isTokenExpired,
-  getTokenExpiration,
+  getTokenTimeRemaining,
 } from './jwt';
 
 export {

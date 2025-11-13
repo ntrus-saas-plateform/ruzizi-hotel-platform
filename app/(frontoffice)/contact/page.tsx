@@ -97,7 +97,7 @@ export default function ContactPage() {
           <div className="absolute top-1/4 left-1/4 w-64 h-64 bg-white/10 rounded-full blur-3xl animate-pulse"></div>
           <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-white/5 rounded-full blur-3xl animate-pulse delay-1000"></div>
         </div>
-        
+
         <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <div className="inline-flex items-center justify-center w-16 h-16 bg-white/20 backdrop-blur-sm rounded-full mb-6 shadow-lg">
             <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -158,7 +158,7 @@ export default function ContactPage() {
                 </svg>
               </div>
               <h3 className="text-xl font-bold text-gray-900 mb-2">{t.visitUs}</h3>
-              <p className="text-amber-700 font-semibold">Avenue de l'Indépendance</p>
+              <p className="text-amber-700 font-semibold">Avenue de l'Université</p>
               <p className="text-gray-600 text-sm mt-2">Bujumbura, Burundi</p>
             </div>
           </div>

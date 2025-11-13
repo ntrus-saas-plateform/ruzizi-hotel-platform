@@ -15,7 +15,7 @@ interface MapSectionProps {
 export default function MapSection({ 
   title = "Notre Emplacement",
   subtitle = "Situé au cœur de Bujumbura",
-  address = "Avenue de l'Indépendance, Bujumbura, Burundi",
+  address = "Avenue de l'Université, Bujumbura, Burundi",
   coordinates = { lat: -3.3614, lng: 29.3599 }
 }: MapSectionProps) {
   const [language, setLanguage] = useState('fr');

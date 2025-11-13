@@ -1,21 +1,52 @@
 'use client';
 
+import { useState, useEffect } from 'react';
+
 export default function TermsPage() {
+  const [language, setLanguage] = useState('fr');
+
+  useEffect(() => {
+    const savedLanguage = localStorage.getItem('language') || 'fr';
+    setLanguage(savedLanguage);
+  }, []);
+
+  const content = {
+    fr: {
+      title: "Conditions Générales",
+      lastUpdated: "Dernière mise à jour: Novembre 2025"
+    },
+    en: {
+      title: "Terms and Conditions",
+      lastUpdated: "Last updated: November 2025"
+    }
+  };
+
+  const t = content[language as keyof typeof content];
+
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-amber-50 pt-32">
       {/* Hero Section */}
-      <section className="bg-gradient-to-r from-blue-600 to-blue-800 text-white py-16">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <h1 className="text-4xl font-bold mb-4">Conditions Générales</h1>
-          <p className="text-xl text-blue-100">
-            Dernière mise à jour: Novembre 2025
-          </p>
+      <section className="py-20 bg-gradient-to-r from-amber-600 via-amber-700 to-amber-800 text-white relative overflow-hidden">
+        <div className="absolute inset-0 bg-black/20"></div>
+        <div className="absolute inset-0">
+          <div className="absolute top-1/4 left-1/4 w-64 h-64 bg-white/10 rounded-full blur-3xl animate-pulse"></div>
+          <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-white/5 rounded-full blur-3xl animate-pulse delay-1000"></div>
+        </div>
+
+        <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+          <div className="inline-flex items-center justify-center w-16 h-16 bg-white/20 backdrop-blur-sm rounded-full mb-6 shadow-lg">
+            <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+            </svg>
+          </div>
+          <h1 className="text-5xl font-bold mb-4">{t.title}</h1>
+          <p className="text-xl text-amber-100">{t.lastUpdated}</p>
         </div>
       </section>
 
       {/* Content */}
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-        <div className="bg-white rounded-lg shadow-lg p-8 prose max-w-none">
+      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
+        <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-2xl border border-white/20 p-8 lg:p-12 prose prose-lg max-w-none prose-headings:text-gray-900 prose-h2:text-2xl prose-h2:font-bold prose-h2:mb-4 prose-h2:mt-8 prose-p:text-gray-700 prose-p:leading-relaxed prose-ul:text-gray-700 prose-li:my-2">
           <h2>1. Réservations</h2>
           <p>
             Les réservations peuvent être effectuées en ligne via notre site web, par téléphone ou par email.

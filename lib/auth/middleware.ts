@@ -29,20 +29,33 @@ export async function authenticateUser(request: NextRequest): Promise<{
   error?: string;
 }> {
   try {
+    // Try to get token from Authorization header first
     const authHeader = request.headers.get('authorization');
-    
-    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    let token: string | null = null;
+
+    if (authHeader && authHeader.startsWith('Bearer ')) {
+      token = authHeader.substring(7);
+    }
+
+    // If no token in header, try cookies
+    if (!token) {
+      token = request.cookies.get('auth-token')?.value || null;
+    }
+
+    if (!token) {
       return { success: false, error: 'Token d\'authentification manquant' };
     }
 
-    const token = authHeader.substring(7);
-    
     // Vérifier le token JWT
     const payload = verifyAccessToken(token);
-    
+
+    if (!payload) {
+      return { success: false, error: 'Token invalide ou expiré' };
+    }
+
     // Vérifier que l'utilisateur existe toujours et est actif
     const user = await AuthService.getUserById(payload.userId);
-    
+
     if (!user || !user.isActive) {
       return { success: false, error: 'Utilisateur non trouvé ou inactif' };
     }
@@ -52,14 +65,14 @@ export async function authenticateUser(request: NextRequest): Promise<{
       user: {
         userId: payload.userId,
         email: payload.email,
-        role: payload.role,
+        role: payload.role as UserRole,
         establishmentId: payload.establishmentId,
       },
     };
   } catch (error) {
-    return { 
-      success: false, 
-      error: error instanceof Error ? error.message : 'Erreur d\'authentification' 
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : 'Erreur d\'authentification'
     };
   }
 }
@@ -82,7 +95,7 @@ export async function requirePermission(
 }> {
   // D'abord authentifier l'utilisateur
   const authResult = await authenticateUser(request);
-  
+
   if (!authResult.success || !authResult.user) {
     return authResult;
   }
@@ -121,7 +134,7 @@ export async function requireRole(
 }> {
   // D'abord authentifier l'utilisateur
   const authResult = await authenticateUser(request);
-  
+
   if (!authResult.success || !authResult.user) {
     return authResult;
   }
@@ -169,7 +182,7 @@ export function withAuth(
 ) {
   return async (request: NextRequest): Promise<NextResponse> => {
     const authResult = await authenticateUser(request);
-    
+
     if (!authResult.success || !authResult.user) {
       return createAuthErrorResponse(authResult.error || 'Authentification échouée');
     }
@@ -195,7 +208,7 @@ export function withPermission(
 ) {
   return async (request: NextRequest): Promise<NextResponse> => {
     const authResult = await requirePermission(request, requiredPermission);
-    
+
     if (!authResult.success || !authResult.user) {
       const status = authResult.error?.includes('Permission') ? 403 : 401;
       return createAuthErrorResponse(authResult.error || 'Accès refusé', status);
@@ -222,7 +235,7 @@ export function withRole(
 ) {
   return async (request: NextRequest): Promise<NextResponse> => {
     const authResult = await requireRole(request, allowedRoles);
-    
+
     if (!authResult.success || !authResult.user) {
       const status = authResult.error?.includes('Rôle') ? 403 : 401;
       return createAuthErrorResponse(authResult.error || 'Accès refusé', status);
@@ -249,7 +262,7 @@ export function createErrorResponse(code: string, message: string, status: numbe
   );
 }
 
-export const createSuccessResponse = (data: any, message?: string, status: number = 200) => 
+export const createSuccessResponse = (data: any, message?: string, status: number = 200) =>
   NextResponse.json({ success: true, data, message }, { status });
 
 // Wrappers spécifiques pour les rôles

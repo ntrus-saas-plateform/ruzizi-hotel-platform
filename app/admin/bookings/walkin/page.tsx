@@ -2,13 +2,12 @@
 
 import { useState, useEffect } from 'react';
 import type { AccommodationResponse } from '@/types/accommodation.types';
-import type { BookingResponse } from '@/types/booking.types';
 
 interface TimeSlot {
   start: string;
   end: string;
   isOccupied: boolean;
-  booking?: BookingResponse;
+  booking?: any;
 }
 
 export default function WalkInBookingPage() {
@@ -17,7 +16,7 @@ export default function WalkInBookingPage() {
   const [selectedEstablishment, setSelectedEstablishment] = useState('');
   const [selectedAccommodation, setSelectedAccommodation] = useState('');
   const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
-  const [existingBookings, setExistingBookings] = useState<BookingResponse[]>([]);
+  const [existingBookings, setExistingBookings] = useState<any[]>([]);
   const [dailyRevenue, setDailyRevenue] = useState(0);
   const [loading, setLoading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
@@ -113,14 +112,13 @@ export default function WalkInBookingPage() {
 
   const generateTimeSlots = (): TimeSlot[] => {
     const slots: TimeSlot[] = [];
-    const startHour = 6; // 6 AM
-    const endHour = 23; // 11 PM
+    const startHour = 6;
+    const endHour = 23;
 
     for (let hour = startHour; hour < endHour; hour++) {
       const start = `${hour.toString().padStart(2, '0')}:00`;
       const end = `${(hour + 1).toString().padStart(2, '0')}:00`;
 
-      // Check if this time slot is occupied
       const isOccupied = existingBookings.some((booking) => {
         const bookingStart = new Date(booking.checkIn);
         const bookingEnd = new Date(booking.checkOut);
@@ -164,11 +162,11 @@ export default function WalkInBookingPage() {
 
     try {
       if (!selectedEstablishment || !selectedAccommodation) {
-        throw new Error('Please select establishment and accommodation');
+        throw new Error('Veuillez sélectionner un établissement et un hébergement');
       }
 
       if (!formData.checkInTime || !formData.checkOutTime) {
-        throw new Error('Please select check-in and check-out times');
+        throw new Error('Veuillez sélectionner les heures d\'arrivée et de départ');
       }
 
       const checkIn = new Date(`${selectedDate}T${formData.checkInTime}`);
@@ -192,21 +190,18 @@ export default function WalkInBookingPage() {
 
       const response = await fetch('/api/bookings/walkin', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(bookingData),
       });
 
       const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(data.error?.message || 'Failed to create booking');
+        throw new Error(data.error?.message || 'Échec de la création de la réservation');
       }
 
       setSuccess(`Réservation créée avec succès ! Code: ${data.data.bookingCode}`);
       
-      // Reset form
       setFormData({
         firstName: '',
         lastName: '',
@@ -219,11 +214,10 @@ export default function WalkInBookingPage() {
         notes: '',
       });
 
-      // Refresh bookings and revenue
       fetchExistingBookings();
       fetchDailyRevenue();
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'An error occurred');
+      setError(err instanceof Error ? err.message : 'Une erreur est survenue');
     } finally {
       setSubmitting(false);
     }
@@ -232,43 +226,63 @@ export default function WalkInBookingPage() {
   const timeSlots = selectedAccommodation ? generateTimeSlots() : [];
 
   return (
-    <div className="min-h-screen bg-gray-50 p-6">
-      <div className="max-w-7xl mx-auto">
+    <div className="min-h-screen bg-gray-50">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
         {/* Header */}
         <div className="mb-6">
-          <h1 className="text-3xl font-bold text-gray-900">Réservations Client de Passage</h1>
-          <p className="text-gray-600 mt-2">
-            Gérer les réservations horaires pour les clients de passage
-          </p>
+          <div className="flex items-center space-x-3 mb-2">
+            <div className="w-12 h-12 bg-gradient-to-br from-purple-500 to-purple-700 rounded-xl flex items-center justify-center">
+              <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+              </svg>
+            </div>
+            <div>
+              <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Client de Passage</h1>
+              <p className="text-gray-600 text-sm sm:text-base">Réservations horaires rapides</p>
+            </div>
+          </div>
         </div>
 
         {/* Messages */}
         {error && (
-          <div className="mb-6 bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded">
-            {error}
+          <div className="mb-6 bg-red-50 border-l-4 border-red-500 p-4 rounded-lg">
+            <div className="flex items-center">
+              <svg className="w-5 h-5 text-red-500 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              <p className="text-red-700 font-medium">{error}</p>
+            </div>
           </div>
         )}
 
         {success && (
-          <div className="mb-6 bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded">
-            {success}
+          <div className="mb-6 bg-green-50 border-l-4 border-green-500 p-4 rounded-lg">
+            <div className="flex items-center">
+              <svg className="w-5 h-5 text-green-500 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              <p className="text-green-700 font-medium">{success}</p>
+            </div>
           </div>
         )}
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Left Column - Form */}
           <div className="lg:col-span-2">
-            <div className="bg-white rounded-lg shadow p-6">
-              <h2 className="text-xl font-bold text-gray-900 mb-6">
-                Nouvelle Réservation de Passage
+            <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 sm:p-6">
+              <h2 className="text-lg sm:text-xl font-bold text-gray-900 mb-6 flex items-center">
+                <svg className="w-5 h-5 mr-2 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                </svg>
+                Nouvelle Réservation
               </h2>
 
               <form onSubmit={handleSubmit} className="space-y-6">
-                {/* Establishment and Accommodation Selection */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {/* Establishment and Accommodation */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Établissement *
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Établissement <span className="text-red-500">*</span>
                     </label>
                     <select
                       value={selectedEstablishment}
@@ -277,55 +291,54 @@ export default function WalkInBookingPage() {
                         setSelectedAccommodation('');
                       }}
                       required
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
                     >
-                      <option value="">Sélectionner un établissement</option>
+                      <option value="">Sélectionner...</option>
                       {establishments.map((est) => (
-                        <option key={est.id} value={est.id}>
-                          {est.name}
-                        </option>
+                        <option key={est.id} value={est.id}>{est.name}</option>
                       ))}
                     </select>
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Hébergement *
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Hébergement <span className="text-red-500">*</span>
                     </label>
                     <select
                       value={selectedAccommodation}
                       onChange={(e) => setSelectedAccommodation(e.target.value)}
                       required
                       disabled={!selectedEstablishment}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent disabled:bg-gray-100"
                     >
-                      <option value="">Sélectionner un hébergement</option>
+                      <option value="">Sélectionner...</option>
                       {accommodations.map((acc) => (
                         <option key={acc.id} value={acc.id}>
-                          {acc.name} - {acc.pricing.basePrice.toLocaleString()} BIF/jour
+                          {acc.name} - {acc.pricing.basePrice.toLocaleString()} BIF
                         </option>
                       ))}
                     </select>
                   </div>
                 </div>
 
-                {/* Date Selection */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Date *</label>
-                  <input
-                    type="date"
-                    value={selectedDate}
-                    onChange={(e) => setSelectedDate(e.target.value)}
-                    required
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  />
-                </div>
-
-                {/* Time Selection */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {/* Date and Time */}
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Heure d'arrivée *
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Date <span className="text-red-500">*</span>
+                    </label>
+                    <input
+                      type="date"
+                      value={selectedDate}
+                      onChange={(e) => setSelectedDate(e.target.value)}
+                      required
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Arrivée <span className="text-red-500">*</span>
                     </label>
                     <input
                       type="time"
@@ -333,13 +346,13 @@ export default function WalkInBookingPage() {
                       value={formData.checkInTime}
                       onChange={handleInputChange}
                       required
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
                     />
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Heure de départ *
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Départ <span className="text-red-500">*</span>
                     </label>
                     <input
                       type="time"
@@ -347,21 +360,24 @@ export default function WalkInBookingPage() {
                       value={formData.checkOutTime}
                       onChange={handleInputChange}
                       required
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
                     />
                   </div>
                 </div>
 
                 {/* Client Information */}
-                <div className="border-t pt-6">
-                  <h3 className="text-lg font-semibold text-gray-900 mb-4">
+                <div className="border-t border-gray-200 pt-6">
+                  <h3 className="text-base sm:text-lg font-semibold text-gray-900 mb-4 flex items-center">
+                    <svg className="w-5 h-5 mr-2 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                    </svg>
                     Informations Client
                   </h3>
 
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
-                        Prénom *
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Prénom <span className="text-red-500">*</span>
                       </label>
                       <input
                         type="text"
@@ -369,13 +385,13 @@ export default function WalkInBookingPage() {
                         value={formData.firstName}
                         onChange={handleInputChange}
                         required
-                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
                       />
                     </div>
 
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
-                        Nom *
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Nom <span className="text-red-500">*</span>
                       </label>
                       <input
                         type="text"
@@ -383,15 +399,13 @@ export default function WalkInBookingPage() {
                         value={formData.lastName}
                         onChange={handleInputChange}
                         required
-                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
                       />
                     </div>
-                  </div>
 
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
-                        Email *
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Email <span className="text-red-500">*</span>
                       </label>
                       <input
                         type="email"
@@ -399,13 +413,13 @@ export default function WalkInBookingPage() {
                         value={formData.email}
                         onChange={handleInputChange}
                         required
-                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
                       />
                     </div>
 
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
-                        Téléphone *
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Téléphone <span className="text-red-500">*</span>
                       </label>
                       <input
                         type="tel"
@@ -413,14 +427,12 @@ export default function WalkInBookingPage() {
                         value={formData.phone}
                         onChange={handleInputChange}
                         required
-                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
                       />
                     </div>
-                  </div>
 
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
                         Numéro d'identité
                       </label>
                       <input
@@ -428,13 +440,13 @@ export default function WalkInBookingPage() {
                         name="idNumber"
                         value={formData.idNumber}
                         onChange={handleInputChange}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
                       />
                     </div>
 
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
-                        Nombre de personnes *
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Personnes <span className="text-red-500">*</span>
                       </label>
                       <input
                         type="number"
@@ -443,21 +455,21 @@ export default function WalkInBookingPage() {
                         onChange={handleInputChange}
                         required
                         min="1"
-                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
                       />
                     </div>
                   </div>
 
                   <div className="mt-4">
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Notes (optionnel)
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Notes
                     </label>
                     <textarea
                       name="notes"
                       value={formData.notes}
                       onChange={handleInputChange}
                       rows={3}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
                       placeholder="Demandes spéciales..."
                     />
                   </div>
@@ -466,60 +478,80 @@ export default function WalkInBookingPage() {
                 <button
                   type="submit"
                   disabled={submitting}
-                  className="w-full px-4 py-3 bg-blue-600 text-white font-medium rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="w-full px-4 py-3 bg-gradient-to-r from-purple-600 to-purple-700 text-white font-semibold rounded-lg hover:from-purple-700 hover:to-purple-800 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-md hover:shadow-lg flex items-center justify-center"
                 >
-                  {submitting ? 'Création en cours...' : 'Créer la réservation'}
+                  {submitting ? (
+                    <>
+                      <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" fill="none" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                      </svg>
+                      Création en cours...
+                    </>
+                  ) : (
+                    <>
+                      <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                      </svg>
+                      Créer la Réservation
+                    </>
+                  )}
                 </button>
               </form>
             </div>
           </div>
 
-          {/* Right Column - Occupancy & Revenue */}
+          {/* Right Column - Stats & Occupancy */}
           <div className="space-y-6">
-            {/* Daily Revenue Card */}
-            <div className="bg-white rounded-lg shadow p-6">
-              <h3 className="text-lg font-semibold text-gray-900 mb-4">Revenu Journalier</h3>
+            {/* Daily Revenue */}
+            <div className="bg-gradient-to-br from-purple-500 to-purple-700 rounded-xl shadow-lg p-6 text-white">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-lg font-semibold">Revenu Journalier</h3>
+                <svg className="w-8 h-8 opacity-80" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+              </div>
               {selectedAccommodation ? (
-                <div className="text-center">
-                  <p className="text-3xl font-bold text-blue-600">
-                    {dailyRevenue.toLocaleString()} BIF
-                  </p>
-                  <p className="text-sm text-gray-600 mt-2">
-                    {existingBookings.length} réservation(s)
-                  </p>
+                <div>
+                  <p className="text-4xl font-bold mb-2">{dailyRevenue.toLocaleString()} <span className="text-xl">BIF</span></p>
+                  <p className="text-purple-100">{existingBookings.length} réservation(s)</p>
                 </div>
               ) : (
-                <p className="text-gray-500 text-center">
-                  Sélectionnez un hébergement pour voir le revenu
-                </p>
+                <p className="text-purple-100">Sélectionnez un hébergement</p>
               )}
             </div>
 
             {/* Hourly Occupancy */}
-            <div className="bg-white rounded-lg shadow p-6">
-              <h3 className="text-lg font-semibold text-gray-900 mb-4">
+            <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+              <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+                <svg className="w-5 h-5 mr-2 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
                 Occupation Horaire
               </h3>
               {selectedAccommodation ? (
                 loading ? (
-                  <p className="text-gray-500 text-center">Chargement...</p>
+                  <div className="text-center py-8">
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-600 mx-auto"></div>
+                    <p className="text-gray-500 mt-2 text-sm">Chargement...</p>
+                  </div>
                 ) : (
                   <div className="space-y-2 max-h-96 overflow-y-auto">
                     {timeSlots.map((slot, index) => (
                       <div
                         key={index}
-                        className={`p-3 rounded-md border ${
+                        className={`p-3 rounded-lg border-2 transition-all ${
                           slot.isOccupied
                             ? 'bg-red-50 border-red-200'
                             : 'bg-green-50 border-green-200'
                         }`}
                       >
                         <div className="flex justify-between items-center">
-                          <span className="font-medium text-sm">
+                          <span className="font-semibold text-sm text-gray-900">
                             {slot.start} - {slot.end}
                           </span>
                           <span
-                            className={`text-xs px-2 py-1 rounded ${
+                            className={`text-xs px-2.5 py-1 rounded-full font-medium ${
                               slot.isOccupied
                                 ? 'bg-red-100 text-red-800'
                                 : 'bg-green-100 text-green-800'
@@ -529,7 +561,10 @@ export default function WalkInBookingPage() {
                           </span>
                         </div>
                         {slot.booking && (
-                          <p className="text-xs text-gray-600 mt-1">
+                          <p className="text-xs text-gray-600 mt-1 flex items-center">
+                            <svg className="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                            </svg>
                             {slot.booking.clientInfo.firstName} {slot.booking.clientInfo.lastName}
                           </p>
                         )}
@@ -538,7 +573,7 @@ export default function WalkInBookingPage() {
                   </div>
                 )
               ) : (
-                <p className="text-gray-500 text-center">
+                <p className="text-gray-500 text-center py-8 text-sm">
                   Sélectionnez un hébergement pour voir l'occupation
                 </p>
               )}

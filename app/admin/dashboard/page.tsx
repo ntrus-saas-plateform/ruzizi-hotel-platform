@@ -77,18 +77,18 @@ export default function DashboardPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 p-6">
-      <div className="max-w-7xl mx-auto">
+    <div className="min-h-screen bg-gray-50">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
         {/* Header */}
         <div className="mb-6">
-          <h1 className="text-3xl font-bold text-gray-900">Tableau de Bord</h1>
-          <p className="text-gray-600 mt-2">Vue d'ensemble des réservations et de l'occupation</p>
+          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Tableau de Bord</h1>
+          <p className="text-gray-600 mt-2 text-sm sm:text-base">Vue d'ensemble des réservations et de l'occupation</p>
         </div>
 
         {/* Date Range Filter */}
-        <div className="bg-white rounded-lg shadow p-6 mb-6">
-          <h2 className="text-lg font-semibold text-gray-900 mb-4">Période</h2>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 sm:p-6 mb-6">
+          <h2 className="text-base sm:text-lg font-semibold text-gray-900 mb-4">Période</h2>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
                 Date de début
@@ -111,11 +111,14 @@ export default function DashboardPage() {
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
             </div>
-            <div className="flex items-end">
+            <div className="flex items-end sm:col-span-2 lg:col-span-1">
               <button
                 onClick={fetchOccupancyStats}
-                className="w-full px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
+                className="w-full px-4 py-2.5 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-lg hover:from-blue-700 hover:to-blue-800 transition-all shadow-md hover:shadow-lg font-medium flex items-center justify-center"
               >
+                <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                </svg>
                 Actualiser
               </button>
             </div>
