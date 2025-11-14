@@ -7,6 +7,7 @@ import {
   createErrorResponse,
   createSuccessResponse,
 } from '@/lib/auth/middleware';
+import { parseRequestBody } from '@/lib/utils/request';
 import { ZodError } from 'zod';
 
 /**
@@ -55,7 +56,8 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
   const resolvedParams = await params;
   return requireSuperAdmin(async (req) => {
     try {
-      const body = await req.json();
+      // Parse JSON body with error handling
+      const body = await parseRequestBody(req);
 
       // Validate request body
       const validatedData = UpdateEstablishmentSchema.parse(body);
@@ -84,6 +86,7 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
       }
 
       if (error instanceof Error) {
+        console.error('Establishment update error:', error);
         return createErrorResponse('SERVER_ERROR', error.message, 500);
       }
 

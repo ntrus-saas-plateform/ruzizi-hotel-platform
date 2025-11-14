@@ -5,6 +5,7 @@ import {
   EstablishmentFilterSchema,
 } from '@/lib/validations/establishment.validation';
 import { requireAuth, requireSuperAdmin, createErrorResponse, createSuccessResponse } from '@/lib/auth/middleware';
+import { parseRequestBody } from '@/lib/utils/request';
 import { ZodError } from 'zod';
 
 /**
@@ -56,7 +57,8 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   return requireSuperAdmin(async (req) => {
     try {
-      const body = await req.json();
+      // Parse JSON body with error handling
+      const body = await parseRequestBody(req);
 
       // Validate request body
       const validatedData = CreateEstablishmentSchema.parse(body);
@@ -81,6 +83,7 @@ export async function POST(request: NextRequest) {
       }
 
       if (error instanceof Error) {
+        console.error('Establishment creation error:', error);
         return createErrorResponse('SERVER_ERROR', error.message, 500);
       }
 
