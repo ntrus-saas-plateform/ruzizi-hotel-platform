@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { verifyAuth } from '@/lib/auth/middleware';
+import { requireAuth } from '@/lib/auth/middleware';
 import UserService from '@/services/User.service';
 
 export async function GET(
@@ -7,27 +7,23 @@ export async function GET(
   { params }: { params: Promise<{ id: string }> }
 ) {
   const resolvedParams = await params;
-  try {
-    const authResult = await verifyAuth(request);
-    if (!authResult.success || !authResult.user) {
-      return NextResponse.json({ error: 'Non autorisé' }, { status: 401 });
-    }
-    const user = authResult.user;
+  return requireAuth(async (req, user) => {
+    try {
+      // Les utilisateurs peuvent voir leur propre profil
+      // Les super_admin et manager peuvent voir tous les profils
+      if (user.userId !== resolvedParams.id && user.role === 'staff') {
+        return NextResponse.json({ error: 'Accès refusé' }, { status: 403 });
+      }
 
-    // Les utilisateurs peuvent voir leur propre profil
-    // Les super_admin et manager peuvent voir tous les profils
-    if (user.userId !== resolvedParams.id && user.role === 'staff') {
-      return NextResponse.json({ error: 'Accès refusé' }, { status: 403 });
+      const userData = await UserService.getById(resolvedParams.id);
+      return NextResponse.json(userData);
+    } catch (error: any) {
+      return NextResponse.json(
+        { error: error.message || 'Erreur serveur' },
+        { status: 500 }
+      );
     }
-
-    const userData = await UserService.getById(resolvedParams.id);
-    return NextResponse.json(userData);
-  } catch (error: any) {
-    return NextResponse.json(
-      { error: error.message || 'Erreur serveur' },
-      { status: 500 }
-    );
-  }
+  })(request);
 }
 
 export async function PATCH(
@@ -35,28 +31,24 @@ export async function PATCH(
   { params }: { params: Promise<{ id: string }> }
 ) {
   const resolvedParams = await params;
-  try {
-    const authResult = await verifyAuth(request);
-    if (!authResult.success || !authResult.user) {
-      return NextResponse.json({ error: 'Non autorisé' }, { status: 401 });
+  return requireAuth(async (req, user) => {
+    try {
+      // Seuls les super_admin peuvent modifier les utilisateurs
+      if (user.role !== 'super_admin') {
+        return NextResponse.json({ error: 'Accès refusé' }, { status: 403 });
+      }
+
+      const data = await request.json();
+      const updatedUser = await UserService.update(resolvedParams.id, data);
+
+      return NextResponse.json(updatedUser);
+    } catch (error: any) {
+      return NextResponse.json(
+        { error: error.message || 'Erreur serveur' },
+        { status: 500 }
+      );
     }
-    const user = authResult.user;
-
-    // Seuls les super_admin peuvent modifier les utilisateurs
-    if (user.role !== 'super_admin') {
-      return NextResponse.json({ error: 'Accès refusé' }, { status: 403 });
-    }
-
-    const data = await request.json();
-    const updatedUser = await UserService.update(resolvedParams.id, data);
-
-    return NextResponse.json(updatedUser);
-  } catch (error: any) {
-    return NextResponse.json(
-      { error: error.message || 'Erreur serveur' },
-      { status: 500 }
-    );
-  }
+  })(request);
 }
 
 export async function DELETE(
@@ -64,32 +56,28 @@ export async function DELETE(
   { params }: { params: Promise<{ id: string }> }
 ) {
   const resolvedParams = await params;
-  try {
-    const authResult = await verifyAuth(request);
-    if (!authResult.success || !authResult.user) {
-      return NextResponse.json({ error: 'Non autorisé' }, { status: 401 });
-    }
-    const user = authResult.user;
+  return requireAuth(async (req, user) => {
+    try {
+      // Seuls les super_admin peuvent supprimer des utilisateurs
+      if (user.role !== 'super_admin') {
+        return NextResponse.json({ error: 'Accès refusé' }, { status: 403 });
+      }
 
-    // Seuls les super_admin peuvent supprimer des utilisateurs
-    if (user.role !== 'super_admin') {
-      return NextResponse.json({ error: 'Accès refusé' }, { status: 403 });
-    }
+      // Empêcher la suppression de son propre compte
+      if (user.userId === resolvedParams.id) {
+        return NextResponse.json(
+          { error: 'Vous ne pouvez pas supprimer votre propre compte' },
+          { status: 400 }
+        );
+      }
 
-    // Empêcher la suppression de son propre compte
-    if (user.userId === resolvedParams.id) {
+      await UserService.delete(resolvedParams.id);
+      return NextResponse.json({ message: 'Utilisateur supprimé avec succès' });
+    } catch (error: any) {
       return NextResponse.json(
-        { error: 'Vous ne pouvez pas supprimer votre propre compte' },
-        { status: 400 }
+        { error: error.message || 'Erreur serveur' },
+        { status: 500 }
       );
     }
-
-    await UserService.delete(resolvedParams.id);
-    return NextResponse.json({ message: 'Utilisateur supprimé avec succès' });
-  } catch (error: any) {
-    return NextResponse.json(
-      { error: error.message || 'Erreur serveur' },
-      { status: 500 }
-    );
-  }
+  })(request);
 }

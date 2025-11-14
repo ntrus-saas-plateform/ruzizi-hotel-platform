@@ -301,3 +301,79 @@ export const requireSuperAdmin = (
     }
   ) => Promise<NextResponse>
 ) => withRole(['super_admin'], handler);
+
+/**
+ * Helper pour appliquer le filtre d'établissement selon le rôle
+ * Les managers et staff ne voient que leur établissement
+ */
+export function applyEstablishmentFilter(
+  user: {
+    userId: string;
+    email: string;
+    role: UserRole;
+    establishmentId?: string;
+  },
+  filters: any = {}
+): any {
+  // Root et super_admin voient tout
+  if (user.role === 'root' || user.role === 'super_admin') {
+    return filters;
+  }
+
+  // Manager et staff ne voient que leur établissement
+  if ((user.role === 'manager' || user.role === 'staff') && user.establishmentId) {
+    return {
+      ...filters,
+      establishmentId: user.establishmentId,
+    };
+  }
+
+  return filters;
+}
+
+/**
+ * Vérifie si l'utilisateur peut accéder à une ressource d'un établissement spécifique
+ */
+export function canAccessEstablishment(
+  user: {
+    userId: string;
+    email: string;
+    role: UserRole;
+    establishmentId?: string;
+  },
+  resourceEstablishmentId: string
+): boolean {
+  // Root et super_admin ont accès à tout
+  if (user.role === 'root' || user.role === 'super_admin') {
+    return true;
+  }
+
+  // Manager et staff ne peuvent accéder qu'à leur établissement
+  return user.establishmentId === resourceEstablishmentId;
+}
+
+/**
+ * Vérifie si l'utilisateur peut modifier une ressource
+ */
+export function canModifyResource(
+  user: {
+    userId: string;
+    email: string;
+    role: UserRole;
+    establishmentId?: string;
+  },
+  resourceEstablishmentId: string
+): boolean {
+  // Root et super_admin peuvent tout modifier
+  if (user.role === 'root' || user.role === 'super_admin') {
+    return true;
+  }
+
+  // Manager peut modifier les ressources de son établissement
+  if (user.role === 'manager' && user.establishmentId === resourceEstablishmentId) {
+    return true;
+  }
+
+  // Staff ne peut pas modifier
+  return false;
+}
