@@ -159,27 +159,27 @@ PayrollSchema.index({ 'period.year': 1, 'period.month': 1, status: 1 });
 
 PayrollSchema.pre('save', function (next) {
   let gross = this.baseSalary;
-  
+
   this.allowances.forEach((allowance) => {
     gross += allowance.amount;
   });
-  
+
   this.bonuses.forEach((bonus) => {
     gross += bonus.amount;
   });
-  
+
   gross += this.overtimeHours * this.overtimeRate;
-  
+
   this.totalGross = gross;
-  
+
   let deductions = 0;
   this.deductions.forEach((deduction) => {
     deductions += deduction.amount;
   });
-  
+
   this.totalDeductions = deductions;
   this.netSalary = Math.max(0, this.totalGross - this.totalDeductions);
-  
+
   next();
 });
 
@@ -189,15 +189,15 @@ PayrollSchema.statics.findByEmployee = function (
   month?: number
 ) {
   const query: any = { employeeId: new mongoose.Types.ObjectId(employeeId) };
-  
+
   if (year) {
     query['period.year'] = year;
   }
-  
+
   if (month) {
     query['period.month'] = month;
   }
-  
+
   return this.find(query).sort({ 'period.year': -1, 'period.month': -1 });
 };
 
