@@ -256,8 +256,8 @@ export default function CreateEstablishmentPage() {
                     <input
                       type="number"
                       min="1"
-                      value={formData.totalCapacity}
-                      onChange={(e) => setFormData({ ...formData, totalCapacity: parseInt(e.target.value) })}
+                      value={formData.totalCapacity || ''}
+                      onChange={(e) => setFormData({ ...formData, totalCapacity: e.target.value ? parseInt(e.target.value) : 0 })}
                       className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                       placeholder="Nombre total de personnes"
                       required
@@ -335,8 +335,8 @@ export default function CreateEstablishmentPage() {
                     <input
                       type="number"
                       step="0.000001"
-                      value={formData.latitude}
-                      onChange={(e) => setFormData({ ...formData, latitude: parseFloat(e.target.value) })}
+                      value={formData.latitude || ''}
+                      onChange={(e) => setFormData({ ...formData, latitude: e.target.value ? parseFloat(e.target.value) : 0 })}
                       className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                       required
                     />
@@ -349,8 +349,8 @@ export default function CreateEstablishmentPage() {
                     <input
                       type="number"
                       step="0.000001"
-                      value={formData.longitude}
-                      onChange={(e) => setFormData({ ...formData, longitude: parseFloat(e.target.value) })}
+                      value={formData.longitude || ''}
+                      onChange={(e) => setFormData({ ...formData, longitude: e.target.value ? parseFloat(e.target.value) : 0 })}
                       className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                       required
                     />

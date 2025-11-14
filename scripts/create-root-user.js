@@ -20,29 +20,29 @@ function generatePassword() {
 // Fonction principale
 async function createRootUser() {
   let client;
-  
+
   try {
     console.log('🔄 Connexion à MongoDB...');
     client = new MongoClient(MONGODB_URI);
     await client.connect();
-    
+
     const db = client.db();
     const usersCollection = db.collection('users');
-    
+
     // Vérifier si l'utilisateur root existe déjà
     const existingUser = await usersCollection.findOne({ email: ROOT_EMAIL });
-    
+
     if (existingUser) {
       console.log('⚠️  L\'utilisateur root existe déjà!');
       console.log(`📧 Email: ${ROOT_EMAIL}`);
       console.log('ℹ️  Utilisez la fonction "Mot de passe oublié" si nécessaire.');
       return;
     }
-    
+
     // Générer le mot de passe
     const password = generatePassword();
     const hashedPassword = await bcrypt.hash(password, 12);
-    
+
     // Créer l'utilisateur root
     const rootUser = {
       firstName: ROOT_FIRST_NAME,
@@ -65,10 +65,10 @@ async function createRootUser() {
       lastLogin: null,
       establishmentId: null // Super admin n'est lié à aucun établissement spécifique
     };
-    
+
     // Insérer l'utilisateur
     const result = await usersCollection.insertOne(rootUser);
-    
+
     if (result.insertedId) {
       console.log('✅ Utilisateur root créé avec succès!');
       console.log('');
@@ -88,7 +88,7 @@ async function createRootUser() {
     } else {
       throw new Error('Échec de la création de l\'utilisateur');
     }
-    
+
   } catch (error) {
     console.error('❌ Erreur:', error.message);
     process.exit(1);
