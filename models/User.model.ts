@@ -118,6 +118,27 @@ const UserSchema = new Schema<IUser>(
   },
   {
     timestamps: true,
+    toJSON: {
+      virtuals: true,
+      transform: function (_doc: any, ret: any) {
+        ret.id = ret._id.toString();
+        ret.userId = ret._id.toString();
+        delete ret._id;
+        delete ret.__v;
+        delete ret.password;
+        return ret;
+      }
+    },
+    toObject: {
+      virtuals: true,
+      transform: function (_doc: any, ret: any) {
+        ret.id = ret._id.toString();
+        ret.userId = ret._id.toString();
+        delete ret._id;
+        delete ret.__v;
+        return ret;
+      }
+    }
   }
 );
 
@@ -130,7 +151,7 @@ UserSchema.index({ isActive: 1 });
 // Hash password avant sauvegarde
 UserSchema.pre('save', async function (next) {
   if (!this.isModified('password')) return next();
-  
+
   try {
     const salt = await bcrypt.genSalt(10);
     this.password = await bcrypt.hash(this.password, salt);
@@ -146,7 +167,7 @@ UserSchema.methods.comparePassword = async function (candidatePassword: string):
 };
 
 // Virtual pour le nom complet
-UserSchema.virtual('name').get(function() {
+UserSchema.virtual('name').get(function () {
   return `${this.firstName} ${this.lastName}`;
 });
 

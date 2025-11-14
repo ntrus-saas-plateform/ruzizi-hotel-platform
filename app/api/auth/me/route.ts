@@ -28,6 +28,7 @@ export async function GET(request: NextRequest) {
       success: true,
       user: {
         id: payload.userId,
+        userId: payload.userId, // Ajouter userId pour compatibilité
         email: payload.email,
         role: payload.role,
         establishmentId: payload.establishmentId,

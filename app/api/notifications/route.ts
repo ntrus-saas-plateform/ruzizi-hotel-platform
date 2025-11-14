@@ -9,11 +9,12 @@ import {
 export async function GET(request: NextRequest) {
   return requireAuth(async (req, user) => {
     try {
-      const notifications = await NotificationService.getByUser((user as any).id);
-      const unreadCount = await NotificationService.getUnreadCount((user as any).id);
+      const notifications = await NotificationService.getByUser(user.userId);
+      const unreadCount = await NotificationService.getUnreadCount(user.userId);
 
       return createSuccessResponse({ notifications, unreadCount });
     } catch (error) {
+      console.error('Error fetching notifications:', error);
       if (error instanceof Error) {
         return createErrorResponse('SERVER_ERROR', error.message, 500);
       }

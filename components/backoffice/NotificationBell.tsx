@@ -16,7 +16,17 @@ export default function NotificationBell() {
 
   const fetchNotifications = async () => {
     try {
-      const response = await fetch('/api/notifications');
+      const token = localStorage.getItem('accessToken');
+      if (!token) {
+        console.log('No token found for notifications');
+        return;
+      }
+
+      const response = await fetch('/api/notifications', {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+      });
       const data = await response.json();
       if (data.success) {
         setNotifications(data.data.notifications || []);
@@ -29,7 +39,15 @@ export default function NotificationBell() {
 
   const markAsRead = async (id: string) => {
     try {
-      await fetch(`/api/notifications/${id}/read`, { method: 'POST' });
+      const token = localStorage.getItem('accessToken');
+      if (!token) return;
+
+      await fetch(`/api/notifications/${id}/read`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+      });
       fetchNotifications();
     } catch (err) {
       console.error('Failed to mark as read:', err);
@@ -95,9 +113,8 @@ export default function NotificationBell() {
               {notifications.map((notification) => (
                 <div
                   key={notification.id}
-                  className={`p-4 border-b hover:bg-gray-50 cursor-pointer ${
-                    !notification.read ? 'bg-blue-50' : ''
-                  }`}
+                  className={`p-4 border-b hover:bg-gray-50 cursor-pointer ${!notification.read ? 'bg-blue-50' : ''
+                    }`}
                   onClick={() => !notification.read && markAsRead(notification.id)}
                 >
                   <div className="flex items-start">

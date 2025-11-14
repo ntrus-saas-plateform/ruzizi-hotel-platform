@@ -35,11 +35,14 @@ export async function POST(request: NextRequest) {
     const response = NextResponse.json({
       success: true,
       message: 'Token refreshed successfully',
-      user: {
-        id: payload.userId,
-        email: payload.email,
-        role: payload.role,
-        establishmentId: payload.establishmentId,
+      data: {
+        accessToken: newAccessToken,
+        user: {
+          id: payload.userId,
+          email: payload.email,
+          role: payload.role,
+          establishmentId: payload.establishmentId,
+        },
       },
     });
 

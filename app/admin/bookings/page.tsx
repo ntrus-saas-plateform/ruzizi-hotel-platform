@@ -52,6 +52,12 @@ export default function BookingsPage() {
       setLoading(true);
       setError('');
 
+      const token = localStorage.getItem('accessToken');
+      if (!token) {
+        setError('Non authentifié');
+        return;
+      }
+
       const params = new URLSearchParams({
         page: currentPage.toString(),
         limit: '10',
@@ -60,7 +66,11 @@ export default function BookingsPage() {
         ),
       });
 
-      const response = await fetch(`/api/bookings?${params}`);
+      const response = await fetch(`/api/bookings?${params}`, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+      });
       const data = await response.json();
 
       if (!response.ok) {
