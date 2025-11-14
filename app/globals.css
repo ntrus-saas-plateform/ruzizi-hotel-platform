@@ -24,3 +24,244 @@ body {
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
 }
+
+/* ============================================
+   AMÉLIORATION DES INPUTS - MEILLEURE VISIBILITÉ
+   ============================================ */
+
+/* Styles de base pour tous les inputs, selects et textareas */
+input[type="text"],
+input[type="email"],
+input[type="password"],
+input[type="number"],
+input[type="tel"],
+input[type="url"],
+input[type="search"],
+input[type="date"],
+input[type="time"],
+input[type="datetime-local"],
+input[type="month"],
+input[type="week"],
+select,
+textarea {
+  /* Amélioration de la visibilité du texte */
+  font-size: 16px !important;
+  font-weight: 500 !important;
+  line-height: 1.5 !important;
+  color: #1f2937 !important; /* gray-800 */
+  
+  /* Padding généreux pour une meilleure lisibilité */
+  padding: 0.875rem 1rem !important; /* py-3.5 px-4 */
+  
+  /* Bordures et arrière-plan */
+  background-color: #ffffff !important;
+  border: 2px solid #d1d5db !important; /* gray-300 */
+  border-radius: 0.5rem !important; /* rounded-lg */
+  
+  /* Transitions fluides */
+  transition: all 0.2s ease-in-out !important;
+  
+  /* Placeholder plus visible */
+  &::placeholder {
+    color: #9ca3af !important; /* gray-400 */
+    font-weight: 400 !important;
+    opacity: 1 !important;
+  }
+  
+  /* Focus state amélioré */
+  &:focus {
+    outline: none !important;
+    border-color: #f59e0b !important; /* amber-500 */
+    background-color: #ffffff !important;
+    box-shadow: 0 0 0 4px rgba(245, 158, 11, 0.1) !important; /* ring-amber-500/10 */
+  }
+  
+  /* Hover state */
+  &:hover:not(:disabled) {
+    border-color: #9ca3af !important; /* gray-400 */
+  }
+  
+  /* Disabled state */
+  &:disabled {
+    background-color: #f3f4f6 !important; /* gray-100 */
+    color: #6b7280 !important; /* gray-500 */
+    cursor: not-allowed !important;
+    opacity: 0.7 !important;
+  }
+  
+  /* État d'erreur */
+  &.error,
+  &[aria-invalid="true"] {
+    border-color: #ef4444 !important; /* red-500 */
+    
+    &:focus {
+      border-color: #ef4444 !important;
+      box-shadow: 0 0 0 4px rgba(239, 68, 68, 0.1) !important;
+    }
+  }
+}
+
+/* Amélioration spécifique pour les textareas */
+textarea {
+  min-height: 100px !important;
+  resize: vertical !important;
+}
+
+/* Amélioration spécifique pour les selects */
+select {
+  cursor: pointer !important;
+  padding-right: 2.5rem !important; /* Pour l'icône de flèche */
+  background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e") !important;
+  background-position: right 0.5rem center !important;
+  background-repeat: no-repeat !important;
+  background-size: 1.5em 1.5em !important;
+  appearance: none !important;
+}
+
+/* Amélioration pour les inputs de type date */
+input[type="date"],
+input[type="time"],
+input[type="datetime-local"],
+input[type="month"],
+input[type="week"] {
+  cursor: pointer !important;
+}
+
+/* Amélioration pour les checkboxes et radios */
+input[type="checkbox"],
+input[type="radio"] {
+  width: 1.25rem !important;
+  height: 1.25rem !important;
+  cursor: pointer !important;
+  border: 2px solid #d1d5db !important;
+  transition: all 0.2s ease-in-out !important;
+  
+  &:focus {
+    outline: none !important;
+    box-shadow: 0 0 0 4px rgba(245, 158, 11, 0.1) !important;
+  }
+  
+  &:checked {
+    background-color: #f59e0b !important; /* amber-500 */
+    border-color: #f59e0b !important;
+  }
+}
+
+/* Labels améliorés */
+label {
+  font-weight: 600 !important;
+  color: #374151 !important; /* gray-700 */
+  font-size: 0.875rem !important; /* text-sm */
+  margin-bottom: 0.5rem !important;
+  display: inline-block !important;
+}
+
+/* Amélioration des messages d'erreur */
+.error-message,
+[role="alert"] {
+  color: #ef4444 !important; /* red-500 */
+  font-size: 0.875rem !important;
+  font-weight: 500 !important;
+  margin-top: 0.5rem !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 0.25rem !important;
+}
+
+/* Amélioration pour les inputs avec icônes */
+.input-with-icon {
+  position: relative !important;
+  
+  input {
+    padding-left: 2.75rem !important;
+  }
+  
+  .icon {
+    position: absolute !important;
+    left: 1rem !important;
+    top: 50% !important;
+    transform: translateY(-50%) !important;
+    color: #9ca3af !important; /* gray-400 */
+  }
+}
+
+/* Amélioration pour les groupes de formulaires */
+.form-group {
+  margin-bottom: 1.5rem !important;
+}
+
+/* Amélioration pour les inputs en mode sombre */
+@media (prefers-color-scheme: dark) {
+  input[type="text"],
+  input[type="email"],
+  input[type="password"],
+  input[type="number"],
+  input[type="tel"],
+  input[type="url"],
+  input[type="search"],
+  input[type="date"],
+  input[type="time"],
+  input[type="datetime-local"],
+  input[type="month"],
+  input[type="week"],
+  select,
+  textarea {
+    background-color: #1f2937 !important; /* gray-800 */
+    border-color: #4b5563 !important; /* gray-600 */
+    color: #f9fafb !important; /* gray-50 */
+    
+    &::placeholder {
+      color: #6b7280 !important; /* gray-500 */
+    }
+    
+    &:focus {
+      background-color: #111827 !important; /* gray-900 */
+      border-color: #f59e0b !important;
+    }
+    
+    &:disabled {
+      background-color: #374151 !important; /* gray-700 */
+      color: #9ca3af !important; /* gray-400 */
+    }
+  }
+  
+  label {
+    color: #e5e7eb !important; /* gray-200 */
+  }
+}
+
+/* Amélioration pour les inputs sur mobile */
+@media (max-width: 640px) {
+  input[type="text"],
+  input[type="email"],
+  input[type="password"],
+  input[type="number"],
+  input[type="tel"],
+  input[type="url"],
+  input[type="search"],
+  input[type="date"],
+  input[type="time"],
+  input[type="datetime-local"],
+  input[type="month"],
+  input[type="week"],
+  select,
+  textarea {
+    font-size: 16px !important; /* Évite le zoom automatique sur iOS */
+  }
+}
+
+/* Animation pour les inputs */
+@keyframes input-focus {
+  0% {
+    box-shadow: 0 0 0 0 rgba(245, 158, 11, 0.2);
+  }
+  100% {
+    box-shadow: 0 0 0 4px rgba(245, 158, 11, 0.1);
+  }
+}
+
+input:focus,
+select:focus,
+textarea:focus {
+  animation: input-focus 0.2s ease-out !important;
+}
