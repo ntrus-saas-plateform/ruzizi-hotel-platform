@@ -17,6 +17,7 @@
     "test:coverage": "jest --coverage",
     "test:ci": "jest --ci --coverage --maxWorkers=2",
     "init:root": "ts-node scripts/init-root-user.ts",
+    "create-root-user": "node scripts/create-root-user.js",
     "check:mongodb": "ts-node scripts/check-mongodb.ts",
     "docker:build": "docker build -t ruzizi-hotel .",
     "docker:run": "docker-compose up -d",

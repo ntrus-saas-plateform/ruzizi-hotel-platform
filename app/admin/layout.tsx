@@ -167,9 +167,13 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
               </button>
               
               {/* Logo */}
-              <button onClick={() => router.push('/admin/dashboard')} className="flex ml-2 md:mr-24">
-                <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-blue-700 rounded-lg flex items-center justify-center mr-3">
-                  <span className="text-white font-bold text-xl">R</span>
+              <button onClick={() => router.push('/admin/dashboard')} className="flex ml-2 md:mr-24 items-center">
+                <div className="w-10 h-10 bg-white rounded-lg flex items-center justify-center mr-3 p-1 shadow-sm">
+                  <img 
+                    src="/ruzizi_black.png" 
+                    alt="Ruzizi Hôtel" 
+                    className="w-full h-full object-contain"
+                  />
                 </div>
                 <span className="self-center text-xl font-semibold sm:text-2xl whitespace-nowrap bg-gradient-to-r from-blue-600 to-blue-800 bg-clip-text text-transparent hidden sm:block">
                   Ruzizi Hôtel

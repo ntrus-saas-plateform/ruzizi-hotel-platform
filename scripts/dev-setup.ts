@@ -3,7 +3,7 @@
 import { spawn } from 'child_process';
 import { existsSync } from 'fs';
 import { join } from 'path';
-import RootUserInitializer from './init-root-user';
+import { createRootUser } from './init-root-user';
 
 /**
  * Script de configuration pour le développement
@@ -22,7 +22,7 @@ class DevSetup {
     }
     
     // Vérifier les variables essentielles
-    const requiredVars = ['MONGODB_URI', 'NEXTAUTH_SECRET', 'JWT_SECRET'];
+    const requiredVars = ['MONGODB_URI', 'JWT_SECRET'];
     const missingVars = requiredVars.filter(varName => !process.env[varName]);
     
     if (missingVars.length > 0) {
@@ -38,8 +38,7 @@ class DevSetup {
     console.log('🔐 Initialisation de l\'utilisateur root...');
     
     try {
-      const initializer = new RootUserInitializer();
-      await initializer.initialize();
+      await createRootUser();
       console.log('✅ Utilisateur root initialisé');
     } catch (error) {
       console.error('❌ Erreur lors de l\'initialisation:', error);

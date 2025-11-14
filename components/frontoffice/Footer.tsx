@@ -70,8 +70,12 @@ export default function Footer() {
           {/* Brand & Contact */}
           <div className="lg:col-span-1">
             <div className="flex items-center space-x-3 mb-6">
-              <div className="w-12 h-12 bg-gradient-to-br from-amber-500 to-amber-700 rounded-lg flex items-center justify-center shadow-lg">
-                <span className="text-white font-bold text-xl">R</span>
+              <div className="w-12 h-12 bg-white rounded-lg flex items-center justify-center shadow-lg p-2">
+                <img 
+                  src="/ruzizi_black.png" 
+                  alt="Ruzizi Hôtel" 
+                  className="w-full h-full object-contain"
+                />
               </div>
               <div>
                 <h3 className="text-2xl font-bold bg-gradient-to-r from-amber-400 to-amber-600 bg-clip-text text-transparent">

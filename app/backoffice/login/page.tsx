@@ -64,8 +64,12 @@ export default function BackOfficeLoginPage() {
                 {/* Logo */}
                 <div className="text-center">
                     <div className="flex justify-center mb-6">
-                        <div className="w-20 h-20 bg-white rounded-2xl shadow-2xl flex items-center justify-center">
-                            <span className="text-4xl font-bold bg-gradient-to-br from-blue-600 to-blue-800 bg-clip-text text-transparent">R</span>
+                        <div className="w-32 h-32 bg-white rounded-2xl shadow-2xl flex items-center justify-center p-4">
+                            <img 
+                                src="/ruzizi_black.png" 
+                                alt="Ruzizi Hôtel" 
+                                className="w-full h-full object-contain"
+                            />
                         </div>
                     </div>
                     <h2 className="text-4xl font-extrabold text-white mb-2">

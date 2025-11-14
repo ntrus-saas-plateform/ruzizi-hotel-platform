@@ -116,8 +116,12 @@ export default function Navigation() {
             className="flex items-center space-x-3 group"
           >
             <div className="relative">
-              <div className="w-14 h-14 bg-gradient-to-br from-amber-500 via-amber-600 to-amber-700 rounded-xl flex items-center justify-center shadow-lg group-hover:shadow-xl transition-all duration-300 group-hover:scale-105">
-                <span className="text-white font-bold text-2xl">R</span>
+              <div className="w-14 h-14 bg-white rounded-xl flex items-center justify-center shadow-lg group-hover:shadow-xl transition-all duration-300 group-hover:scale-105 p-2 border border-amber-100">
+                <img 
+                  src="/ruzizi_black.png" 
+                  alt="Ruzizi Hôtel" 
+                  className="w-full h-full object-contain"
+                />
               </div>
               <div className="absolute -top-1 -right-1 w-4 h-4 bg-green-500 rounded-full border-2 border-white animate-pulse"></div>
             </div>
