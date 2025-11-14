@@ -42,85 +42,101 @@ export default function BookingDetailPage() {
   };
 
   const handleConfirm = async () => {
-    if (!confirm('Confirmer cette réservation ?')) return;
+    if (!confirm('Confirmer cette réservation ? Le client sera notifié par email.')) return;
 
     try {
       setActionLoading(true);
       setError('');
       setActionSuccess('');
 
+      const token = localStorage.getItem('accessToken');
       const response = await fetch(`/api/bookings/${bookingId}/confirm`, {
         method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
       });
 
       const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(data.error?.message || 'Failed to confirm booking');
+        throw new Error(data.error?.message || 'Échec de la confirmation');
       }
 
-      setActionSuccess('Réservation confirmée avec succès');
+      setActionSuccess('Réservation confirmée avec succès. Le client a été notifié.');
       fetchBooking();
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'An error occurred');
+      setError(err instanceof Error ? err.message : 'Une erreur est survenue');
     } finally {
       setActionLoading(false);
     }
   };
 
   const handleCheckout = async () => {
-    if (!confirm('Effectuer le check-out pour cette réservation ?')) return;
+    if (!confirm('Effectuer le check-out pour cette réservation ? Cela marquera la réservation comme terminée.')) return;
 
     try {
       setActionLoading(true);
       setError('');
       setActionSuccess('');
 
+      const token = localStorage.getItem('accessToken');
       const response = await fetch(`/api/bookings/${bookingId}/checkout`, {
         method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
       });
 
       const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(data.error?.message || 'Failed to checkout');
+        throw new Error(data.error?.message || 'Échec du check-out');
       }
 
-      setActionSuccess('Check-out effectué avec succès');
+      setActionSuccess('Check-out effectué avec succès. La chambre est maintenant disponible.');
       fetchBooking();
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'An error occurred');
+      setError(err instanceof Error ? err.message : 'Une erreur est survenue');
     } finally {
       setActionLoading(false);
     }
   };
 
   const handleCancel = async () => {
-    if (!confirm('Annuler cette réservation ?')) return;
+    const reason = prompt('Raison de l\'annulation (optionnel):');
+    if (reason === null) return; // User clicked cancel
+
+    if (!confirm('Êtes-vous sûr de vouloir annuler cette réservation ?')) return;
 
     try {
       setActionLoading(true);
       setError('');
       setActionSuccess('');
 
+      const token = localStorage.getItem('accessToken');
       const response = await fetch(`/api/bookings/${bookingId}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
         },
-        body: JSON.stringify({ status: 'cancelled' }),
+        body: JSON.stringify({ 
+          status: 'cancelled',
+          cancellationReason: reason || 'Annulée par l\'administrateur'
+        }),
       });
 
       const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(data.error?.message || 'Failed to cancel booking');
+        throw new Error(data.error?.message || 'Échec de l\'annulation');
       }
 
       setActionSuccess('Réservation annulée avec succès');
       fetchBooking();
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'An error occurred');
+      setError(err instanceof Error ? err.message : 'Une erreur est survenue');
     } finally {
       setActionLoading(false);
     }
@@ -260,42 +276,116 @@ export default function BookingDetailPage() {
 
         {/* Actions */}
         <div className="bg-white rounded-lg shadow p-6 mb-6">
-          <h2 className="text-lg font-semibold text-gray-900 mb-4">Actions</h2>
+          <h2 className="text-lg font-semibold text-gray-900 mb-4">Actions disponibles</h2>
+          
+          {/* Status Info */}
+          {booking.status === 'pending' && (
+            <div className="mb-4 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
+              <p className="text-sm text-yellow-800">
+                <strong>⏳ En attente de confirmation</strong> - Cette réservation doit être confirmée par un administrateur ou un manager.
+              </p>
+            </div>
+          )}
+          
+          {booking.status === 'confirmed' && (
+            <div className="mb-4 p-3 bg-green-50 border border-green-200 rounded-lg">
+              <p className="text-sm text-green-800">
+                <strong>✅ Confirmée</strong> - Le client peut effectuer son check-in. Vous pouvez effectuer le check-out une fois le séjour terminé.
+              </p>
+            </div>
+          )}
+          
+          {booking.status === 'cancelled' && (
+            <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg">
+              <p className="text-sm text-red-800">
+                <strong>❌ Annulée</strong> - Cette réservation a été annulée et ne peut plus être modifiée.
+              </p>
+            </div>
+          )}
+          
+          {booking.status === 'completed' && (
+            <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+              <p className="text-sm text-blue-800">
+                <strong>✓ Terminée</strong> - Le check-out a été effectué. Cette réservation est archivée.
+              </p>
+            </div>
+          )}
+          
           <div className="flex flex-wrap gap-3">
             {booking.status === 'pending' && (
-              <button
-                onClick={handleConfirm}
-                disabled={actionLoading}
-                className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 disabled:opacity-50"
-              >
-                Confirmer
-              </button>
+              <>
+                <button
+                  onClick={handleConfirm}
+                  disabled={actionLoading}
+                  className="px-6 py-2.5 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50 flex items-center gap-2 font-medium shadow-sm"
+                >
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                  </svg>
+                  Confirmer la réservation
+                </button>
+                <button
+                  onClick={handleCancel}
+                  disabled={actionLoading}
+                  className="px-6 py-2.5 bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:opacity-50 flex items-center gap-2 font-medium shadow-sm"
+                >
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                  Annuler
+                </button>
+              </>
             )}
+            
             {booking.status === 'confirmed' && (
-              <button
-                onClick={handleCheckout}
-                disabled={actionLoading}
-                className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50"
-              >
-                Check-out
-              </button>
+              <>
+                <button
+                  onClick={handleCheckout}
+                  disabled={actionLoading}
+                  className="px-6 py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 flex items-center gap-2 font-medium shadow-sm"
+                >
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                  </svg>
+                  Effectuer le check-out
+                </button>
+                <button
+                  onClick={handleCancel}
+                  disabled={actionLoading}
+                  className="px-6 py-2.5 bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:opacity-50 flex items-center gap-2 font-medium shadow-sm"
+                >
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                  Annuler
+                </button>
+              </>
             )}
+            
             {(booking.status === 'pending' || booking.status === 'confirmed') && (
               <button
-                onClick={handleCancel}
+                onClick={() => router.push(`/admin/bookings/${bookingId}/edit`)}
                 disabled={actionLoading}
-                className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 disabled:opacity-50"
+                className="px-6 py-2.5 bg-gray-600 text-white rounded-lg hover:bg-gray-700 disabled:opacity-50 flex items-center gap-2 font-medium shadow-sm"
               >
-                Annuler
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                </svg>
+                Modifier
               </button>
             )}
-            <button
-              onClick={() => router.push(`/bookings/${bookingId}/edit`)}
-              disabled={booking.status === 'cancelled' || booking.status === 'completed'}
-              className="px-4 py-2 bg-gray-600 text-white rounded-md hover:bg-gray-700 disabled:opacity-50"
-            >
-              Modifier
-            </button>
+            
+            {booking.status === 'cancelled' || booking.status === 'completed' ? (
+              <button
+                onClick={() => router.push('/admin/bookings')}
+                className="px-6 py-2.5 bg-gray-600 text-white rounded-lg hover:bg-gray-700 flex items-center gap-2 font-medium shadow-sm"
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+                </svg>
+                Retour à la liste
+              </button>
+            ) : null}
           </div>
         </div>
 
@@ -365,6 +455,12 @@ export default function BookingDetailPage() {
                 <div>
                   <span className="text-sm text-gray-600">Notes</span>
                   <p className="font-medium">{booking.notes}</p>
+                </div>
+              )}
+              {booking.status === 'cancelled' && (booking as any).cancellationReason && (
+                <div className="mt-4 p-3 bg-red-50 border border-red-200 rounded-lg">
+                  <span className="text-sm font-semibold text-red-800">Raison de l'annulation</span>
+                  <p className="text-red-700 mt-1">{(booking as any).cancellationReason}</p>
                 </div>
               )}
             </div>

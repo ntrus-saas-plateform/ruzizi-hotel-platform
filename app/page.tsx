@@ -127,7 +127,10 @@ export default function HomePage() {
     <div className="min-h-screen">
       {/* Navigation Header */}
       <Navigation />
-      
+
+      {/* Spacer for fixed header - adjust based on header height */}
+      <div className="h-[120px]"></div>
+
       {/* Hero Section */}
       <HeroSection />
 
