@@ -1,53 +1,95 @@
+/**
+ * Protected Route Component
+ * Wraps pages that require authentication
+ */
+
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { useAuth } from '@/lib/auth/AuthContext';
-import type { UserRole } from '@/types/user.types';
+import { isAuthenticated, hasRole, getAccessToken } from '@/lib/utils/auth';
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
-  allowedRoles?: UserRole[];
-  redirectTo?: string;
+  requiredRole?: string | string[];
+  fallback?: React.ReactNode;
 }
 
-export function ProtectedRoute({
+export default function ProtectedRoute({
   children,
-  allowedRoles,
-  redirectTo = '/auth/login',
+  requiredRole,
+  fallback,
 }: ProtectedRouteProps) {
   const router = useRouter();
-  const { user, isLoading, isAuthenticated } = useAuth();
+  const [isChecking, setIsChecking] = useState(true);
+  const [isAuthorized, setIsAuthorized] = useState(false);
 
   useEffect(() => {
-    if (!isLoading) {
-      // Redirect to login if not authenticated
-      if (!isAuthenticated) {
-        router.push(redirectTo);
+    checkAuth();
+  }, []);
+
+  const checkAuth = async () => {
+    try {
+      // Determine login path based on current location
+      const currentPath = window.location.pathname;
+      const loginPath = currentPath.startsWith('/admin') || currentPath.startsWith('/backoffice')
+        ? '/backoffice/login'
+        : '/auth/login';
+
+      // Check if authenticated
+      if (!isAuthenticated()) {
+        router.push(`${loginPath}?redirect=${encodeURIComponent(currentPath)}`);
         return;
       }
 
-      // Check role permissions if specified
-      if (allowedRoles && user && !allowedRoles.includes(user.role)) {
-        router.push('/unauthorized');
-      }
-    }
-  }, [isLoading, isAuthenticated, user, allowedRoles, router, redirectTo]);
+      // Get fresh token (will refresh if needed)
+      const token = await getAccessToken();
 
-  // Show loading state
-  if (isLoading) {
+      if (!token) {
+        router.push(`${loginPath}?redirect=${encodeURIComponent(currentPath)}`);
+        return;
+      }
+
+      // Check role if required
+      if (requiredRole) {
+        if (!hasRole(requiredRole)) {
+          router.push('/unauthorized');
+          return;
+        }
+      }
+
+      setIsAuthorized(true);
+    } catch (error) {
+      console.error('Auth check error:', error);
+      const currentPath = window.location.pathname;
+      const loginPath = currentPath.startsWith('/admin') || currentPath.startsWith('/backoffice')
+        ? '/backoffice/login'
+        : '/auth/login';
+      router.push(`${loginPath}?redirect=${encodeURIComponent(currentPath)}`);
+    } finally {
+      setIsChecking(false);
+    }
+  };
+
+  if (isChecking) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
-          <p className="mt-4 text-gray-600">Chargement...</p>
+      fallback || (
+        <div className="min-h-screen flex items-center justify-center bg-gray-50">
+          <div className="text-center">
+            <div className="relative">
+              <div className="w-16 h-16 border-4 border-blue-200 border-t-blue-600 rounded-full animate-spin mx-auto"></div>
+              <div className="absolute inset-0 flex items-center justify-center">
+                <div className="w-8 h-8 bg-blue-600 rounded-full animate-pulse"></div>
+              </div>
+            </div>
+            <p className="mt-4 text-gray-600">Vérification de l'authentification...</p>
+          </div>
         </div>
-      </div>
+      )
     );
   }
 
-  // Don't render children if not authenticated or not authorized
-  if (!isAuthenticated || (allowedRoles && user && !allowedRoles.includes(user.role))) {
+  if (!isAuthorized) {
     return null;
   }
 

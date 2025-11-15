@@ -95,7 +95,7 @@ const EstablishmentSchema = new Schema<IEstablishmentDocument, IEstablishmentMod
       required: [true, 'Description is required'],
       trim: true,
       minlength: [10, 'Description must be at least 10 characters'],
-      maxlength: [1000, 'Description cannot exceed 1000 characters'],
+      maxlength: [10000, 'Description cannot exceed 1000 characters'],
     },
     location: {
       type: LocationSchema,
@@ -124,7 +124,7 @@ const EstablishmentSchema = new Schema<IEstablishmentDocument, IEstablishmentMod
     managerId: {
       type: Schema.Types.ObjectId,
       ref: 'User',
-      required: [true, 'Manager is required'],
+      //required: [true, 'Manager is required'],
     },
     staffIds: {
       type: [Schema.Types.ObjectId],

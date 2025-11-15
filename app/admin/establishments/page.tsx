@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import { apiClient } from '@/lib/utils/api-client';
 import type { EstablishmentResponse } from '@/types/establishment.types';
 
 export default function EstablishmentsPage() {
@@ -35,13 +36,7 @@ export default function EstablishmentsPage() {
         )
       );
 
-      const response = await fetch(`/api/establishments?${params}`);
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error?.message || 'Failed to fetch establishments');
-      }
-
+      const data = await apiClient.get(`/api/establishments?${params}`);
       setEstablishments(data.data.data || []);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'An error occurred');
@@ -70,14 +65,7 @@ export default function EstablishmentsPage() {
     }
 
     try {
-      const response = await fetch(`/api/establishments/${id}`, {
-        method: 'DELETE',
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to delete establishment');
-      }
-
+      await apiClient.delete(`/api/establishments/${id}`);
       fetchEstablishments();
     } catch (err) {
       alert(err instanceof Error ? err.message : 'Failed to delete establishment');

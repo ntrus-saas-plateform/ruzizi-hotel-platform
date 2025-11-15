@@ -56,22 +56,39 @@ export default function PendingBookingsPage() {
   };
 
   const handleConfirm = async (bookingId: string) => {
+    console.log('🔍 Tentative de confirmation:', bookingId);
+    
     if (!confirm('Confirmer cette réservation ?')) return;
 
     try {
       setActionLoading(bookingId);
       const token = localStorage.getItem('accessToken');
+      
+      console.log('📤 Envoi de la requête avec token:', token ? 'Présent' : 'Absent');
+      
       const response = await fetch(`/api/bookings/${bookingId}/confirm`, {
         method: 'POST',
-        headers: { 'Authorization': `Bearer ${token}` },
+        headers: { 
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
       });
 
+      console.log('📥 Status de la réponse:', response.status);
+      
+      const data = await response.json();
+      console.log('📦 Données reçues:', data);
+
       if (!response.ok) {
-        throw new Error('Erreur lors de la confirmation');
+        console.error('❌ Erreur:', data);
+        throw new Error(data.error?.message || 'Erreur lors de la confirmation');
       }
 
+      console.log('✅ Confirmation réussie!');
+      alert('Réservation confirmée avec succès!');
       fetchPendingBookings();
     } catch (err) {
+      console.error('💥 Exception:', err);
       alert(err instanceof Error ? err.message : 'Erreur inconnue');
     } finally {
       setActionLoading(null);
@@ -206,7 +223,12 @@ export default function PendingBookingsPage() {
 
                   <div className="flex gap-3">
                     <button
-                      onClick={() => handleConfirm(booking._id)}
+                      type="button"
+                      onClick={() => {
+                        console.log('🖱️ CLIC DETECTE sur le bouton Confirmer');
+                        console.log('📋 Booking ID:', booking._id);
+                        handleConfirm(booking._id);
+                      }}
                       disabled={actionLoading === booking._id}
                       className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50 flex items-center gap-2 text-sm font-medium"
                     >

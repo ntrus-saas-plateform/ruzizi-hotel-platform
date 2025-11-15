@@ -27,7 +27,16 @@ export default function HomePage() {
       const response = await fetch('/api/public/establishments');
       const data = await response.json();
       if (data.success) {
-        setEstablishments(data.data.data || []);
+        const establishments = data.data.data || [];
+        console.log('📊 Établissements chargés:', establishments.length);
+        establishments.forEach((est: any) => {
+          console.log(`🏨 ${est.name}:`, {
+            hasImages: est.images && est.images.length > 0,
+            imageCount: est.images?.length || 0,
+            firstImage: est.images?.[0] || 'Aucune'
+          });
+        });
+        setEstablishments(establishments);
       }
     } catch (err) {
       console.error('Failed to fetch establishments:', err);
@@ -201,13 +210,18 @@ export default function HomePage() {
                     id={establishment.id}
                     name={establishment.name}
                     description={establishment.description || "Découvrez le confort et l'élégance dans cet établissement d'exception."}
-                    image={establishment.images?.[0] || "https://images.unsplash.com/photo-1566073771259-6a8506099945?ixlib=rb-4.0.3&auto=format&fit=crop&w=2070&q=80"}
+                    image={establishment.images && establishment.images.length > 0
+                      ? establishment.images[0]
+                      : "https://images.unsplash.com/photo-1566073771259-6a8506099945?ixlib=rb-4.0.3&auto=format&fit=crop&w=2070&q=80"}
+
                     location={`${establishment.location?.city || 'Bujumbura'}, ${establishment.location?.country || 'Burundi'}`}
                     rating={4.8}
                     reviewCount={127}
-                    priceRange="$$$"
-                    amenities={['WiFi gratuit', 'Piscine', 'Restaurant', 'Spa', 'Parking']}
-                    isAvailable={true}
+                    priceRange="$$"
+                    amenities={establishment.services && establishment.services.length > 0
+                      ? establishment.services.slice(0, 5)
+                      : ['WiFi gratuit', 'Piscine', 'Restaurant', 'Spa', 'Parking']}
+                    isAvailable={establishment.isActive !== false}
                   />
                 ))}
               </div>
@@ -266,7 +280,9 @@ export default function HomePage() {
       </section>
 
       {/* Map Section */}
-      <MapSection />
+      <div id="map-section">
+        <MapSection />
+      </div>
 
       {/* Contact Section */}
       <ContactForm />

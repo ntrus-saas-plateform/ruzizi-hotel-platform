@@ -57,7 +57,7 @@ export interface CreateEstablishmentInput {
   contacts: Contacts;
   services?: string[];
   images?: string[];
-  managerId: string;
+  managerId?: string;
   staffIds?: string[];
   totalCapacity: number;
   isActive?: boolean;

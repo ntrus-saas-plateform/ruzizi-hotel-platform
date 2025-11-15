@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { useImageLoader } from '@/hooks/useImageLoader';
 
 interface EstablishmentCardProps {
   id: string;
@@ -16,7 +17,7 @@ interface EstablishmentCardProps {
   isAvailable?: boolean;
 }
 
-export default function EstablishmentCard({
+export default function EstablishmentCardOptimized({
   id,
   name,
   description,
@@ -29,50 +30,39 @@ export default function EstablishmentCard({
   isAvailable = true
 }: EstablishmentCardProps) {
   const router = useRouter();
-  const [imageLoaded, setImageLoaded] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
-
-  // Log pour debug
-  console.log(`🖼️ EstablishmentCard ${name}:`, { 
-    imageType: typeof image,
-    imageLength: image?.length || 0,
-    isBase64: image?.startsWith('data:image'),
-    imagePreview: image?.substring(0, 100),
-    hasComma: image?.includes(','),
-    mimeType: image?.match(/data:([^;]+);/)?.[1]
+  
+  // Use custom hook for better image handling
+  const { imageSrc, isLoading, hasError } = useImageLoader({
+    src: image,
+    onLoad: () => console.log('✅ Image loaded:', name),
+    onError: (error) => console.error('❌ Image error:', name, error),
   });
 
   const handleBookNow = (e: React.MouseEvent) => {
     e.stopPropagation();
     e.preventDefault();
-    console.log('🎯 Réserver établissement:', id);
     router.push(`/booking?establishment=${id}`);
   };
 
   const handleViewDetails = (e: React.MouseEvent) => {
     e.stopPropagation();
     e.preventDefault();
-    console.log('👁️ Voir détails établissement:', id);
     router.push(`/establishments/${id}`);
   };
 
   const handleViewOnMap = (e: React.MouseEvent) => {
     e.stopPropagation();
     e.preventDefault();
-    console.log('🗺️ Voir sur la carte');
-    // Scroll to map section on homepage or navigate to map
     const mapSection = document.getElementById('map-section');
     if (mapSection) {
       mapSection.scrollIntoView({ behavior: 'smooth' });
-    } else {
-      console.warn('Section carte non trouvée');
     }
   };
 
   const handleLike = (e: React.MouseEvent) => {
     e.stopPropagation();
     e.preventDefault();
-    console.log('❤️ Like établissement:', id);
     alert('Établissement ajouté aux favoris !');
   };
 
@@ -101,14 +91,9 @@ export default function EstablishmentCard({
     ));
   };
 
-  const handleCardClick = () => {
-    console.log('🖱️ Clic sur la carte établissement:', id);
-    router.push(`/establishments/${id}`);
-  };
-
   return (
     <div 
-      onClick={handleCardClick}
+      onClick={() => router.push(`/establishments/${id}`)}
       className={`group relative bg-white rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-500 overflow-hidden border border-gray-100 cursor-pointer ${
         isHovered ? 'transform -translate-y-2' : ''
       } ${!isAvailable ? 'opacity-75' : ''}`}
@@ -117,36 +102,31 @@ export default function EstablishmentCard({
     >
       {/* Image Container */}
       <div className="relative h-64 overflow-hidden bg-gray-200">
-        {!imageLoaded && (
+        {isLoading && (
           <div className="absolute inset-0 bg-gradient-to-br from-gray-200 to-gray-300 animate-pulse flex items-center justify-center">
             <svg className="w-12 h-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
             </svg>
           </div>
         )}
+        
+        {hasError && (
+          <div className="absolute inset-0 bg-red-50 flex items-center justify-center">
+            <div className="text-center p-4">
+              <svg className="w-12 h-12 text-red-400 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              <p className="text-sm text-red-600">Image non disponible</p>
+            </div>
+          </div>
+        )}
+        
         <img
-          src={image}
+          src={imageSrc}
           alt={name}
           className={`w-full h-full object-cover transition-all duration-700 ${
-            imageLoaded ? 'opacity-100 scale-100' : 'opacity-0 scale-110'
+            !isLoading && !hasError ? 'opacity-100 scale-100' : 'opacity-0 scale-110'
           } ${isHovered ? 'scale-110' : 'scale-100'}`}
-          onLoad={(e) => {
-            console.log('✅ Image chargée:', name, {
-              naturalWidth: e.currentTarget.naturalWidth,
-              naturalHeight: e.currentTarget.naturalHeight,
-              complete: e.currentTarget.complete
-            });
-            setImageLoaded(true);
-          }}
-          onError={(e) => {
-            console.error('❌ Erreur chargement image pour:', name, {
-              src: image.substring(0, 100),
-              error: 'Image failed to load'
-            });
-            // Fallback vers image par défaut
-            e.currentTarget.src = 'https://images.unsplash.com/photo-1566073771259-6a8506099945?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80';
-            setImageLoaded(true);
-          }}
         />
         
         {/* Overlay Gradient */}

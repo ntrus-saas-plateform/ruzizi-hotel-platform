@@ -1,31 +1,50 @@
-import { NextRequest } from 'next/server';
-import { AccommodationService } from '@/services/Accommodation.service';
-import { createErrorResponse, createSuccessResponse } from '@/lib/auth/middleware';
+import { NextRequest, NextResponse } from 'next/server';
+import { AccommodationModel } from '@/models/Accommodation.model';
+import { connectDB } from '@/lib/db';
 
 /**
  * GET /api/public/accommodations/[id]
- * Get accommodation by ID (public access)
+ * Get accommodation details by ID (public access)
  */
-export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
-  const resolvedParams = await params;
+export async function GET(
+  request: NextRequest,
+  { params }: { params: { id: string } }
+) {
   try {
-    const accommodation = await AccommodationService.getById(resolvedParams.id);
+    await connectDB();
+
+    const accommodation = await AccommodationModel.findById(params.id)
+      .populate('establishmentId', 'name location contacts')
+      .lean();
 
     if (!accommodation) {
-      return createErrorResponse('NOT_FOUND', 'Accommodation not found', 404);
+      return NextResponse.json(
+        {
+          success: false,
+          error: {
+            code: 'NOT_FOUND',
+            message: 'Accommodation not found',
+          },
+        },
+        { status: 404 }
+      );
     }
 
-    // Only show available accommodations to public
-    if (accommodation.status !== 'available') {
-      return createErrorResponse('NOT_FOUND', 'Accommodation not available', 404);
-    }
-
-    return createSuccessResponse(accommodation);
+    return NextResponse.json({
+      success: true,
+      data: accommodation,
+    });
   } catch (error) {
-    if (error instanceof Error) {
-      return createErrorResponse('SERVER_ERROR', error.message, 500);
-    }
-
-    return createErrorResponse('SERVER_ERROR', 'An unexpected error occurred', 500);
+    console.error('Error fetching accommodation:', error);
+    return NextResponse.json(
+      {
+        success: false,
+        error: {
+          code: 'SERVER_ERROR',
+          message: 'Failed to fetch accommodation',
+        },
+      },
+      { status: 500 }
+    );
   }
 }

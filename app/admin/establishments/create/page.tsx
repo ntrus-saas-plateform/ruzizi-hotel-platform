@@ -76,8 +76,8 @@ export default function CreateEstablishmentPage() {
         },
         pricingMode: formData.pricingMode,
         totalCapacity: formData.totalCapacity,
-        services: formData.services,
-        amenities: formData.amenities,
+        // Fusionner services et amenities en un seul tableau
+        services: [...formData.services, ...formData.amenities],
         images: formData.images,
         isActive: formData.isActive,
         // TODO: Ajouter managerId depuis l'utilisateur connecté ou sélection

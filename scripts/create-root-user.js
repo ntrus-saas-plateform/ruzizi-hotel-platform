@@ -3,7 +3,7 @@ const bcrypt = require('bcryptjs');
 
 // Configuration
 const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/ruzizi-hotel';
-const ROOT_EMAIL = 'admin@ruzizihotel.com';
+const ROOT_EMAIL = 'ntrus07@outlook.fr';
 const ROOT_FIRST_NAME = 'Admin';
 const ROOT_LAST_NAME = 'Ruzizi';
 

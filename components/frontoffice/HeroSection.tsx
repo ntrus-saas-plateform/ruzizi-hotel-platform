@@ -3,15 +3,59 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 
+interface Establishment {
+  id: string;
+  name: string;
+  description: string;
+  images: string[];
+  location: {
+    city: string;
+  };
+}
+
 export default function HeroSection() {
   const router = useRouter();
   const [language, setLanguage] = useState('fr');
   const [currentSlide, setCurrentSlide] = useState(0);
+  const [establishments, setEstablishments] = useState<Establishment[]>([]);
+  const [imagesLoaded, setImagesLoaded] = useState<boolean[]>([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const savedLanguage = localStorage.getItem('language') || 'fr';
     setLanguage(savedLanguage);
+    fetchEstablishments();
   }, []);
+
+  const fetchEstablishments = async () => {
+    try {
+      console.log('🔄 Chargement des établissements pour le Hero...');
+      const response = await fetch('/api/public/establishments?limit=3');
+      const data = await response.json();
+
+      if (data.success && data.data.data && data.data.data.length > 0) {
+        const establishments = data.data.data.slice(0, 3);
+        console.log('✅ Établissements chargés pour Hero:', establishments.length);
+
+        establishments.forEach((est: Establishment) => {
+          console.log(`🏨 ${est.name}:`, {
+            hasImages: est.images && est.images.length > 0,
+            imageCount: est.images?.length || 0,
+            firstImage: est.images?.[0]?.substring(0, 50) || 'Aucune'
+          });
+        });
+
+        setEstablishments(establishments);
+        setImagesLoaded(new Array(establishments.length).fill(false));
+      } else {
+        console.warn('⚠️ Aucun établissement trouvé, utilisation des images par défaut');
+      }
+    } catch (error) {
+      console.error('❌ Erreur chargement établissements pour Hero:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const content = {
     fr: {
@@ -19,7 +63,7 @@ export default function HeroSection() {
       subtitle: "Excellence & Confort au Cœur de Bujumbura",
       description: "Découvrez l'hospitalité burundaise dans un cadre moderne et élégant. Notre hôtel vous offre une expérience unique alliant tradition et modernité.",
       cta1: "Réserver maintenant",
-      cta2: "Découvrir nos chambres",
+      cta2: "Découvrir nos établissements",
       features: [
         "Vue panoramique sur le lac Tanganyika",
         "Restaurant gastronomique",
@@ -38,7 +82,7 @@ export default function HeroSection() {
       subtitle: "Excellence & Comfort in the Heart of Bujumbura",
       description: "Discover Burundian hospitality in a modern and elegant setting. Our hotel offers you a unique experience combining tradition and modernity.",
       cta1: "Book now",
-      cta2: "Discover our rooms",
+      cta2: "Discover our institutions",
       features: [
         "Panoramic view of Lake Tanganyika",
         "Gourmet restaurant",
@@ -56,46 +100,153 @@ export default function HeroSection() {
 
   const t = content[language as keyof typeof content];
 
-  const slides = [
+  // Images par défaut si pas d'établissements
+  const defaultSlides = [
     {
       image: "https://images.unsplash.com/photo-1566073771259-6a8506099945?ixlib=rb-4.0.3&auto=format&fit=crop&w=2070&q=80",
+      fallback: "https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?w=2070&q=80",
       title: "Chambres Luxueuses",
-      description: "Confort moderne avec vue imprenable"
+      description: "Confort moderne avec vue imprenable",
+      establishmentId: undefined as string | undefined
     },
     {
       image: "https://images.unsplash.com/photo-1551882547-ff40c63fe5fa?ixlib=rb-4.0.3&auto=format&fit=crop&w=2070&q=80",
+      fallback: "https://images.unsplash.com/photo-1414235077428-338989a2e8c0?w=2070&q=80",
       title: "Restaurant Gastronomique",
-      description: "Saveurs locales et internationales"
+      description: "Saveurs locales et internationales",
+      establishmentId: undefined as string | undefined
     },
     {
       image: "https://images.unsplash.com/photo-1571896349842-33c89424de2d?ixlib=rb-4.0.3&auto=format&fit=crop&w=2070&q=80",
+      fallback: "https://images.unsplash.com/photo-1540555700478-4be289fbecef?w=2070&q=80",
       title: "Spa & Bien-être",
-      description: "Détente et relaxation absolue"
+      description: "Détente et relaxation absolue",
+      establishmentId: undefined as string | undefined
     }
   ];
 
+  // Utiliser les images des établissements de la DB ou les images par défaut
+  const slides = establishments.length > 0
+    ? establishments.map((est, idx) => {
+        const hasImage = est.images && est.images.length > 0;
+        const imageUrl = hasImage ? est.images[0] : defaultSlides[0].image;
+        
+        console.log(`📸 Slide ${idx + 1} - ${est.name}:`, {
+          hasImage,
+          imageLength: imageUrl?.length || 0,
+          isBase64: imageUrl?.startsWith('data:image'),
+          imagePreview: imageUrl?.substring(0, 100)
+        });
+        
+        return {
+          image: imageUrl,
+          fallback: defaultSlides[0].fallback,
+          title: est.name,
+          description: `${est.location.city} - ${est.description.substring(0, 60)}...`,
+          establishmentId: est.id
+        };
+      })
+    : defaultSlides;
+
+  // Preload images when establishments are loaded
   useEffect(() => {
+    if (slides.length > 0 && !loading) {
+      console.log('🖼️ Préchargement des images Hero...');
+      slides.forEach((slide, index) => {
+        const img = new Image();
+        img.onload = () => {
+          console.log(`✅ Hero image ${index + 1} chargée:`, slide.title);
+          setImagesLoaded(prev => {
+            const newState = [...prev];
+            newState[index] = true;
+            return newState;
+          });
+        };
+        img.onerror = () => {
+          console.error(`❌ Erreur chargement hero image ${index + 1}:`, slide.title);
+          setImagesLoaded(prev => {
+            const newState = [...prev];
+            newState[index] = true; // Mark as loaded anyway to prevent infinite loading
+            return newState;
+          });
+        };
+        img.src = slide.image;
+      });
+    }
+  }, [loading, establishments]);
+
+  // Auto-advance slideshow
+  useEffect(() => {
+    if (slides.length === 0) return;
+    
     const timer = setInterval(() => {
       setCurrentSlide((prev) => (prev + 1) % slides.length);
     }, 5000);
     return () => clearInterval(timer);
   }, [slides.length]);
 
+  // Reset currentSlide if it exceeds slides length
+  useEffect(() => {
+    if (currentSlide >= slides.length && slides.length > 0) {
+      setCurrentSlide(0);
+    }
+  }, [slides.length, currentSlide]);
+
+  // Show loading state while fetching
+  if (loading) {
+    return (
+      <section className="relative min-h-screen flex items-center justify-center overflow-hidden bg-gradient-to-br from-gray-800 to-gray-900">
+        <div className="text-center text-white">
+          <div className="w-16 h-16 border-4 border-amber-200 border-t-amber-600 rounded-full animate-spin mx-auto mb-4"></div>
+          <p className="text-lg">Chargement...</p>
+        </div>
+      </section>
+    );
+  }
+
   return (
     <section className="relative min-h-screen flex items-center justify-center overflow-hidden">
       {/* Background Slideshow */}
       <div className="absolute inset-0">
-        {slides.map((slide, index) => (
+        {slides.length > 0 && slides.map((slide, index) => (
           <div
             key={index}
-            className={`absolute inset-0 transition-opacity duration-1000 ${
-              index === currentSlide ? 'opacity-100' : 'opacity-0'
-            }`}
+            className={`absolute inset-0 transition-opacity duration-1000 ${index === currentSlide ? 'opacity-100' : 'opacity-0'
+              }`}
           >
-            <div
-              className="w-full h-full bg-cover bg-center bg-no-repeat"
-              style={{ backgroundImage: `url(${slide.image})` }}
+            {/* Loading placeholder */}
+            {!imagesLoaded[index] && (
+              <div className="absolute inset-0 bg-gradient-to-br from-gray-800 to-gray-900 flex items-center justify-center">
+                <div className="text-center">
+                  <div className="w-16 h-16 border-4 border-amber-200 border-t-amber-600 rounded-full animate-spin mx-auto mb-4"></div>
+                  <p className="text-white text-sm">Chargement...</p>
+                </div>
+              </div>
+            )}
+
+            {/* Background image */}
+            <img
+              src={slide.image}
+              alt={slide.title}
+              className={`w-full h-full object-cover transition-opacity duration-500 ${imagesLoaded[index] ? 'opacity-100' : 'opacity-0'
+                }`}
+              onLoad={() => {
+                console.log(`✅ Hero background ${index + 1} affiché:`, slide.title);
+              }}
+              onError={(e) => {
+                console.error(`❌ Erreur affichage hero background ${index + 1}, essai fallback`);
+                // Try fallback image
+                if (e.currentTarget.src !== slide.fallback) {
+                  e.currentTarget.src = slide.fallback;
+                } else {
+                  // Both failed, hide image and show gradient only
+                  e.currentTarget.style.display = 'none';
+                  console.error(`❌ Fallback aussi échoué pour ${slide.title}`);
+                }
+              }}
             />
+
+            {/* Gradient overlay */}
             <div className="absolute inset-0 bg-gradient-to-r from-black/60 via-black/40 to-black/60" />
           </div>
         ))}
@@ -146,7 +297,7 @@ export default function HeroSection() {
               </svg>
               <span>{t.cta1}</span>
             </button>
-            
+
             <button
               onClick={() => router.push('/establishments')}
               className="px-8 py-4 border-2 border-white/30 text-white rounded-xl hover:bg-white/10 hover:border-white/50 transition-all duration-300 font-semibold text-lg backdrop-blur-sm flex items-center justify-center space-x-3"
@@ -173,40 +324,55 @@ export default function HeroSection() {
           </div>
         </div>
 
-        {/* Scroll Indicator */}
-        <div className="absolute bottom-8 left-1/2 transform -translate-x-1/2 animate-bounce">
+        {/* Scroll Indicator - Centré en bas, plus haut pour éviter chevauchement */}
+        <div className="absolute bottom-24 left-1/2 transform -translate-x-1/2 animate-bounce hidden md:block">
           <div className="w-6 h-10 border-2 border-white/50 rounded-full flex justify-center">
             <div className="w-1 h-3 bg-white/70 rounded-full mt-2 animate-pulse" />
           </div>
         </div>
       </div>
 
-      {/* Slide Indicators */}
-      <div className="absolute bottom-8 right-8 flex space-x-2">
-        {slides.map((_, index) => (
-          <button
-            key={index}
-            onClick={() => setCurrentSlide(index)}
-            className={`w-3 h-3 rounded-full transition-all duration-300 ${
-              index === currentSlide 
-                ? 'bg-amber-400 scale-125' 
+      {/* Slide Indicators - Droite bas, responsive */}
+      {slides.length > 0 && (
+        <div className="absolute bottom-6 right-4 md:bottom-8 md:right-8 flex space-x-2 z-20">
+          {slides.map((_, index) => (
+            <button
+              key={index}
+              onClick={() => setCurrentSlide(index)}
+              className={`w-3 h-3 rounded-full transition-all duration-300 ${index === currentSlide
+                ? 'bg-amber-400 scale-125'
                 : 'bg-white/50 hover:bg-white/70'
-            }`}
-          />
-        ))}
-      </div>
-
-      {/* Slide Info */}
-      <div className="absolute bottom-8 left-8 text-white">
-        <div className="bg-black/30 backdrop-blur-sm rounded-lg p-4 max-w-xs">
-          <h3 className="font-semibold text-lg mb-1">
-            {slides[currentSlide].title}
-          </h3>
-          <p className="text-gray-200 text-sm">
-            {slides[currentSlide].description}
-          </p>
+                }`}
+              aria-label={`Aller au slide ${index + 1}`}
+            />
+          ))}
         </div>
-      </div>
+      )}
+
+      {/* Slide Info - Gauche bas, responsive, ne chevauche pas les autres éléments */}
+      {slides.length > 0 && slides[currentSlide] && (
+        <div className="absolute bottom-6 left-4 md:bottom-8 md:left-8 text-white z-20 max-w-[calc(100%-8rem)] md:max-w-xs">
+          <div className="bg-black/40 backdrop-blur-md rounded-xl p-4 shadow-2xl border border-white/10">
+            <h3 className="font-bold text-base md:text-lg mb-2 line-clamp-1">
+              {slides[currentSlide].title}
+            </h3>
+            <p className="text-gray-200 text-xs md:text-sm line-clamp-2 mb-3">
+              {slides[currentSlide].description}
+            </p>
+            {slides[currentSlide].establishmentId && (
+              <button
+                onClick={() => router.push(`/establishments/${slides[currentSlide].establishmentId}`)}
+                className="w-full px-4 py-2 bg-amber-600 hover:bg-amber-700 text-white text-xs md:text-sm rounded-lg transition-all duration-200 flex items-center justify-center space-x-2 font-medium shadow-lg hover:shadow-xl transform hover:scale-105"
+              >
+                <span>Voir détails</span>
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                </svg>
+              </button>
+            )}
+          </div>
+        </div>
+      )}
 
       <style jsx>{`
         @keyframes fade-in {

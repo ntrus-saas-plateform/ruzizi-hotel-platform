@@ -19,7 +19,7 @@ export default function Footer() {
       newsletter: 'Newsletter',
       newsletterText: 'Restez informé de nos offres spéciales',
       subscribe: 'S\'abonner',
-      address: 'Avenue de l\'Indépendance, Bujumbura, Burundi',
+      address: 'Avenue de l\'Université, Bujumbura, Burundi',
       rights: 'Tous droits réservés',
       privacy: 'Politique de confidentialité',
       terms: 'Conditions d\'utilisation',
@@ -42,7 +42,7 @@ export default function Footer() {
       newsletter: 'Newsletter',
       newsletterText: 'Stay informed about our special offers',
       subscribe: 'Subscribe',
-      address: 'Independence Avenue, Bujumbura, Burundi',
+      address: 'Avenue of the University, Bujumbura, Burundi',
       rights: 'All rights reserved',
       privacy: 'Privacy Policy',
       terms: 'Terms of Use',
@@ -66,14 +66,14 @@ export default function Footer() {
       {/* Main Footer Content */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-          
+
           {/* Brand & Contact */}
           <div className="lg:col-span-1">
             <div className="flex items-center space-x-3 mb-6">
               <div className="w-12 h-12 bg-white rounded-lg flex items-center justify-center shadow-lg p-2">
-                <img 
-                  src="/ruzizi_black.png" 
-                  alt="Ruzizi Hôtel" 
+                <img
+                  src="/ruzizi_black.png"
+                  alt="Ruzizi Hôtel"
                   className="w-full h-full object-contain"
                 />
               </div>
@@ -84,7 +84,7 @@ export default function Footer() {
                 <p className="text-gray-400 text-sm">Excellence & Confort</p>
               </div>
             </div>
-            
+
             <div className="space-y-4">
               <div className="flex items-start space-x-3">
                 <svg className="w-5 h-5 text-amber-500 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -93,7 +93,7 @@ export default function Footer() {
                 </svg>
                 <p className="text-gray-300 text-sm leading-relaxed">{t.address}</p>
               </div>
-              
+
               <div className="flex items-center space-x-3">
                 <svg className="w-5 h-5 text-amber-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
@@ -102,7 +102,7 @@ export default function Footer() {
                   +257 69 65 75 54
                 </a>
               </div>
-              
+
               <div className="flex items-center space-x-3">
                 <svg className="w-5 h-5 text-amber-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
@@ -127,8 +127,8 @@ export default function Footer() {
                 { name: t.support, href: '/support' }
               ].map((link) => (
                 <li key={link.name}>
-                  <a 
-                    href={link.href} 
+                  <a
+                    href={link.href}
                     className="text-gray-300 hover:text-amber-400 transition text-sm flex items-center group"
                   >
                     <span className="w-0 group-hover:w-2 h-0.5 bg-amber-400 transition-all duration-300 mr-0 group-hover:mr-2"></span>
@@ -161,7 +161,7 @@ export default function Footer() {
           <div>
             <h4 className="text-lg font-semibold mb-6 text-white">{t.newsletter}</h4>
             <p className="text-gray-300 text-sm mb-4">{t.newsletterText}</p>
-            
+
             <div className="flex mb-6">
               <input
                 type="email"

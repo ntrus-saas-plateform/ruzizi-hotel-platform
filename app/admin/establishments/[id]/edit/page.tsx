@@ -79,8 +79,9 @@ export default function EditEstablishmentPage() {
         website: est.contacts?.website || '',
         pricingMode: est.pricingMode || 'nightly',
         totalCapacity: est.totalCapacity || 0,
-        services: est.services || [],
-        amenities: est.amenities || [],
+        // Séparer services et amenities depuis le tableau services
+        services: (est.services || []).filter((s: string) => servicesList.includes(s)),
+        amenities: (est.services || []).filter((s: string) => amenitiesList.includes(s)),
         images: est.images || [],
         isActive: est.isActive !== false,
       });
@@ -118,8 +119,8 @@ export default function EditEstablishmentPage() {
         },
         pricingMode: formData.pricingMode,
         totalCapacity: formData.totalCapacity,
-        services: formData.services,
-        amenities: formData.amenities,
+        // Fusionner services et amenities en un seul tableau
+        services: [...formData.services, ...formData.amenities],
         images: formData.images,
         isActive: formData.isActive,
       };

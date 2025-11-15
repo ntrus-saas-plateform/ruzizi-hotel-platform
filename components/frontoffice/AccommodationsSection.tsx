@@ -8,9 +8,15 @@ interface Accommodation {
   name: string;
   type: 'room' | 'guesthouse';
   establishmentId: string;
-  establishmentName: string;
-  price: number;
-  capacity: number;
+  establishmentName?: string;
+  price?: number;
+  pricing?: {
+    basePrice: number;
+    seasonalPrice?: number;
+  };
+  capacity?: number | {
+    maxGuests: number;
+  };
   images: string[];
   amenities: string[];
   isAvailable: boolean;
@@ -50,7 +56,23 @@ export default function AccommodationsSection() {
       const estabData = await estabResponse.json();
       
       if (accomData.success) {
-        setAccommodations(accomData.data.data || []);
+        // Normalize accommodations to extract establishment info
+        const normalizedAccommodations = (accomData.data.data || []).map((accom: any) => {
+          const estId = typeof accom.establishmentId === 'object' 
+            ? (accom.establishmentId?._id || accom.establishmentId?.id)
+            : accom.establishmentId;
+          
+          const estName = typeof accom.establishmentId === 'object'
+            ? accom.establishmentId?.name
+            : undefined;
+
+          return {
+            ...accom,
+            establishmentId: estId,
+            establishmentName: estName || accom.establishmentName,
+          };
+        });
+        setAccommodations(normalizedAccommodations);
       }
       if (estabData.success) {
         setEstablishments(estabData.data.data || []);
@@ -142,16 +164,18 @@ export default function AccommodationsSection() {
     if (selectedEstablishment !== 'all' && accom.establishmentId !== selectedEstablishment) return false;
     if (selectedType !== 'all' && accom.type !== selectedType) return false;
     
+    const price = accom.price || accom.pricing?.basePrice || 0;
     if (priceRange !== 'all') {
-      if (priceRange === 'budget' && accom.price >= 50000) return false;
-      if (priceRange === 'standard' && (accom.price < 50000 || accom.price > 100000)) return false;
-      if (priceRange === 'premium' && accom.price <= 100000) return false;
+      if (priceRange === 'budget' && price >= 50000) return false;
+      if (priceRange === 'standard' && (price < 50000 || price > 100000)) return false;
+      if (priceRange === 'premium' && price <= 100000) return false;
     }
     
+    const maxGuests = typeof accom.capacity === 'number' ? accom.capacity : accom.capacity?.maxGuests || 0;
     if (capacity !== 'all') {
-      if (capacity === 'single' && accom.capacity !== 1) return false;
-      if (capacity === 'double' && accom.capacity !== 2) return false;
-      if (capacity === 'family' && accom.capacity < 3) return false;
+      if (capacity === 'single' && maxGuests !== 1) return false;
+      if (capacity === 'double' && maxGuests !== 2) return false;
+      if (capacity === 'family' && maxGuests < 3) return false;
     }
     
     return true;
@@ -347,10 +371,12 @@ export default function AccommodationsSection() {
                       {accom.name}
                     </h3>
                     <p className="text-sm text-gray-600 mb-4 flex items-center">
-                      <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <svg className="w-4 h-4 mr-1 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
                       </svg>
-                      {accom.establishmentName}
+                      <span className="truncate">
+                        {accom.establishmentName || 'Établissement'}
+                      </span>
                     </p>
 
                     {/* Amenities */}
@@ -373,11 +399,15 @@ export default function AccommodationsSection() {
                         <svg className="w-5 h-5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
                         </svg>
-                        <span className="text-sm">{accom.capacity} {t.persons}</span>
+                        <span className="text-sm">
+                          {typeof accom.capacity === 'number' 
+                            ? accom.capacity 
+                            : accom.capacity?.maxGuests || 'N/A'} {t.persons}
+                        </span>
                       </div>
                       <div className="text-right">
                         <div className="text-2xl font-bold text-amber-600">
-                          {accom.price.toLocaleString()} FBU
+                          {(accom.price || accom.pricing?.basePrice || 0).toLocaleString()} FBU
                         </div>
                         <div className="text-xs text-gray-500">{t.perNight}</div>
                       </div>
@@ -392,7 +422,7 @@ export default function AccommodationsSection() {
                         {t.viewDetails}
                       </button>
                       <button
-                        onClick={() => router.push(`/booking?accommodation=${accom.id}`)}
+                        onClick={() => router.push(`/booking?establishment=${accom.establishmentId}&accommodation=${accom.id}`)}
                         disabled={!accom.isAvailable}
                         className="flex-1 px-4 py-2.5 bg-gradient-to-r from-amber-600 to-amber-700 text-white rounded-lg hover:from-amber-700 hover:to-amber-800 transition font-medium text-sm disabled:opacity-50 disabled:cursor-not-allowed"
                       >

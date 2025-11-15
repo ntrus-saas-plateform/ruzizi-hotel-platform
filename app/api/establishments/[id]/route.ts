@@ -18,6 +18,11 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
   const resolvedParams = await params;
   return requireAuth(async (req, user) => {
     try {
+      // Ignore "new" route (used for create page)
+      if (resolvedParams.id === 'new' || resolvedParams.id === 'create') {
+        return createErrorResponse('BAD_REQUEST', 'Invalid establishment ID', 400);
+      }
+      
       const establishment = await EstablishmentService.getById(resolvedParams.id);
 
       if (!establishment) {
@@ -56,6 +61,11 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
   const resolvedParams = await params;
   return requireSuperAdmin(async (req) => {
     try {
+      // Ignore "new" route
+      if (resolvedParams.id === 'new' || resolvedParams.id === 'create') {
+        return createErrorResponse('BAD_REQUEST', 'Invalid establishment ID', 400);
+      }
+      
       // Parse JSON body with error handling
       const body = await parseRequestBody(req);
 
@@ -103,6 +113,11 @@ export async function DELETE(request: NextRequest, { params }: { params: Promise
   const resolvedParams = await params;
   return requireSuperAdmin(async () => {
     try {
+      // Ignore "new" route
+      if (resolvedParams.id === 'new' || resolvedParams.id === 'create') {
+        return createErrorResponse('BAD_REQUEST', 'Invalid establishment ID', 400);
+      }
+      
       const deleted = await EstablishmentService.delete(resolvedParams.id);
 
       if (!deleted) {

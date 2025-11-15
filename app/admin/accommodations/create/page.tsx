@@ -2,10 +2,12 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import { apiClient } from '@/lib/utils/api-client';
 import ImageUpload from '@/components/admin/ImageUpload';
 
 interface Establishment {
-  _id: string;
+  _id?: string;
+  id?: string;
   name: string;
   pricingMode: string;
 }
@@ -63,13 +65,14 @@ export default function CreateAccommodationPage() {
 
   const fetchEstablishments = async () => {
     try {
-      const token = localStorage.getItem('accessToken');
-      const response = await fetch('/api/establishments', {
-        headers: { 'Authorization': `Bearer ${token}` },
-      });
-      const data = await response.json();
-      if (response.ok) {
-        setEstablishments(data.data.data || []);
+      const data = await apiClient.get('/api/establishments');
+      if (data.success) {
+        // Normalize establishments to ensure they have _id
+        const normalizedEstablishments = (data.data.data || []).map((est: any) => ({
+          ...est,
+          _id: est._id || est.id,
+        }));
+        setEstablishments(normalizedEstablishments);
       }
     } catch (err) {
       console.error('Erreur chargement établissements:', err);
@@ -77,7 +80,7 @@ export default function CreateAccommodationPage() {
   };
 
   const handleEstablishmentChange = (establishmentId: string) => {
-    const establishment = establishments.find(e => e._id === establishmentId);
+    const establishment = establishments.find(e => (e._id || e.id) === establishmentId);
     setFormData(prev => ({
       ...prev,
       establishmentId,
@@ -91,8 +94,6 @@ export default function CreateAccommodationPage() {
     setError('');
 
     try {
-      const token = localStorage.getItem('accessToken');
-      
       const payload = {
         establishmentId: formData.establishmentId,
         name: formData.name,
@@ -123,21 +124,7 @@ export default function CreateAccommodationPage() {
         images: formData.images,
       };
 
-      const response = await fetch('/api/accommodations', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`,
-        },
-        body: JSON.stringify(payload),
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error?.message || 'Erreur lors de la création');
-      }
-
+      await apiClient.post('/api/accommodations', payload);
       router.push('/admin/accommodations');
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Erreur inconnue');
@@ -221,9 +208,14 @@ export default function CreateAccommodationPage() {
                     required
                   >
                     <option value="">Sélectionner un établissement</option>
-                    {establishments.map((est) => (
-                      <option key={est._id} value={est._id}>{est.name}</option>
-                    ))}
+                    {establishments.map((est, index) => {
+                      const estId = est._id || est.id || `est-${index}`;
+                      return (
+                        <option key={estId} value={estId}>
+                          {est.name}
+                        </option>
+                      );
+                    })}
                   </select>
                 </div>
 
@@ -308,8 +300,8 @@ export default function CreateAccommodationPage() {
                         type="number"
                         min="0"
                         step="1000"
-                        value={formData.basePrice}
-                        onChange={(e) => setFormData({ ...formData, basePrice: parseFloat(e.target.value) })}
+                        value={formData.basePrice || ''}
+                        onChange={(e) => setFormData({ ...formData, basePrice: parseFloat(e.target.value) || 0 })}
                         className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                         required
                       />
@@ -329,8 +321,8 @@ export default function CreateAccommodationPage() {
                         type="number"
                         min="0"
                         step="1000"
-                        value={formData.seasonalPrice}
-                        onChange={(e) => setFormData({ ...formData, seasonalPrice: parseFloat(e.target.value) })}
+                        value={formData.seasonalPrice || ''}
+                        onChange={(e) => setFormData({ ...formData, seasonalPrice: parseFloat(e.target.value) || 0 })}
                         className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                       />
                       <span className="absolute right-4 top-2 text-gray-500">BIF</span>
@@ -358,8 +350,8 @@ export default function CreateAccommodationPage() {
                     <input
                       type="number"
                       min="1"
-                      value={formData.maxGuests}
-                      onChange={(e) => setFormData({ ...formData, maxGuests: parseInt(e.target.value) })}
+                      value={formData.maxGuests || ''}
+                      onChange={(e) => setFormData({ ...formData, maxGuests: parseInt(e.target.value) || 1 })}
                       className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                       required
                     />
@@ -372,8 +364,8 @@ export default function CreateAccommodationPage() {
                     <input
                       type="number"
                       min="0"
-                      value={formData.bedrooms}
-                      onChange={(e) => setFormData({ ...formData, bedrooms: parseInt(e.target.value) })}
+                      value={formData.bedrooms || ''}
+                      onChange={(e) => setFormData({ ...formData, bedrooms: parseInt(e.target.value) || 0 })}
                       className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                       required
                     />
@@ -386,8 +378,8 @@ export default function CreateAccommodationPage() {
                     <input
                       type="number"
                       min="0"
-                      value={formData.bathrooms}
-                      onChange={(e) => setFormData({ ...formData, bathrooms: parseInt(e.target.value) })}
+                      value={formData.bathrooms || ''}
+                      onChange={(e) => setFormData({ ...formData, bathrooms: parseInt(e.target.value) || 0 })}
                       className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                       required
                     />
@@ -400,8 +392,8 @@ export default function CreateAccommodationPage() {
                     <input
                       type="number"
                       min="0"
-                      value={formData.showers}
-                      onChange={(e) => setFormData({ ...formData, showers: parseInt(e.target.value) })}
+                      value={formData.showers || ''}
+                      onChange={(e) => setFormData({ ...formData, showers: parseInt(e.target.value) || 0 })}
                       className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                       required
                     />
@@ -414,8 +406,8 @@ export default function CreateAccommodationPage() {
                     <input
                       type="number"
                       min="0"
-                      value={formData.livingRooms}
-                      onChange={(e) => setFormData({ ...formData, livingRooms: parseInt(e.target.value) })}
+                      value={formData.livingRooms || ''}
+                      onChange={(e) => setFormData({ ...formData, livingRooms: parseInt(e.target.value) || 0 })}
                       className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                       required
                     />
@@ -428,8 +420,8 @@ export default function CreateAccommodationPage() {
                     <input
                       type="number"
                       min="0"
-                      value={formData.kitchens}
-                      onChange={(e) => setFormData({ ...formData, kitchens: parseInt(e.target.value) })}
+                      value={formData.kitchens || ''}
+                      onChange={(e) => setFormData({ ...formData, kitchens: parseInt(e.target.value) || 0 })}
                       className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                       required
                     />
@@ -442,8 +434,8 @@ export default function CreateAccommodationPage() {
                     <input
                       type="number"
                       min="0"
-                      value={formData.balconies}
-                      onChange={(e) => setFormData({ ...formData, balconies: parseInt(e.target.value) })}
+                      value={formData.balconies || ''}
+                      onChange={(e) => setFormData({ ...formData, balconies: parseInt(e.target.value) || 0 })}
                       className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                       required
                     />
@@ -462,8 +454,8 @@ export default function CreateAccommodationPage() {
                     </label>
                     <input
                       type="number"
-                      value={formData.floor}
-                      onChange={(e) => setFormData({ ...formData, floor: parseInt(e.target.value) })}
+                      value={formData.floor || ''}
+                      onChange={(e) => setFormData({ ...formData, floor: parseInt(e.target.value) || 0 })}
                       className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                       placeholder="Ex: 2"
                     />
@@ -476,8 +468,8 @@ export default function CreateAccommodationPage() {
                     <input
                       type="number"
                       min="0"
-                      value={formData.area}
-                      onChange={(e) => setFormData({ ...formData, area: parseFloat(e.target.value) })}
+                      value={formData.area || ''}
+                      onChange={(e) => setFormData({ ...formData, area: parseFloat(e.target.value) || 0 })}
                       className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                       placeholder="Ex: 35"
                     />

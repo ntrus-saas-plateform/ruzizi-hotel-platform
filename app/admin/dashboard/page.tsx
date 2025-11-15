@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { apiClient } from '@/lib/utils/api-client';
 
 interface OccupancyStats {
   totalAccommodations: number;
@@ -40,13 +41,7 @@ export default function DashboardPage() {
         endDate: dateRange.endDate,
       });
 
-      const response = await fetch(`/api/bookings/occupancy?${params}`);
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error?.message || 'Failed to fetch occupancy stats');
-      }
-
+      const data = await apiClient.get(`/api/bookings/occupancy?${params}`);
       setOccupancyStats(data.data);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'An error occurred');

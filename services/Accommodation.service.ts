@@ -43,8 +43,8 @@ export class AccommodationService {
     await connectDB();
 
     const accommodation = await AccommodationModel.findById(id).populate(
-      'establishment',
-      'name location'
+      'establishmentId',
+      'name location contacts'
     );
 
     if (!accommodation) {
@@ -101,12 +101,15 @@ export class AccommodationService {
       query.$text = { $search: filters.search };
     }
 
-    // Execute query with pagination
-    const result = await paginate(AccommodationModel.find(query), {
-      page,
-      limit,
-      sort: { createdAt: -1 },
-    });
+    // Execute query with pagination and populate establishment
+    const result = await paginate(
+      AccommodationModel.find(query).populate('establishmentId', 'name location contacts'),
+      {
+        page,
+        limit,
+        sort: { createdAt: -1 },
+      }
+    );
 
     return {
       data: result.data.map((acc) => acc.toJSON() as unknown as AccommodationResponse),

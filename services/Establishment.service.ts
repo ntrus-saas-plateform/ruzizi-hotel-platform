@@ -22,13 +22,15 @@ export class EstablishmentService {
     await connectDB();
 
     // Verify manager exists and has correct role
-    const manager = await UserModel.findById(data.managerId);
-    if (!manager) {
-      throw new Error('Manager not found');
-    }
-
-    if (manager.role !== 'manager' && manager.role !== 'super_admin') {
-      throw new Error('User must have manager or super_admin role');
+    if(data.managerId){
+      const manager = await UserModel.findById(data.managerId);
+      if (!manager) {
+        throw new Error('Manager not found');
+      }
+  
+      if (manager.role !== 'manager' && manager.role !== 'super_admin') {
+        throw new Error('User must have manager or super_admin role');
+      }
     }
 
     // Verify staff members exist
@@ -38,17 +40,22 @@ export class EstablishmentService {
         throw new Error('One or more staff members not found');
       }
     }
+    let hotelManager;
+
+    if(data.managerId){
+      hotelManager = toObjectId(data.managerId)
+    }
 
     // Create establishment
     const establishment = await EstablishmentModel.create({
       ...data,
-      managerId: toObjectId(data.managerId),
+      managerId: hotelManager,
       staffIds: data.staffIds?.map((id) => toObjectId(id)) || [],
     });
 
     // Update manager's establishmentId
-    manager.establishmentId = establishment._id as any;
-    await manager.save();
+    // manager.establishmentId = establishment._id as any;
+    // await manager.save();
 
     // Update staff members' establishmentId
     if (data.staffIds && data.staffIds.length > 0) {

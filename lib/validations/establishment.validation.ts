@@ -32,13 +32,13 @@ export const ContactsSchema = z.object({
  */
 export const CreateEstablishmentSchema = z.object({
   name: z.string().min(1, 'Name is required').max(100),
-  description: z.string().min(10, 'Description must be at least 10 characters').max(1000),
+  description: z.string().min(10, 'Description must be at least 10 characters').max(10000),
   location: LocationSchema,
   pricingMode: PricingModeSchema,
   contacts: ContactsSchema,
   services: z.array(z.string()).default([]),
   images: z.array(z.string().url('Invalid image URL')).default([]),
-  managerId: z.string().min(1, 'Manager ID is required'),
+  managerId: z.string(),
   staffIds: z.array(z.string()).default([]),
   totalCapacity: z.number().int().min(1, 'Total capacity must be at least 1'),
   isActive: z.boolean().default(true),

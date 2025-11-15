@@ -160,7 +160,7 @@ export default function AccommodationsPage() {
               </p>
             </div>
             <button
-              onClick={() => router.push('/admin/accommodations/new')}
+              onClick={() => router.push('/admin/accommodations/create')}
               className="px-4 py-2.5 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-lg hover:from-blue-700 hover:to-blue-800 transition-all shadow-md hover:shadow-lg font-medium flex items-center justify-center"
             >
               <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">

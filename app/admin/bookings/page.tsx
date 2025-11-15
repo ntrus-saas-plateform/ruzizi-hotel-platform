@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import { apiClient } from '@/lib/utils/api-client';
 import type { BookingResponse } from '@/types/booking.types';
 
 export default function BookingsPage() {
@@ -37,8 +38,7 @@ export default function BookingsPage() {
 
   const fetchEstablishments = async () => {
     try {
-      const response = await fetch('/api/establishments');
-      const data = await response.json();
+      const data = await apiClient.get('/api/establishments');
       if (data.success) {
         setEstablishments(data.data.data || []);
       }
@@ -52,12 +52,6 @@ export default function BookingsPage() {
       setLoading(true);
       setError('');
 
-      const token = localStorage.getItem('accessToken');
-      if (!token) {
-        setError('Non authentifié');
-        return;
-      }
-
       const params = new URLSearchParams({
         page: currentPage.toString(),
         limit: '10',
@@ -66,17 +60,7 @@ export default function BookingsPage() {
         ),
       });
 
-      const response = await fetch(`/api/bookings?${params}`, {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-        },
-      });
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error?.message || 'Failed to fetch bookings');
-      }
-
+      const data = await apiClient.get(`/api/bookings?${params}`);
       setBookings(data.data.data || []);
       setTotalPages(data.data.pagination?.totalPages || 1);
     } catch (err) {

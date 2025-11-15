@@ -26,7 +26,12 @@ export default function BookingDetailPage() {
       setLoading(true);
       setError('');
 
-      const response = await fetch(`/api/bookings/${bookingId}`);
+      const token = localStorage.getItem('accessToken');
+      const response = await fetch(`/api/bookings/${bookingId}`, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+      });
       const data = await response.json();
 
       if (!response.ok) {
@@ -215,7 +220,7 @@ export default function BookingDetailPage() {
         <div className="text-center">
           <p className="text-red-600">{error}</p>
           <button
-            onClick={() => router.push('/bookings')}
+            onClick={() => router.push('/admin/bookings')}
             className="mt-4 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
           >
             Retour aux réservations
@@ -235,7 +240,7 @@ export default function BookingDetailPage() {
         {/* Header */}
         <div className="mb-6">
           <button
-            onClick={() => router.push('/bookings')}
+            onClick={() => router.push('/admin/bookings')}
             className="text-blue-600 hover:text-blue-800 mb-2"
           >
             ← Retour aux réservations

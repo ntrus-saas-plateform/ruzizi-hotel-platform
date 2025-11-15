@@ -13,7 +13,15 @@ export default function EstablishmentDetailsPage() {
     const [establishment, setEstablishment] = useState<any>(null);
 
     useEffect(() => {
-        fetchEstablishment();
+        // Don't fetch if id is "new" or "create" (these are for creation pages)
+        if (id && id !== 'new' && id !== 'create') {
+            fetchEstablishment();
+        } else {
+            // Redirect to create page if trying to access /new
+            if (id === 'new' || id === 'create') {
+                router.push('/admin/establishments/create');
+            }
+        }
     }, [id]);
 
     const fetchEstablishment = async () => {

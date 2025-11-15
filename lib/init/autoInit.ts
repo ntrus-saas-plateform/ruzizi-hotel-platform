@@ -2,7 +2,7 @@ import { connectDB } from '@/lib/db';
 import bcrypt from 'bcryptjs';
 import nodemailer from 'nodemailer';
 
-let initialized = false;
+// Removed: let initialized = false; - We check the database every time instead
 
 const ROOT_EMAIL = process.env.ROOT_EMAIL || 'ntrus07@outlook.fr';
 const ROOT_FIRST_NAME = 'Admin';
@@ -107,8 +107,6 @@ async function sendCredentialsEmail(email: string, password: string): Promise<vo
  * Initialise l'utilisateur root au démarrage
  */
 export async function autoInitRootUser(): Promise<void> {
-    if (initialized) return;
-
     try {
         const mongoose = await connectDB();
         const db = mongoose.connection.db;
@@ -123,8 +121,7 @@ export async function autoInitRootUser(): Promise<void> {
         const userCount = await usersCollection.countDocuments();
 
         if (userCount > 0) {
-            initialized = true;
-            return;
+            return; // Des utilisateurs existent déjà
         }
 
         console.log('');
@@ -147,9 +144,10 @@ export async function autoInitRootUser(): Promise<void> {
                 'manage_establishments',
                 'manage_accommodations',
                 'manage_bookings',
-                'manage_finances',
-                'view_analytics',
-                'system_admin',
+                'manage_payments',
+                'view_reports',
+                'manage_system',
+                'manage_settings'
             ],
             createdAt: new Date(),
             updatedAt: new Date(),
@@ -178,8 +176,6 @@ export async function autoInitRootUser(): Promise<void> {
                 await sendCredentialsEmail(ROOT_EMAIL, password);
             }
         }
-
-        initialized = true;
     } catch (error) {
         console.error('❌ Erreur initialisation root user:', error);
     }

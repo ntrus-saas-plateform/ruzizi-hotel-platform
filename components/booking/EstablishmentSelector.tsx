@@ -207,7 +207,8 @@ export default function EstablishmentSelector({
       const response = await fetch(`/api/public/accommodations?${params.toString()}`);
       const data = await response.json();
       if (data.success) {
-        setAccommodations(data.data || []);
+        const accomData = data.data?.data || data.data || [];
+        setAccommodations(Array.isArray(accomData) ? accomData : []);
       }
     } catch (error) {
       console.error('Error fetching accommodations:', error);
@@ -255,7 +256,11 @@ export default function EstablishmentSelector({
   const hasActiveFilters = typeFilter || pricingModeFilter || priceRange.min > 0 || priceRange.max < 1000000 || searchTerm || minBedrooms > 0 || minBathrooms > 0 || selectedAmenities.length > 0;
 
   // Get all unique amenities from accommodations
-  const allAmenities = Array.from(new Set(accommodations.flatMap(acc => acc.amenities)));
+  const allAmenities = Array.from(new Set(
+    Array.isArray(accommodations) 
+      ? accommodations.flatMap(acc => acc.amenities || [])
+      : []
+  ));
 
   const toggleAmenity = (amenity: string) => {
     setSelectedAmenities(prev => 
@@ -267,6 +272,7 @@ export default function EstablishmentSelector({
 
   // Filter and sort accommodations
   const getFilteredAndSortedAccommodations = () => {
+    if (!Array.isArray(accommodations)) return [];
     let filtered = [...accommodations];
 
     // Apply bedroom filter

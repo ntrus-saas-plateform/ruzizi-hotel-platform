@@ -13,22 +13,21 @@ export default function AccommodationDetailsPage() {
   const [accommodation, setAccommodation] = useState<any>(null);
 
   useEffect(() => {
-    fetchAccommodation();
+    // Don't fetch if id is "new" or "create" (these are for creation pages)
+    if (id && id !== 'new' && id !== 'create') {
+      fetchAccommodation();
+    } else {
+      // Redirect to create page if trying to access /new
+      if (id === 'new' || id === 'create') {
+        router.push('/admin/accommodations/create');
+      }
+    }
   }, [id]);
 
   const fetchAccommodation = async () => {
     try {
-      const token = localStorage.getItem('accessToken');
-      const response = await fetch(`/api/accommodations/${id}`, {
-        headers: { 'Authorization': `Bearer ${token}` },
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error?.message || 'Erreur de chargement');
-      }
-
+      const { apiClient } = await import('@/lib/utils/api-client');
+      const data = await apiClient.get(`/api/accommodations/${id}`);
       setAccommodation(data.data);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Erreur inconnue');
@@ -43,16 +42,8 @@ export default function AccommodationDetailsPage() {
     }
 
     try {
-      const token = localStorage.getItem('accessToken');
-      const response = await fetch(`/api/accommodations/${id}`, {
-        method: 'DELETE',
-        headers: { 'Authorization': `Bearer ${token}` },
-      });
-
-      if (!response.ok) {
-        throw new Error('Erreur lors de la suppression');
-      }
-
+      const { apiClient } = await import('@/lib/utils/api-client');
+      await apiClient.delete(`/api/accommodations/${id}`);
       router.push('/admin/accommodations');
     } catch (err) {
       alert(err instanceof Error ? err.message : 'Erreur inconnue');
@@ -159,12 +150,12 @@ export default function AccommodationDetailsPage() {
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="text-sm font-medium text-gray-500">Capacité</label>
-                  <p className="text-gray-900">{accommodation.capacity} personne(s)</p>
+                  <label className="text-sm font-medium text-gray-500">Capacité max</label>
+                  <p className="text-gray-900">{accommodation.capacity?.maxGuests || 'N/A'} personne(s)</p>
                 </div>
                 <div>
-                  <label className="text-sm font-medium text-gray-500">Prix par nuit</label>
-                  <p className="text-gray-900 font-semibold">{accommodation.pricePerNight?.toLocaleString()} BIF</p>
+                  <label className="text-sm font-medium text-gray-500">Prix de base</label>
+                  <p className="text-gray-900 font-semibold">{accommodation.pricing?.basePrice?.toLocaleString() || 'N/A'} BIF</p>
                 </div>
               </div>
             </div>
@@ -194,15 +185,15 @@ export default function AccommodationDetailsPage() {
             
             <div className="space-y-4">
               <div className="p-4 bg-blue-50 rounded-lg">
-                <div className="text-2xl font-bold text-blue-600">{accommodation.capacity}</div>
-                <div className="text-sm text-gray-600">Capacité</div>
+                <div className="text-2xl font-bold text-blue-600">{accommodation.capacity?.maxGuests || 'N/A'}</div>
+                <div className="text-sm text-gray-600">Capacité max</div>
               </div>
 
               <div className="p-4 bg-green-50 rounded-lg">
                 <div className="text-2xl font-bold text-green-600">
-                  {accommodation.pricePerNight?.toLocaleString()} BIF
+                  {accommodation.pricing?.basePrice?.toLocaleString() || 'N/A'} BIF
                 </div>
-                <div className="text-sm text-gray-600">Prix par nuit</div>
+                <div className="text-sm text-gray-600">Prix de base</div>
               </div>
 
               <div className="p-4 bg-purple-50 rounded-lg">
@@ -210,6 +201,14 @@ export default function AccommodationDetailsPage() {
                   {accommodation.type}
                 </div>
                 <div className="text-sm text-gray-600">Type</div>
+              </div>
+
+              <div className="p-4 bg-amber-50 rounded-lg">
+                <div className="text-sm text-gray-600 space-y-1">
+                  <div>🛏️ {accommodation.capacity?.bedrooms || 0} chambre(s)</div>
+                  <div>🚿 {accommodation.capacity?.bathrooms || 0} salle(s) de bain</div>
+                  <div>🛁 {accommodation.capacity?.showers || 0} douche(s)</div>
+                </div>
               </div>
             </div>
           </div>

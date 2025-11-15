@@ -17,6 +17,12 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
     return requireAuth(async (req, user) => {
         try {
             const { id } = await params;
+            
+            // Ignore "new" route (used for create page)
+            if (id === 'new') {
+                return createErrorResponse('BAD_REQUEST', 'Invalid accommodation ID', 400);
+            }
+            
             const accommodation = await AccommodationService.getById(id);
 
             if (!accommodation) {
@@ -55,6 +61,12 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
     return requireManager(async (request: NextRequest, user) => {
         try {
             const { id } = await params;
+            
+            // Ignore "new" route
+            if (id === 'new') {
+                return createErrorResponse('BAD_REQUEST', 'Invalid accommodation ID', 400);
+            }
+            
             // Check if accommodation exists and user has access
             const existing = await AccommodationService.getById(id);
 
@@ -119,6 +131,12 @@ export async function DELETE(request: NextRequest, { params }: { params: Promise
     return requireManager(async (req, user) => {
         try {
             const { id } = await params;
+            
+            // Ignore "new" route
+            if (id === 'new') {
+                return createErrorResponse('BAD_REQUEST', 'Invalid accommodation ID', 400);
+            }
+            
             // Check if accommodation exists and user has access
             const existing = await AccommodationService.getById(id);
 
