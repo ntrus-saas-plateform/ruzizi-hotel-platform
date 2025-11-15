@@ -1,29 +1,42 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useRouter, useSearchParams } from 'next/navigation';
-import MainClientForm from '@/components/booking/MainClientForm';
-import GuestForm from '@/components/booking/GuestForm';
-import EstablishmentSelector from '@/components/booking/EstablishmentSelector';
-import BookingSummary from '@/components/booking/BookingSummary';
-import type { CompleteClientInfo, GuestInfo } from '@/types/guest.types';
-import type { AccommodationResponse } from '@/types/accommodation.types';
+
+// Types simplifiés pour la démo
+type CompleteClientInfo = {
+    firstName: string;
+    lastName: string;
+    email: string;
+    phone: string;
+    nationality: string;
+    gender: string;
+    dateOfBirth: Date;
+    idType: string;
+    idNumber: string;
+    address: string;
+    city: string;
+    country: string;
+    customerType: string;
+    companyName?: string;
+};
+
+type GuestInfo = {
+    firstName: string;
+    lastName: string;
+    gender: string;
+    dateOfBirth: Date;
+    nationality: string;
+    idType: string;
+    idNumber: string;
+    relationshipToMainClient: string;
+    isMinor: boolean;
+};
 
 export default function BookingContent() {
-    const router = useRouter();
-    const searchParams = useSearchParams();
-    const accommodationId = searchParams.get('accommodation');
-    const establishmentId = searchParams.get('establishment');
-
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
     const [success, setSuccess] = useState(false);
     const [currentStep, setCurrentStep] = useState(1);
-
-    // Sélection d'établissement et d'hébergement
-    const [selectedEstablishment, setSelectedEstablishment] = useState<string | null>(establishmentId);
-    const [selectedAccommodation, setSelectedAccommodation] = useState<string | null>(accommodationId);
-    const [selectedAccommodationData, setSelectedAccommodationData] = useState<AccommodationResponse | null>(null);
 
     // Dates
     const [checkInDate, setCheckInDate] = useState('');
@@ -63,229 +76,55 @@ export default function BookingContent() {
         }
     }, [checkInDate, checkOutDate]);
 
-    // Gestion des invités
-    useEffect(() => {
-        const guestCount = numberOfGuests - 1;
-        if (guestCount > guests.length) {
-            const newGuests = [...guests];
-            for (let i = guests.length; i < guestCount; i++) {
-                newGuests.push({
-                    firstName: '',
-                    lastName: '',
-                    gender: 'M',
-                    dateOfBirth: new Date(),
-                    nationality: '',
-                    idType: 'passport',
-                    idNumber: '',
-                    relationshipToMainClient: 'friend',
-                    isMinor: false,
-                });
-            }
-            setGuests(newGuests);
-        } else if (guestCount < guests.length) {
-            setGuests(guests.slice(0, guestCount));
-        }
-    }, [numberOfGuests, guests.length]);
-
-    const updateGuest = (index: number, guest: GuestInfo) => {
-        const updated = [...guests];
-        updated[index] = guest;
-        setGuests(updated);
-    };
-
-    const removeGuest = (index: number) => {
-        setGuests(guests.filter((_, i) => i !== index));
-        setNumberOfGuests(numberOfGuests - 1);
-    };
-
-    const validateForm = () => {
-        // Validation étape 1: Sélection
-        if (!selectedEstablishment) {
-            setError('Veuillez sélectionner un établissement');
-            return false;
-        }
-
-        if (!selectedAccommodation) {
-            setError('Veuillez choisir un hébergement');
-            return false;
-        }
-
-        if (!checkInDate || !checkOutDate) {
-            setError('Veuillez sélectionner les dates de séjour');
-            return false;
-        }
-
-        if (numberOfNights <= 0) {
-            setError('La date de départ doit être après la date d\'arrivée');
-            return false;
-        }
-
-        // Validation étape 2: Informations client
-        const requiredClientFields: (keyof CompleteClientInfo)[] = [
-            'firstName', 'lastName', 'email', 'phone', 'nationality',
-            'idNumber', 'address', 'city', 'country'
-        ];
-
-        for (const field of requiredClientFields) {
-            if (!mainClient[field]) {
-                setError(`Veuillez remplir le champ "${field}" du client principal`);
-                return false;
-            }
-        }
-
-        if (mainClient.customerType === 'corporate' || mainClient.customerType === 'agency') {
-            if (!mainClient.companyName) {
-                setError('Veuillez fournir le nom de l\'entreprise/agence');
-                return false;
-            }
-        }
-
-        // Validation des invités
-        for (let i = 0; i < guests.length; i++) {
-            const guest = guests[i];
-            if (!guest.firstName || !guest.lastName || !guest.nationality ||
-                !guest.idNumber || !guest.relationshipToMainClient) {
-                setError(`Veuillez remplir toutes les informations de l'invité ${i + 1}`);
-                return false;
-            }
-        }
-
-        // Validation de la capacité
-        if (selectedAccommodationData && numberOfGuests > selectedAccommodationData.capacity.maxGuests) {
-            setError(`Le nombre d'invités (${numberOfGuests}) dépasse la capacité maximale de l'hébergement (${selectedAccommodationData.capacity.maxGuests})`);
-            return false;
-        }
-
-        return true;
-    };
-
-    const handleSubmit = async (e: React.FormEvent) => {
-        e.preventDefault();
-        setError('');
-
-        if (!validateForm()) {
-            return;
-        }
-
-        setLoading(true);
-
-        try {
-            const bookingData = {
-                accommodationId,
-                checkInDate,
-                checkOutDate,
-                numberOfNights,
-                arrivalTime,
-                mainClient,
-                guests,
-                numberOfGuests,
-                specialRequests,
-            };
-
-            const response = await fetch('/api/public/bookings', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(bookingData),
-            });
-
-            const data = await response.json();
-
-            if (!response.ok) {
-                throw new Error(data.error?.message || 'Erreur lors de la réservation');
-            }
-
-            setSuccess(true);
-            setTimeout(() => {
-                router.push(`/booking-confirmation/${data.data.id}`);
-            }, 2000);
-        } catch (err) {
-            setError(err instanceof Error ? err.message : 'Une erreur est survenue');
-        } finally {
-            setLoading(false);
-        }
-    };
-
     const totalSteps = 3;
-    const stepTitles = [
-        'Sélection',
-        'Informations',
-        'Confirmation'
-    ];
-
-    const canProceedToStep2 = selectedEstablishment && selectedAccommodation && checkInDate && checkOutDate;
-    const canProceedToStep3 = canProceedToStep2 && mainClient.firstName && mainClient.lastName && mainClient.email;
-
-    const handleEstablishmentChange = (establishmentId: string | null) => {
-        setSelectedEstablishment(establishmentId);
-        setSelectedAccommodation(null);
-        setSelectedAccommodationData(null);
-    };
-
-    const handleAccommodationChange = (accommodationId: string | null, accommodation: AccommodationResponse | null) => {
-        setSelectedAccommodation(accommodationId);
-        setSelectedAccommodationData(accommodation);
-        
-        // Ajuster le nombre d'invités selon la capacité
-        if (accommodation && numberOfGuests > accommodation.capacity.maxGuests) {
-            setNumberOfGuests(accommodation.capacity.maxGuests);
-        }
-    };
-
-    const calculateTotalPrice = () => {
-        if (!selectedAccommodationData || numberOfNights <= 0) return 0;
-        
-        const basePrice = selectedAccommodationData.pricing.basePrice;
-        const seasonalPrice = selectedAccommodationData.pricing.seasonalPrice || basePrice;
-        
-        return seasonalPrice * numberOfNights;
-    };
+    const stepTitles = ['Sélection', 'Informations', 'Confirmation'];
 
     return (
-        <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-amber-50 py-8 pt-32">
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                {/* Header Section */}
+        <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 py-12 px-4 sm:px-6 lg:px-8">
+            <div className="max-w-5xl mx-auto">
+                {/* Header */}
                 <div className="text-center mb-12">
-                    <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-amber-500 to-amber-700 rounded-full mb-6 shadow-lg">
-                        <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                    <div className="inline-flex items-center justify-center w-20 h-20 bg-gradient-to-br from-amber-500 to-orange-600 rounded-2xl mb-6 shadow-xl">
+                        <svg className="w-10 h-10 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                         </svg>
                     </div>
-                    <h1 className="text-4xl font-bold bg-gradient-to-r from-gray-900 via-gray-800 to-amber-800 bg-clip-text text-transparent mb-4">
+                    <h1 className="text-5xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-slate-900 via-blue-900 to-indigo-900 mb-4">
                         Réservation Complète
                     </h1>
-                    <p className="text-lg text-gray-600 max-w-2xl mx-auto">
-                        Finalisez votre réservation en quelques étapes simples. Nous nous occupons du reste pour vous offrir un séjour inoubliable.
+                    <p className="text-lg text-slate-600 max-w-2xl mx-auto font-medium">
+                        Finalisez votre réservation en quelques étapes simples
                     </p>
                 </div>
 
-                <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-2xl border border-white/20 p-8 lg:p-12">
-                    {/* Progress Indicator */}
-                    <div className="mb-8">
+                <div className="bg-white rounded-3xl shadow-2xl border border-slate-200 overflow-hidden">
+                    {/* Progress Bar */}
+                    <div className="bg-gradient-to-r from-slate-50 to-blue-50 px-8 py-6 border-b border-slate-200">
                         <div className="flex items-center justify-between mb-4">
-                            <span className="text-sm font-medium text-amber-600">Étape {currentStep} sur {totalSteps}</span>
-                            <span className="text-sm text-gray-500">{stepTitles[currentStep - 1]}</span>
+                            <span className="text-sm font-bold text-amber-600 uppercase tracking-wide">
+                                Étape {currentStep} sur {totalSteps}
+                            </span>
+                            <span className="text-sm font-semibold text-slate-700">{stepTitles[currentStep - 1]}</span>
                         </div>
-                        <div className="w-full bg-gray-200 rounded-full h-2">
-                            <div 
-                                className="bg-gradient-to-r from-amber-500 to-amber-600 h-2 rounded-full transition-all duration-500"
+                        <div className="w-full bg-slate-200 rounded-full h-3 overflow-hidden">
+                            <div
+                                className="bg-gradient-to-r from-amber-500 via-orange-500 to-amber-600 h-3 rounded-full transition-all duration-700 ease-out shadow-lg"
                                 style={{ width: `${(currentStep / totalSteps) * 100}%` }}
                             ></div>
                         </div>
-                        
-                        {/* Step Navigation */}
-                        <div className="flex justify-between mt-4">
+
+                        {/* Step Indicators */}
+                        <div className="flex justify-between mt-6">
                             {stepTitles.map((title, index) => (
-                                <div key={index} className="flex items-center">
-                                    <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium ${
-                                        index + 1 <= currentStep 
-                                            ? 'bg-amber-600 text-white' 
-                                            : 'bg-gray-200 text-gray-500'
-                                    }`}>
+                                <div key={index} className="flex flex-col items-center">
+                                    <div className={`w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold transition-all duration-300 ${index + 1 <= currentStep
+                                            ? 'bg-gradient-to-br from-amber-500 to-orange-600 text-white shadow-lg scale-110'
+                                            : 'bg-slate-200 text-slate-500'
+                                        }`}>
                                         {index + 1}
                                     </div>
-                                    <span className={`ml-2 text-sm font-medium ${
-                                        index + 1 <= currentStep ? 'text-amber-600' : 'text-gray-500'
-                                    }`}>
+                                    <span className={`mt-2 text-xs font-semibold transition-all duration-300 ${index + 1 <= currentStep ? 'text-amber-600' : 'text-slate-500'
+                                        }`}>
                                         {title}
                                     </span>
                                 </div>
@@ -293,366 +132,360 @@ export default function BookingContent() {
                         </div>
                     </div>
 
-                    {error && (
-                        <div className="mb-8 p-6 bg-gradient-to-r from-red-50 to-red-100 border border-red-200 rounded-xl shadow-sm">
-                            <div className="flex items-center">
-                                <svg className="w-6 h-6 text-red-500 mr-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                </svg>
-                                <p className="text-red-700 font-medium">{error}</p>
+                    {/* Messages */}
+                    <div className="px-8 pt-6">
+                        {error && (
+                            <div className="mb-6 p-5 bg-gradient-to-r from-red-50 to-rose-50 border-l-4 border-red-500 rounded-lg shadow-sm">
+                                <div className="flex items-center">
+                                    <svg className="w-6 h-6 text-red-600 mr-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                    </svg>
+                                    <p className="text-red-800 font-semibold">{error}</p>
+                                </div>
                             </div>
-                        </div>
-                    )}
+                        )}
 
-                    {success && (
-                        <div className="mb-8 p-6 bg-gradient-to-r from-green-50 to-emerald-100 border border-green-200 rounded-xl shadow-sm">
-                            <div className="flex items-center">
-                                <svg className="w-6 h-6 text-green-500 mr-3 flex-shrink-0 animate-pulse" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                </svg>
-                                <p className="text-green-700 font-medium">Réservation effectuée avec succès! Redirection...</p>
+                        {success && (
+                            <div className="mb-6 p-5 bg-gradient-to-r from-green-50 to-emerald-50 border-l-4 border-green-500 rounded-lg shadow-sm">
+                                <div className="flex items-center">
+                                    <svg className="w-6 h-6 text-green-600 mr-3 flex-shrink-0 animate-pulse" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                    </svg>
+                                    <p className="text-green-800 font-semibold">Réservation effectuée avec succès! Redirection...</p>
+                                </div>
                             </div>
-                        </div>
-                    )}
+                        )}
+                    </div>
 
-                    <form onSubmit={handleSubmit} className="space-y-10">
-                        {/* Étape 1: Sélection d'établissement et d'hébergement */}
+                    {/* Form Content */}
+                    <form className="p-8 space-y-8">
+                        {/* Étape 1: Dates de séjour */}
                         {currentStep === 1 && (
                             <div className="space-y-8">
                                 {/* Dates Section */}
-                                <div className="bg-gradient-to-r from-amber-50 to-orange-50 rounded-xl p-6 border border-amber-100">
-                                    <div className="flex items-center mb-6">
-                                        <div className="w-10 h-10 bg-gradient-to-br from-amber-500 to-amber-600 rounded-lg flex items-center justify-center mr-4">
-                                            <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                                <div className="bg-gradient-to-br from-white to-amber-50/30 rounded-2xl p-8 border-2 border-amber-200/50 shadow-lg">
+                                    <div className="flex items-center mb-8 pb-6 border-b-2 border-amber-200">
+                                        <div className="w-14 h-14 bg-gradient-to-br from-amber-500 to-orange-600 rounded-xl flex items-center justify-center mr-4 shadow-lg">
+                                            <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                                             </svg>
                                         </div>
-                                        <h2 className="text-2xl font-bold text-gray-900">Dates de séjour</h2>
-                                    </div>
-                                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                                        <div className="space-y-2">
-                                            <label className="block text-sm font-semibold text-gray-700">
-                                                Date d'arrivée <span className="text-red-500">*</span>
-                                            </label>
-                                            <div className="relative">
-                                                <input
-                                                    type="date"
-                                                    value={checkInDate}
-                                                    onChange={(e) => setCheckInDate(e.target.value)}
-                                                    min={new Date().toISOString().split('T')[0]}
-                                                    className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-amber-500 focus:border-amber-500 transition-all duration-200 bg-white shadow-sm"
-                                                    required
-                                                />
-                                            </div>
+                                        <div>
+                                            <h2 className="text-3xl font-bold text-slate-900 mb-1">Dates de séjour</h2>
+                                            <p className="text-slate-600 font-medium">Sélectionnez vos dates d'arrivée et de départ</p>
                                         </div>
-                                        <div className="space-y-2">
-                                            <label className="block text-sm font-semibold text-gray-700">
-                                                Date de départ <span className="text-red-500">*</span>
+                                    </div>
+
+                                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                                        {/* Date d'arrivée */}
+                                        <div>
+                                            <label className="block text-sm font-bold text-slate-800 mb-3 uppercase tracking-wide">
+                                                Date d'arrivée <span className="text-red-600">*</span>
+                                            </label>
+                                            <input
+                                                type="date"
+                                                value={checkInDate}
+                                                onChange={(e) => setCheckInDate(e.target.value)}
+                                                min={new Date().toISOString().split('T')[0]}
+                                                className="w-full px-4 py-3.5 text-base font-semibold text-slate-900 bg-white border-2 border-slate-300 rounded-xl focus:ring-4 focus:ring-amber-500/20 focus:border-amber-500 transition-all duration-200 shadow-sm hover:border-amber-400 hover:shadow-md"
+                                                required
+                                            />
+                                        </div>
+
+                                        {/* Date de départ */}
+                                        <div>
+                                            <label className="block text-sm font-bold text-slate-800 mb-3 uppercase tracking-wide">
+                                                Date de départ <span className="text-red-600">*</span>
                                             </label>
                                             <input
                                                 type="date"
                                                 value={checkOutDate}
                                                 onChange={(e) => setCheckOutDate(e.target.value)}
                                                 min={checkInDate || new Date().toISOString().split('T')[0]}
-                                                className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-amber-500 focus:border-amber-500 transition-all duration-200 bg-white shadow-sm"
+                                                className="w-full px-4 py-3.5 text-base font-semibold text-slate-900 bg-white border-2 border-slate-300 rounded-xl focus:ring-4 focus:ring-amber-500/20 focus:border-amber-500 transition-all duration-200 shadow-sm hover:border-amber-400 hover:shadow-md"
                                                 required
                                             />
                                         </div>
-                                        <div className="space-y-2">
-                                            <label className="block text-sm font-semibold text-gray-700">
+
+                                        {/* Nombre de nuits */}
+                                        <div>
+                                            <label className="block text-sm font-bold text-slate-800 mb-3 uppercase tracking-wide">
                                                 Nombre de nuits
                                             </label>
-                                            <div className="relative">
-                                                <input
-                                                    type="text"
-                                                    value={numberOfNights}
-                                                    readOnly
-                                                    className="w-full px-4 py-3 border border-gray-200 rounded-xl bg-gradient-to-r from-gray-50 to-gray-100 text-gray-700 font-semibold shadow-sm"
-                                                />
-                                                <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
-                                                    <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
-                                                    </svg>
+                                            <div className="w-full px-4 py-3.5 border-3 border-amber-400 rounded-xl bg-gradient-to-br from-amber-50 to-orange-50 shadow-md">
+                                                <div className="text-center">
+                                                    <div className="text-4xl font-black text-amber-700">{numberOfNights}</div>
+                                                    <div className="text-xs font-bold text-amber-600 uppercase tracking-wider mt-1">
+                                                        {numberOfNights === 1 ? 'Nuit' : 'Nuits'}
+                                                    </div>
                                                 </div>
                                             </div>
                                         </div>
-                                        <div className="space-y-2">
-                                            <label className="block text-sm font-semibold text-gray-700">
+
+                                        {/* Heure d'arrivée */}
+                                        <div>
+                                            <label className="block text-sm font-bold text-slate-800 mb-3 uppercase tracking-wide">
                                                 Heure d'arrivée
                                             </label>
                                             <input
                                                 type="time"
                                                 value={arrivalTime}
                                                 onChange={(e) => setArrivalTime(e.target.value)}
-                                                className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-amber-500 focus:border-amber-500 transition-all duration-200 bg-white shadow-sm"
+                                                className="w-full px-4 py-3.5 text-base font-semibold text-slate-900 bg-white border-2 border-slate-300 rounded-xl focus:ring-4 focus:ring-amber-500/20 focus:border-amber-500 transition-all duration-200 shadow-sm hover:border-amber-400 hover:shadow-md"
                                             />
                                         </div>
                                     </div>
                                 </div>
-
-                                {/* Sélection d'établissement et d'hébergement */}
-                                <EstablishmentSelector
-                                    selectedEstablishment={selectedEstablishment}
-                                    selectedAccommodation={selectedAccommodation}
-                                    onEstablishmentChange={handleEstablishmentChange}
-                                    onAccommodationChange={handleAccommodationChange}
-                                    checkInDate={checkInDate}
-                                    checkOutDate={checkOutDate}
-                                    numberOfGuests={numberOfGuests}
-                                />
                             </div>
                         )}
 
                         {/* Étape 2: Informations des invités */}
                         {currentStep === 2 && (
-                            <div className="space-y-8">{/* Guests Section */}
-                        <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl p-6 border border-blue-100">
-                            <div className="flex items-center mb-6">
-                                <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg flex items-center justify-center mr-4">
-                                    <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
-                                    </svg>
-                                </div>
-                                <h2 className="text-2xl font-bold text-gray-900">Nombre de personnes</h2>
-                            </div>
-                            <div className="max-w-md">
-                                <label className="block text-sm font-semibold text-gray-700 mb-3">
-                                    Nombre total de personnes (incluant vous) <span className="text-red-500">*</span>
-                                </label>
-                                <div className="relative">
-                                    <select
-                                        value={numberOfGuests}
-                                        onChange={(e) => setNumberOfGuests(parseInt(e.target.value))}
-                                        className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 bg-white shadow-sm appearance-none"
-                                        required
-                                    >
-                                        {Array.from({ length: selectedAccommodationData?.capacity.maxGuests || 10 }, (_, i) => i + 1).map((num) => (
-                                            <option key={num} value={num}>
-                                                {num} {num === 1 ? 'personne' : 'personnes'}
-                                            </option>
-                                        ))}
-                                    </select>
-                                    <div className="absolute right-3 top-1/2 transform -translate-y-1/2 pointer-events-none">
-                                        <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                                        </svg>
+                            <div className="space-y-8">
+                                {/* Nombre de personnes */}
+                                <div className="bg-gradient-to-br from-white to-blue-50/30 rounded-2xl p-8 border-2 border-blue-200/50 shadow-lg">
+                                    <div className="flex items-center mb-8 pb-6 border-b-2 border-blue-200">
+                                        <div className="w-14 h-14 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-xl flex items-center justify-center mr-4 shadow-lg">
+                                            <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                                            </svg>
+                                        </div>
+                                        <div>
+                                            <h2 className="text-3xl font-bold text-slate-900 mb-1">Nombre de personnes</h2>
+                                            <p className="text-slate-600 font-medium">Indiquez le nombre total de voyageurs</p>
+                                        </div>
+                                    </div>
+
+                                    <div className="max-w-md">
+                                        <label className="block text-sm font-bold text-slate-800 mb-3 uppercase tracking-wide">
+                                            Nombre total de personnes (incluant vous) <span className="text-red-600">*</span>
+                                        </label>
+                                        <div className="relative">
+                                            <select
+                                                value={numberOfGuests}
+                                                onChange={(e) => setNumberOfGuests(parseInt(e.target.value))}
+                                                className="w-full px-4 py-3.5 text-base font-semibold text-slate-900 bg-white border-2 border-slate-300 rounded-xl focus:ring-4 focus:ring-blue-500/20 focus:border-blue-500 transition-all duration-200 appearance-none cursor-pointer shadow-sm hover:border-blue-400 hover:shadow-md"
+                                                required
+                                            >
+                                                {Array.from({ length: 10 }, (_, i) => i + 1).map((num) => (
+                                                    <option key={num} value={num}>
+                                                        {num} {num === 1 ? 'personne' : 'personnes'}
+                                                    </option>
+                                                ))}
+                                            </select>
+                                            <div className="absolute right-4 top-1/2 transform -translate-y-1/2 pointer-events-none">
+                                                <svg className="w-5 h-5 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M19 9l-7 7-7-7" />
+                                                </svg>
+                                            </div>
+                                        </div>
                                     </div>
                                 </div>
-                                {selectedAccommodationData && (
-                                    <p className="text-sm text-gray-500 mt-2">
-                                        Capacité maximale: {selectedAccommodationData.capacity.maxGuests} personnes
-                                    </p>
-                                )}
-                            </div>
-                        </div>
 
-                        <MainClientForm client={mainClient} onChange={setMainClient} />
-
-                        {/* Guests Section */}
-                        <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl p-6 border border-blue-100">
-                            <div className="flex items-center mb-6">
-                                <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg flex items-center justify-center mr-4">
-                                    <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
-                                    </svg>
-                                </div>
-                                <h2 className="text-2xl font-bold text-gray-900">Nombre de personnes</h2>
-                            </div>
-                            <div className="max-w-md">
-                                <label className="block text-sm font-semibold text-gray-700 mb-3">
-                                    Nombre total de personnes (incluant vous) <span className="text-red-500">*</span>
-                                </label>
-                                <div className="relative">
-                                    <select
-                                        value={numberOfGuests}
-                                        onChange={(e) => setNumberOfGuests(parseInt(e.target.value))}
-                                        className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 bg-white shadow-sm appearance-none"
-                                        required
-                                    >
-                                        {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((num) => (
-                                            <option key={num} value={num}>
-                                                {num} {num === 1 ? 'personne' : 'personnes'}
-                                            </option>
-                                        ))}
-                                    </select>
-                                    <div className="absolute right-3 top-1/2 transform -translate-y-1/2 pointer-events-none">
-                                        <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                                        </svg>
+                                {/* Client Principal */}
+                                <div className="bg-gradient-to-br from-white to-purple-50/30 rounded-2xl p-8 border-2 border-purple-200/50 shadow-lg">
+                                    <div className="flex items-center mb-8 pb-6 border-b-2 border-purple-200">
+                                        <div className="w-14 h-14 bg-gradient-to-br from-purple-500 to-pink-600 rounded-xl flex items-center justify-center mr-4 shadow-lg">
+                                            <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                                            </svg>
+                                        </div>
+                                        <div>
+                                            <h2 className="text-3xl font-bold text-slate-900 mb-1">Informations personnelles</h2>
+                                            <p className="text-slate-600 font-medium">Vos coordonnées principales</p>
+                                        </div>
                                     </div>
-                                </div>
-                            </div>
-                        </div>
 
-                        <MainClientForm client={mainClient} onChange={setMainClient} />
-
-                        {guests.length > 0 && (
-                            <div className="bg-gradient-to-r from-purple-50 to-pink-50 rounded-xl p-6 border border-purple-100">
-                                <div className="flex items-center mb-6">
-                                    <div className="w-10 h-10 bg-gradient-to-br from-purple-500 to-purple-600 rounded-lg flex items-center justify-center mr-4">
-                                        <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z" />
-                                        </svg>
-                                    </div>
-                                    <h2 className="text-2xl font-bold text-gray-900">
-                                        Invités / Accompagnants ({guests.length})
-                                    </h2>
-                                </div>
-                                <div className="space-y-6">
-                                    {guests.map((guest, index) => (
-                                        <div key={index} className="bg-white rounded-lg p-4 shadow-sm border border-gray-100">
-                                            <GuestForm
-                                                guest={guest}
-                                                index={index}
-                                                onChange={(updated) => updateGuest(index, updated)}
-                                                onRemove={() => removeGuest(index)}
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                        {/* Prénom */}
+                                        <div>
+                                            <label className="block text-sm font-bold text-slate-800 mb-3 uppercase tracking-wide">
+                                                Prénom <span className="text-red-600">*</span>
+                                            </label>
+                                            <input
+                                                type="text"
+                                                value={mainClient.firstName}
+                                                onChange={(e) => setMainClient({ ...mainClient, firstName: e.target.value })}
+                                                placeholder="Votre prénom"
+                                                className="w-full px-4 py-3.5 text-base font-semibold text-slate-900 bg-white border-2 border-slate-300 rounded-xl focus:ring-4 focus:ring-purple-500/20 focus:border-purple-500 transition-all duration-200 shadow-sm hover:border-purple-400 hover:shadow-md placeholder:text-slate-400 placeholder:font-normal"
+                                                required
                                             />
                                         </div>
-                                    ))}
+
+                                        {/* Nom */}
+                                        <div>
+                                            <label className="block text-sm font-bold text-slate-800 mb-3 uppercase tracking-wide">
+                                                Nom <span className="text-red-600">*</span>
+                                            </label>
+                                            <input
+                                                type="text"
+                                                value={mainClient.lastName}
+                                                onChange={(e) => setMainClient({ ...mainClient, lastName: e.target.value })}
+                                                placeholder="Votre nom"
+                                                className="w-full px-4 py-3.5 text-base font-semibold text-slate-900 bg-white border-2 border-slate-300 rounded-xl focus:ring-4 focus:ring-purple-500/20 focus:border-purple-500 transition-all duration-200 shadow-sm hover:border-purple-400 hover:shadow-md placeholder:text-slate-400 placeholder:font-normal"
+                                                required
+                                            />
+                                        </div>
+
+                                        {/* Email */}
+                                        <div>
+                                            <label className="block text-sm font-bold text-slate-800 mb-3 uppercase tracking-wide">
+                                                Email <span className="text-red-600">*</span>
+                                            </label>
+                                            <input
+                                                type="email"
+                                                value={mainClient.email}
+                                                onChange={(e) => setMainClient({ ...mainClient, email: e.target.value })}
+                                                placeholder="exemple@email.com"
+                                                className="w-full px-4 py-3.5 text-base font-semibold text-slate-900 bg-white border-2 border-slate-300 rounded-xl focus:ring-4 focus:ring-purple-500/20 focus:border-purple-500 transition-all duration-200 shadow-sm hover:border-purple-400 hover:shadow-md placeholder:text-slate-400 placeholder:font-normal"
+                                                required
+                                            />
+                                        </div>
+
+                                        {/* Téléphone */}
+                                        <div>
+                                            <label className="block text-sm font-bold text-slate-800 mb-3 uppercase tracking-wide">
+                                                Téléphone <span className="text-red-600">*</span>
+                                            </label>
+                                            <input
+                                                type="tel"
+                                                value={mainClient.phone}
+                                                onChange={(e) => setMainClient({ ...mainClient, phone: e.target.value })}
+                                                placeholder="+257 00 00 00 00"
+                                                className="w-full px-4 py-3.5 text-base font-semibold text-slate-900 bg-white border-2 border-slate-300 rounded-xl focus:ring-4 focus:ring-purple-500/20 focus:border-purple-500 transition-all duration-200 shadow-sm hover:border-purple-400 hover:shadow-md placeholder:text-slate-400 placeholder:font-normal"
+                                                required
+                                            />
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {/* Demandes spéciales */}
+                                <div className="bg-gradient-to-br from-white to-green-50/30 rounded-2xl p-8 border-2 border-green-200/50 shadow-lg">
+                                    <div className="flex items-center mb-8 pb-6 border-b-2 border-green-200">
+                                        <div className="w-14 h-14 bg-gradient-to-br from-green-500 to-emerald-600 rounded-xl flex items-center justify-center mr-4 shadow-lg">
+                                            <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z" />
+                                            </svg>
+                                        </div>
+                                        <div>
+                                            <h2 className="text-3xl font-bold text-slate-900 mb-1">Demandes spéciales</h2>
+                                            <p className="text-slate-600 font-medium">Partagez vos besoins particuliers</p>
+                                        </div>
+                                    </div>
+
+                                    <div className="space-y-3">
+                                        <label className="block text-sm font-bold text-slate-800 uppercase tracking-wide">
+                                            Avez-vous des demandes particulières pour votre séjour ?
+                                        </label>
+                                        <textarea
+                                            value={specialRequests}
+                                            onChange={(e) => setSpecialRequests(e.target.value)}
+                                            rows={5}
+                                            className="w-full px-4 py-3.5 text-base font-medium text-slate-900 bg-white border-2 border-slate-300 rounded-xl focus:ring-4 focus:ring-green-500/20 focus:border-green-500 transition-all duration-200 resize-none shadow-sm hover:border-green-400 hover:shadow-md placeholder:text-slate-400"
+                                            placeholder="Exemples : Régime alimentaire spécial, besoins d'accessibilité, préférences de chambre (étage élevé, vue mer), célébration spéciale (anniversaire, lune de miel), etc."
+                                        />
+                                        <div className="flex items-start text-xs text-slate-500 bg-slate-50 p-3 rounded-lg">
+                                            <svg className="w-4 h-4 mr-2 flex-shrink-0 mt-0.5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                            </svg>
+                                            <span className="font-medium">Nous ferons de notre mieux pour répondre à vos demandes selon nos disponibilités.</span>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                         )}
 
-                        {/* Special Requests Section */}
-                        <div className="bg-gradient-to-r from-green-50 to-emerald-50 rounded-xl p-6 border border-green-100">
-                            <div className="flex items-center mb-6">
-                                <div className="w-10 h-10 bg-gradient-to-br from-green-500 to-green-600 rounded-lg flex items-center justify-center mr-4">
-                                    <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z" />
-                                    </svg>
+                        {/* Étape 3: Confirmation */}
+                        {currentStep === 3 && (
+                            <div className="bg-gradient-to-br from-white to-slate-50 rounded-2xl p-8 border-2 border-slate-200 shadow-lg">
+                                <div className="flex items-center mb-8 pb-6 border-b-2 border-slate-200">
+                                    <div className="w-14 h-14 bg-gradient-to-br from-green-500 to-teal-600 rounded-xl flex items-center justify-center mr-4 shadow-lg">
+                                        <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                        </svg>
+                                    </div>
+                                    <div>
+                                        <h2 className="text-3xl font-bold text-slate-900 mb-1">Confirmation</h2>
+                                        <p className="text-slate-600 font-medium">Vérifiez votre réservation avant de confirmer</p>
+                                    </div>
                                 </div>
-                                <h2 className="text-2xl font-bold text-gray-900">Demandes spéciales</h2>
-                            </div>
-                            <div className="space-y-3">
-                                <label className="block text-sm font-semibold text-gray-700">
-                                    Avez-vous des demandes particulières pour votre séjour ?
-                                </label>
-                                <textarea
-                                    value={specialRequests}
-                                    onChange={(e) => setSpecialRequests(e.target.value)}
-                                    rows={5}
-                                    className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all duration-200 bg-white shadow-sm resize-none"
-                                    placeholder="Exemples : Régime alimentaire spécial, besoins d'accessibilité, préférences de chambre (étage élevé, vue mer), célébration spéciale (anniversaire, lune de miel), heure d'arrivée tardive, etc."
-                                />
-                                <p className="text-xs text-gray-500 flex items-center">
-                                    <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                    </svg>
-                                    Nous ferons de notre mieux pour répondre à vos demandes selon nos disponibilités.
-                                </p>
-                            </div>
-                        </div>
+
+                                <div className="space-y-6 text-slate-700">
+                                    <div className="grid grid-cols-2 gap-4 p-6 bg-slate-50 rounded-xl">
+                                        <div>
+                                            <p className="text-sm font-bold text-slate-500 uppercase tracking-wide mb-1">Date d'arrivée</p>
+                                            <p className="text-lg font-bold text-slate-900">{checkInDate || 'Non défini'}</p>
+                                        </div>
+                                        <div>
+                                            <p className="text-sm font-bold text-slate-500 uppercase tracking-wide mb-1">Date de départ</p>
+                                            <p className="text-lg font-bold text-slate-900">{checkOutDate || 'Non défini'}</p>
+                                        </div>
+                                        <div>
+                                            <p className="text-sm font-bold text-slate-500 uppercase tracking-wide mb-1">Nombre de nuits</p>
+                                            <p className="text-lg font-bold text-amber-600">{numberOfNights}</p>
+                                        </div>
+                                        <div>
+                                            <p className="text-sm font-bold text-slate-500 uppercase tracking-wide mb-1">Nombre de personnes</p>
+                                            <p className="text-lg font-bold text-blue-600">{numberOfGuests}</p>
+                                        </div>
+                                    </div>
+
+                                    <div className="p-6 bg-purple-50 rounded-xl">
+                                        <p className="text-sm font-bold text-slate-500 uppercase tracking-wide mb-3">Client principal</p>
+                                        <p className="text-xl font-bold text-slate-900">{mainClient.firstName} {mainClient.lastName}</p>
+                                        <p className="text-slate-600 font-medium">{mainClient.email}</p>
+                                        <p className="text-slate-600 font-medium">{mainClient.phone}</p>
+                                    </div>
+                                </div>
                             </div>
                         )}
-
-                        {/* Étape 3: Récapitulatif et confirmation */}
-                        {currentStep === 3 && selectedAccommodationData && (
-                            <div className="space-y-8">
-                                <BookingSummary
-                                    accommodation={selectedAccommodationData}
-                                    checkInDate={checkInDate}
-                                    checkOutDate={checkOutDate}
-                                    numberOfNights={numberOfNights}
-                                    numberOfGuests={numberOfGuests}
-                                    mainClient={mainClient}
-                                    totalAmount={calculateTotalPrice()}
-                                    specialRequests={specialRequests}
-                                    arrivalTime={arrivalTime}
-                                />
-                            </div>
-                        )}
-
-                        {/* Special Requests Section */}
-                        <div className="bg-gradient-to-r from-green-50 to-emerald-50 rounded-xl p-6 border border-green-100">
-                            <div className="flex items-center mb-6">
-                                <div className="w-10 h-10 bg-gradient-to-br from-green-500 to-green-600 rounded-lg flex items-center justify-center mr-4">
-                                    <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z" />
-                                    </svg>
-                                </div>
-                                <h2 className="text-2xl font-bold text-gray-900">Demandes spéciales</h2>
-                            </div>
-                            <div className="space-y-3">
-                                <label className="block text-sm font-semibold text-gray-700">
-                                    Avez-vous des demandes particulières pour votre séjour ?
-                                </label>
-                                <textarea
-                                    value={specialRequests}
-                                    onChange={(e) => setSpecialRequests(e.target.value)}
-                                    rows={5}
-                                    className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all duration-200 bg-white shadow-sm resize-none"
-                                    placeholder="Exemples : Régime alimentaire spécial, besoins d'accessibilité, préférences de chambre (étage élevé, vue mer), célébration spéciale (anniversaire, lune de miel), heure d'arrivée tardive, etc."
-                                />
-                                <p className="text-xs text-gray-500 flex items-center">
-                                    <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                    </svg>
-                                    Nous ferons de notre mieux pour répondre à vos demandes selon nos disponibilités.
-                                </p>
-                            </div>
-                        </div>
 
                         {/* Navigation Buttons */}
-                        <div className="flex flex-col sm:flex-row justify-between items-center pt-8 border-t border-gray-200 space-y-4 sm:space-y-0">
+                        <div className="flex flex-col sm:flex-row justify-between items-center pt-8 border-t-2 border-slate-200 space-y-4 sm:space-y-0">
                             <div className="flex space-x-4">
-                                <button
-                                    type="button"
-                                    onClick={() => router.back()}
-                                    className="px-6 py-3 border-2 border-gray-300 text-gray-700 rounded-xl hover:bg-gray-50 hover:border-gray-400 transition-all duration-200 font-medium flex items-center space-x-2"
-                                >
-                                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
-                                    </svg>
-                                    <span>Retour</span>
-                                </button>
-                                
                                 {currentStep > 1 && (
                                     <button
                                         type="button"
                                         onClick={() => setCurrentStep(currentStep - 1)}
-                                        className="px-6 py-3 border-2 border-amber-300 text-amber-700 rounded-xl hover:bg-amber-50 hover:border-amber-400 transition-all duration-200 font-medium flex items-center space-x-2"
+                                        className="px-6 py-3.5 border-2 border-slate-300 text-slate-700 rounded-xl hover:bg-slate-50 hover:border-slate-400 transition-all duration-200 font-bold flex items-center space-x-2 shadow-sm hover:shadow-md"
                                     >
                                         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M15 19l-7-7 7-7" />
                                         </svg>
                                         <span>Précédent</span>
                                     </button>
                                 )}
                             </div>
-                            
+
                             <div>
                                 {currentStep < totalSteps ? (
                                     <button
                                         type="button"
                                         onClick={() => setCurrentStep(currentStep + 1)}
-                                        disabled={
-                                            (currentStep === 1 && !canProceedToStep2) ||
-                                            (currentStep === 2 && !canProceedToStep3)
-                                        }
-                                        className="px-8 py-3 bg-gradient-to-r from-amber-600 via-amber-700 to-amber-800 text-white rounded-xl hover:from-amber-700 hover:via-amber-800 hover:to-amber-900 disabled:from-gray-400 disabled:via-gray-500 disabled:to-gray-600 disabled:cursor-not-allowed transition-all duration-300 shadow-lg hover:shadow-xl font-semibold flex items-center space-x-2 transform hover:scale-105 disabled:transform-none"
+                                        className="px-8 py-3.5 bg-gradient-to-r from-amber-500 via-orange-500 to-amber-600 text-white rounded-xl hover:from-amber-600 hover:via-orange-600 hover:to-amber-700 transition-all duration-300 shadow-lg hover:shadow-xl font-bold flex items-center space-x-2 transform hover:scale-105"
                                     >
                                         <span>Suivant</span>
                                         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M9 5l7 7-7 7" />
                                         </svg>
                                     </button>
                                 ) : (
                                     <button
                                         type="submit"
-                                        disabled={loading || !canProceedToStep3}
-                                        className="px-8 py-3 bg-gradient-to-r from-green-600 via-green-700 to-green-800 text-white rounded-xl hover:from-green-700 hover:via-green-800 hover:to-green-900 disabled:from-gray-400 disabled:via-gray-500 disabled:to-gray-600 disabled:cursor-not-allowed transition-all duration-300 shadow-lg hover:shadow-xl font-semibold flex items-center space-x-2 transform hover:scale-105 disabled:transform-none"
+                                        disabled={loading}
+                                        className="px-8 py-3.5 bg-gradient-to-r from-green-600 via-emerald-600 to-green-700 text-white rounded-xl hover:from-green-700 hover:via-emerald-700 hover:to-green-800 disabled:from-gray-400 disabled:via-gray-500 disabled:to-gray-600 disabled:cursor-not-allowed transition-all duration-300 shadow-lg hover:shadow-xl font-bold flex items-center space-x-2 transform hover:scale-105 disabled:transform-none"
                                     >
                                         {loading ? (
                                             <>
                                                 <svg className="w-5 h-5 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
                                                 </svg>
-                                                <span>Traitement en cours...</span>
+                                                <span>Traitement...</span>
                                             </>
                                         ) : (
                                             <>
                                                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                                                 </svg>
                                                 <span>Confirmer la réservation</span>
                                             </>

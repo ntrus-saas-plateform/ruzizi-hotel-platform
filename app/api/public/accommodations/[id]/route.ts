@@ -8,12 +8,13 @@ import { connectDB } from '@/lib/db';
  */
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     await connectDB();
 
-    const accommodation = await AccommodationModel.findById(params.id)
+    const { id } = await params;
+    const accommodation = await AccommodationModel.findById(id)
       .populate('establishmentId', 'name location contacts')
       .lean();
 

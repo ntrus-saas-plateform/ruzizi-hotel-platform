@@ -384,10 +384,25 @@ export default function AccommodationDetailsPage() {
               <button
                 onClick={handleBooking}
                 disabled={!isAvailable}
-                className="w-full px-6 py-4 bg-gradient-to-r from-amber-600 to-amber-700 text-white rounded-lg hover:from-amber-700 hover:to-amber-800 transition font-medium text-lg disabled:opacity-50 disabled:cursor-not-allowed shadow-lg"
+                className="w-full px-6 py-4 bg-gradient-to-r from-amber-600 to-amber-700 text-white rounded-lg hover:from-amber-700 hover:to-amber-800 hover:shadow-xl transition-all duration-200 font-medium text-lg disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:shadow-lg shadow-lg flex items-center justify-center space-x-2 transform hover:scale-105 disabled:transform-none"
+                title={!isAvailable ? 'Hébergement non disponible actuellement' : 'Réserver cet hébergement'}
               >
-                {t.bookNow}
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                </svg>
+                <span>{t.bookNow}</span>
               </button>
+              
+              {!isAvailable && (
+                <div className="mt-3 p-3 bg-red-50 border border-red-200 rounded-lg">
+                  <p className="text-sm text-red-700 text-center flex items-center justify-center">
+                    <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    Cet hébergement n'est pas disponible pour le moment
+                  </p>
+                </div>
+              )}
             </div>
 
             {/* Establishment Info */}

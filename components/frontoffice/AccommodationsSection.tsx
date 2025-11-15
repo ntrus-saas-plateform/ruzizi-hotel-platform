@@ -28,13 +28,13 @@ export default function AccommodationsSection() {
   const [accommodations, setAccommodations] = useState<Accommodation[]>([]);
   const [establishments, setEstablishments] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-  
+
   // Filters
   const [selectedEstablishment, setSelectedEstablishment] = useState('all');
   const [selectedType, setSelectedType] = useState('all');
   const [priceRange, setPriceRange] = useState('all');
   const [capacity, setCapacity] = useState('all');
-  
+
   // Pagination
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 6;
@@ -51,31 +51,63 @@ export default function AccommodationsSection() {
         fetch('/api/public/accommodations'),
         fetch('/api/public/establishments')
       ]);
-      
+
       const accomData = await accomResponse.json();
       const estabData = await estabResponse.json();
-      
+
+      console.log('Accommodations API response:', accomData);
+      console.log('Establishments API response:', estabData);
+
       if (accomData.success) {
         // Normalize accommodations to extract establishment info
-        const normalizedAccommodations = (accomData.data.data || []).map((accom: any) => {
-          const estId = typeof accom.establishmentId === 'object' 
-            ? (accom.establishmentId?._id || accom.establishmentId?.id)
-            : accom.establishmentId;
-          
-          const estName = typeof accom.establishmentId === 'object'
-            ? accom.establishmentId?.name
-            : undefined;
+        const normalizedAccommodations = (accomData.data.data || accomData.data || []).map((accom: any) => {
+          console.log('🔍 Processing accommodation:', accom.name);
+          console.log('  Raw establishmentId:', accom.establishmentId);
+          console.log('  Type:', typeof accom.establishmentId);
 
-          return {
+          let estId: string | undefined;
+          let estName: string | undefined;
+
+          if (typeof accom.establishmentId === 'object' && accom.establishmentId !== null) {
+            // Try different possible ID fields
+            estId = accom.establishmentId._id || 
+                    accom.establishmentId.id || 
+                    (typeof accom.establishmentId.toString === 'function' ? accom.establishmentId.toString() : undefined);
+            estName = accom.establishmentId.name;
+            console.log('  Object - _id:', accom.establishmentId._id);
+            console.log('  Object - id:', accom.establishmentId.id);
+            console.log('  Object - name:', accom.establishmentId.name);
+          } else if (typeof accom.establishmentId === 'string') {
+            estId = accom.establishmentId;
+            console.log('  String ID:', estId);
+          }
+
+          console.log('✅ Extracted estId:', estId);
+          console.log('✅ Extracted estName:', estName);
+
+          const normalized = {
             ...accom,
+            id: accom.id || accom._id,
             establishmentId: estId,
             establishmentName: estName || accom.establishmentName,
+            isAvailable: accom.isAvailable !== undefined ? accom.isAvailable : accom.status === 'available'
           };
+
+          console.log('📦 Normalized:', { 
+            id: normalized.id, 
+            name: normalized.name, 
+            establishmentId: normalized.establishmentId,
+            isAvailable: normalized.isAvailable 
+          });
+
+          return normalized;
         });
+
+        console.log('Normalized accommodations:', normalizedAccommodations);
         setAccommodations(normalizedAccommodations);
       }
       if (estabData.success) {
-        setEstablishments(estabData.data.data || []);
+        setEstablishments(estabData.data.data || estabData.data || []);
       }
     } catch (err) {
       console.error('Failed to fetch data:', err);
@@ -163,21 +195,21 @@ export default function AccommodationsSection() {
   const filteredAccommodations = accommodations.filter(accom => {
     if (selectedEstablishment !== 'all' && accom.establishmentId !== selectedEstablishment) return false;
     if (selectedType !== 'all' && accom.type !== selectedType) return false;
-    
+
     const price = accom.price || accom.pricing?.basePrice || 0;
     if (priceRange !== 'all') {
       if (priceRange === 'budget' && price >= 50000) return false;
       if (priceRange === 'standard' && (price < 50000 || price > 100000)) return false;
       if (priceRange === 'premium' && price <= 100000) return false;
     }
-    
+
     const maxGuests = typeof accom.capacity === 'number' ? accom.capacity : accom.capacity?.maxGuests || 0;
     if (capacity !== 'all') {
       if (capacity === 'single' && maxGuests !== 1) return false;
       if (capacity === 'double' && maxGuests !== 2) return false;
       if (capacity === 'family' && maxGuests < 3) return false;
     }
-    
+
     return true;
   });
 
@@ -350,11 +382,10 @@ export default function AccommodationsSection() {
                       className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
                     />
                     <div className="absolute top-4 right-4">
-                      <span className={`px-3 py-1 rounded-full text-xs font-medium ${
-                        accom.isAvailable 
-                          ? 'bg-green-500 text-white' 
+                      <span className={`px-3 py-1 rounded-full text-xs font-medium ${accom.isAvailable
+                          ? 'bg-green-500 text-white'
                           : 'bg-red-500 text-white'
-                      }`}>
+                        }`}>
                         {accom.isAvailable ? t.available : t.unavailable}
                       </span>
                     </div>
@@ -400,8 +431,8 @@ export default function AccommodationsSection() {
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
                         </svg>
                         <span className="text-sm">
-                          {typeof accom.capacity === 'number' 
-                            ? accom.capacity 
+                          {typeof accom.capacity === 'number'
+                            ? accom.capacity
                             : accom.capacity?.maxGuests || 'N/A'} {t.persons}
                         </span>
                       </div>
@@ -414,20 +445,54 @@ export default function AccommodationsSection() {
                     </div>
 
                     {/* Actions */}
-                    <div className="flex space-x-2">
-                      <button
-                        onClick={() => router.push(`/accommodations/${accom.id}`)}
-                        className="flex-1 px-4 py-2.5 border border-amber-600 text-amber-600 rounded-lg hover:bg-amber-50 transition font-medium text-sm"
-                      >
-                        {t.viewDetails}
-                      </button>
-                      <button
-                        onClick={() => router.push(`/booking?establishment=${accom.establishmentId}&accommodation=${accom.id}`)}
-                        disabled={!accom.isAvailable}
-                        className="flex-1 px-4 py-2.5 bg-gradient-to-r from-amber-600 to-amber-700 text-white rounded-lg hover:from-amber-700 hover:to-amber-800 transition font-medium text-sm disabled:opacity-50 disabled:cursor-not-allowed"
-                      >
-                        {t.bookNow}
-                      </button>
+                    <div className="flex flex-col space-y-2">
+                      <div className="flex space-x-2">
+                        <button
+                          onClick={() => router.push(`/accommodations/${accom.id}`)}
+                          className="flex-1 px-4 py-2.5 border-2 border-amber-600 text-amber-600 rounded-lg hover:bg-amber-50 hover:border-amber-700 transition-all duration-200 font-medium text-sm flex items-center justify-center space-x-1"
+                        >
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                          </svg>
+                          <span>{t.viewDetails}</span>
+                        </button>
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            console.log('Book button clicked for:', accom.name);
+                            console.log('establishmentId:', accom.establishmentId);
+                            console.log('accommodation id:', accom.id);
+                            console.log('isAvailable:', accom.isAvailable);
+
+                            if (accom.isAvailable && accom.establishmentId) {
+                              const bookingUrl = `/booking?establishment=${accom.establishmentId}&accommodation=${accom.id}`;
+                              console.log('Navigating to:', bookingUrl);
+                              router.push(bookingUrl);
+                            } else {
+                              console.warn('Cannot book:', {
+                                isAvailable: accom.isAvailable,
+                                hasEstablishmentId: !!accom.establishmentId
+                              });
+                            }
+                          }}
+                          disabled={!accom.isAvailable || !accom.establishmentId}
+                          className="flex-1 px-4 py-2.5 bg-gradient-to-r from-amber-600 to-amber-700 text-white rounded-lg hover:from-amber-700 hover:to-amber-800 hover:shadow-lg transition-all duration-200 font-medium text-sm disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:shadow-none flex items-center justify-center space-x-1 transform hover:scale-105 disabled:transform-none"
+                          title={!accom.isAvailable ? 'Hébergement non disponible' : !accom.establishmentId ? 'Établissement non défini' : 'Réserver cet hébergement'}
+                        >
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                          </svg>
+                          <span>{t.bookNow}</span>
+                        </button>
+                      </div>
+
+                      {/* Debug info - Remove in production */}
+                      {!accom.establishmentId && accom.isAvailable && (
+                        <div className="text-xs text-red-600 bg-red-50 p-2 rounded">
+                          ⚠️ Établissement non défini pour cet hébergement
+                        </div>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -453,11 +518,10 @@ export default function AccommodationsSection() {
                     <button
                       key={page}
                       onClick={() => setCurrentPage(page)}
-                      className={`w-10 h-10 rounded-lg font-medium transition ${
-                        currentPage === page
+                      className={`w-10 h-10 rounded-lg font-medium transition ${currentPage === page
                           ? 'bg-gradient-to-r from-amber-600 to-amber-700 text-white'
                           : 'border border-gray-300 hover:bg-gray-50 text-gray-700'
-                      }`}
+                        }`}
                     >
                       {page}
                     </button>

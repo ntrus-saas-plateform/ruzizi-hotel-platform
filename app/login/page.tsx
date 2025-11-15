@@ -1,13 +1,13 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 
 /**
  * Redirect page for /login
  * Redirects to the appropriate login page based on context
  */
-export default function LoginRedirectPage() {
+function LoginRedirect() {
   const router = useRouter();
   const searchParams = useSearchParams();
 
@@ -40,5 +40,22 @@ export default function LoginRedirectPage() {
         <p className="mt-4 text-gray-600">Redirection...</p>
       </div>
     </div>
+  );
+}
+
+export default function LoginRedirectPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="text-center">
+          <div className="relative">
+            <div className="w-16 h-16 border-4 border-blue-200 border-t-blue-600 rounded-full animate-spin mx-auto"></div>
+          </div>
+          <p className="mt-4 text-gray-600">Chargement...</p>
+        </div>
+      </div>
+    }>
+      <LoginRedirect />
+    </Suspense>
   );
 }
