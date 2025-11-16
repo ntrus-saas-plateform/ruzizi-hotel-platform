@@ -206,16 +206,16 @@ label {
   input[type="week"],
   select,
   textarea {
-    background-color: #1f2937 !important; /* gray-800 */
+    background-color: #fafafa !important; /* gray-800 */
     border-color: #4b5563 !important; /* gray-600 */
-    color: #f9fafb !important; /* gray-50 */
+    color: #202020 !important; /* gray-50 */
     
     &::placeholder {
       color: #6b7280 !important; /* gray-500 */
     }
     
     &:focus {
-      background-color: #111827 !important; /* gray-900 */
+      background-color: #ffffff !important; /* gray-900 */
       border-color: #f59e0b !important;
     }
     
@@ -226,7 +226,7 @@ label {
   }
   
   label {
-    color: #e5e7eb !important; /* gray-200 */
+    color: black !important; /* gray-200 */
   }
 }
 
