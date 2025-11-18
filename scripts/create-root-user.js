@@ -17,7 +17,6 @@ async function createRootUser() {
   let client;
 
   try {
-    console.log('🔄 Connexion à MongoDB...');
     client = new MongoClient(MONGODB_URI);
     await client.connect();
 
@@ -32,7 +31,6 @@ async function createRootUser() {
     const existingUser = await usersCollection.findOne({ email: ROOT_EMAIL });
 
     if (existingUser) {
-      console.log('⚠️  L\'utilisateur root existe déjà, suppression et recréation...');
       await usersCollection.deleteOne({ email: ROOT_EMAIL });
     }
 
@@ -63,22 +61,7 @@ async function createRootUser() {
     const result = await usersCollection.insertOne(rootUser);
 
     if (result.insertedId) {
-      console.log('✅ Utilisateur root créé avec succès!');
-      console.log('');
-      console.log('═══════════════════════════════════════════════════════');
-      console.log('📋 INFORMATIONS DE CONNEXION');
-      console.log('═══════════════════════════════════════════════════════');
-      console.log(`   📧 Email:        ${ROOT_EMAIL}`);
-      console.log(`   🔑 Mot de passe: ${password}`);
-      console.log(`   🆔 ID:           ${result.insertedId}`);
-      console.log('═══════════════════════════════════════════════════════');
-      console.log('');
-      console.log('🔐 IMPORTANT: Notez bien ce mot de passe, il ne sera plus affiché!');
-      console.log('🌐 Connectez-vous sur: http://localhost:3000/backoffice/login');
-      console.log('');
-      console.log('💡 Conseil: Changez ce mot de passe après votre première connexion.');
-      console.log('');
-    } else {
+      } else {
       throw new Error('Échec de la création de l\'utilisateur');
     }
 
@@ -88,8 +71,7 @@ async function createRootUser() {
   } finally {
     if (client) {
       await client.close();
-      console.log('🔌 Connexion MongoDB fermée.');
-    }
+      }
   }
 }
 

@@ -195,7 +195,7 @@ export function logAccess(
     };
 
     // En production, envoyer à un service de logging
-    console.log('[ACCESS LOG]', JSON.stringify(logEntry));
+    console.log('Access log:', logEntry);
 }
 
 /**

@@ -12,7 +12,6 @@ export default function TrackBookingPage() {
   }, []);
 
   const handleBookingSearch = (code: string) => {
-    console.log('Searching for booking:', code);
     // Ici vous pouvez ajouter la logique pour rechercher la réservation
   };
 

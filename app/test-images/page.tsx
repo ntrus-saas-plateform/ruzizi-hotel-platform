@@ -64,7 +64,6 @@ export default function TestImagesPage() {
                       src={img}
                       alt={`${est.name} - Image ${idx + 1}`}
                       className="w-full h-full object-cover"
-                      onLoad={() => console.log(`✅ Image ${idx + 1} loaded for ${est.name}`)}
                       onError={(e) => {
                         console.error(`❌ Image ${idx + 1} failed for ${est.name}`);
                         e.currentTarget.style.display = 'none';

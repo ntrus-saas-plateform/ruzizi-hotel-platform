@@ -183,11 +183,10 @@ export default function EstablishmentDetailPage() {
             className="col-span-4 md:col-span-2 md:row-span-2 relative rounded-2xl overflow-hidden cursor-pointer group bg-gray-200" 
             onClick={() => { setSelectedImageIndex(0); setShowGallery(true); }}
           >
-            <img 
-              src={images[0]} 
-              alt={establishment.name} 
+            <img
+              src={images[0]}
+              alt={establishment.name}
               className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
-              onLoad={() => console.log('✅ Image principale chargée:', establishment.name)}
               onError={(e) => {
                 console.error('❌ Erreur chargement image principale:', {
                   establishment: establishment.name,
@@ -205,11 +204,10 @@ export default function EstablishmentDetailPage() {
               className="relative rounded-2xl overflow-hidden cursor-pointer group hidden md:block bg-gray-200" 
               onClick={() => { setSelectedImageIndex(idx + 1); setShowGallery(true); }}
             >
-              <img 
-                src={img} 
-                alt={`${establishment.name} ${idx + 2}`} 
+              <img
+                src={img}
+                alt={`${establishment.name} ${idx + 2}`}
                 className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
-                onLoad={() => console.log(`✅ Image ${idx + 2} chargée`)}
                 onError={(e) => {
                   console.error(`❌ Erreur chargement image ${idx + 2}:`, {
                     imagePreview: img.substring(0, 100),

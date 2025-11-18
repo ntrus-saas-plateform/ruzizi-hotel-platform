@@ -114,13 +114,9 @@ function findRouteFiles(dir: string): string[] {
 }
 
 // Exécution
-console.log('\n🔐 Vérification de la Sécurité des Routes API\n');
-console.log('═'.repeat(80));
-
+console.log('🔍 Vérification de la sécurité des routes API...\n');
 const apiDir = path.join(process.cwd(), 'app', 'api');
 const routeFiles = findRouteFiles(apiDir);
-
-console.log(`\n📁 ${routeFiles.length} fichiers de routes trouvés\n`);
 
 // Vérifier chaque fichier
 for (const file of routeFiles) {
@@ -136,100 +132,78 @@ const byStatus = {
 };
 
 // Afficher les résultats
-console.log('📊 Résultats par Statut:\n');
-console.log(`✅ OK:       ${byStatus.OK.length} routes`);
-console.log(`⚠️  WARNING:  ${byStatus.WARNING.length} routes`);
-console.log(`❌ ERROR:    ${byStatus.ERROR.length} routes`);
+console.log('📊 RÉSULTATS DE LA VÉRIFICATION\n');
 
 // Afficher les routes sécurisées
 if (byStatus.OK.length > 0) {
-  console.log('\n' + '═'.repeat(80));
-  console.log('\n✅ Routes Sécurisées:\n');
-  
+  console.log(`✅ Routes sécurisées: ${byStatus.OK.length}`);
   const secured = byStatus.OK.filter(r => r.needsAuth);
   const publicRoutes = byStatus.OK.filter(r => !r.needsAuth);
-  
+
   if (secured.length > 0) {
-    console.log(`📌 Routes avec authentification (${secured.length}):\n`);
+    console.log(`\n🔒 Routes API sécurisées (${secured.length}):\n`);
     secured.slice(0, 10).forEach(r => {
-      console.log(`   ✅ ${r.file}`);
-      console.log(`      ${r.message}`);
+      console.log(`  ${r.file}`);
     });
     if (secured.length > 10) {
-      console.log(`   ... et ${secured.length - 10} autres routes sécurisées`);
+      console.log(`  ... et ${secured.length - 10} autres`);
     }
   }
-  
+
   if (publicRoutes.length > 0) {
-    console.log(`\n📌 Routes publiques (${publicRoutes.length}):\n`);
+    console.log(`\n🌐 Routes publiques (${publicRoutes.length}):\n`);
     publicRoutes.forEach(r => {
-      console.log(`   ✅ ${r.file}`);
+      console.log(`  ${r.file}`);
     });
   }
 }
 
 // Afficher les erreurs
 if (byStatus.ERROR.length > 0) {
-  console.log('\n' + '═'.repeat(80));
-  console.log('\n❌ ERREURS - Routes Non Sécurisées:\n');
-  
+  console.log(`\n❌ Routes non sécurisées: ${byStatus.ERROR.length}`);
   byStatus.ERROR.forEach(r => {
-    console.log(`   ❌ ${r.file}`);
-    console.log(`      ${r.message}`);
-    console.log('');
+    console.log(`  ${r.file}`);
   });
-  
-  console.log('⚠️  ACTION REQUISE: Ces routes doivent être sécurisées avant la production!\n');
+
 }
 
 // Afficher les warnings
 if (byStatus.WARNING.length > 0) {
-  console.log('\n' + '═'.repeat(80));
-  console.log('\n⚠️  WARNINGS:\n');
-  
+  console.log(`\n⚠️  Routes avec avertissements: ${byStatus.WARNING.length}`);
   byStatus.WARNING.forEach(r => {
-    console.log(`   ⚠️  ${r.file}`);
-    console.log(`      ${r.message}`);
-    console.log('');
+    console.log(`  ${r.file}`);
   });
 }
 
 // Statistiques détaillées
-console.log('\n' + '═'.repeat(80));
-console.log('\n📈 Statistiques Détaillées:\n');
-
+console.log('\n📈 STATISTIQUES DÉTAILLÉES\n');
 const authMethodsUsed: Record<string, number> = {};
 results.filter(r => r.authMethod).forEach(r => {
   authMethodsUsed[r.authMethod!] = (authMethodsUsed[r.authMethod!] || 0) + 1;
 });
 
-console.log('Méthodes d\'authentification utilisées:');
 Object.entries(authMethodsUsed).forEach(([method, count]) => {
-  console.log(`   ${method}: ${count} routes`);
+  console.log(`  ${method}: ${count} routes`);
 });
 
 // Taux de sécurité
 const securedRoutes = results.filter(r => r.needsAuth && r.hasAuth).length;
 const routesNeedingAuth = results.filter(r => r.needsAuth).length;
-const securityRate = routesNeedingAuth > 0 
-  ? Math.round((securedRoutes / routesNeedingAuth) * 100) 
+const securityRate = routesNeedingAuth > 0
+  ? Math.round((securedRoutes / routesNeedingAuth) * 100)
   : 100;
 
-console.log(`\n📊 Taux de sécurité: ${securityRate}% (${securedRoutes}/${routesNeedingAuth} routes sécurisées)`);
+console.log(`\n🔐 Taux de sécurité: ${securityRate}%`);
 
 // Résumé final
-console.log('\n' + '═'.repeat(80));
-console.log('\n🎯 Résumé Final:\n');
-
+console.log('\n🏁 RÉSUMÉ FINAL\n');
 if (byStatus.ERROR.length === 0) {
-  console.log('✅ TOUTES LES ROUTES SONT SÉCURISÉES!');
-  console.log('✅ Le système est prêt pour la production.');
+  console.log('🎉 Toutes les routes sont sécurisées !');
 } else {
-  console.log(`❌ ${byStatus.ERROR.length} route(s) non sécurisée(s) détectée(s)`);
-  console.log('⚠️  Sécurisez ces routes avant le déploiement en production!');
+  console.log(`🚨 ${byStatus.ERROR.length} route(s) non sécurisée(s) détectée(s)`);
 }
 
-console.log('\n' + '═'.repeat(80) + '\n');
+console.log('\n📄 Rapport détaillé sauvegardé dans security-report.json\n');
 
 // Sauvegarder le rapport
 const report = {
@@ -246,8 +220,6 @@ fs.writeFileSync(
   path.join(process.cwd(), 'security-report.json'),
   JSON.stringify(report, null, 2)
 );
-
-console.log('📄 Rapport détaillé sauvegardé dans: security-report.json\n');
 
 // Exit code
 process.exit(byStatus.ERROR.length > 0 ? 1 : 0);

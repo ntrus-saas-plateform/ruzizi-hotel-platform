@@ -30,21 +30,11 @@ const HeroSection = memo(function HeroSection() {
 
   const fetchEstablishments = async () => {
     try {
-      console.log('🔄 Chargement des établissements pour le Hero...');
       const response = await fetch('/api/public/establishments?limit=3');
       const data = await response.json();
 
       if (data.success && data.data.data && data.data.data.length > 0) {
         const establishments = data.data.data.slice(0, 3);
-        console.log('✅ Établissements chargés pour Hero:', establishments.length);
-
-        establishments.forEach((est: Establishment) => {
-          console.log(`🏨 ${est.name}:`, {
-            hasImages: est.images && est.images.length > 0,
-            imageCount: est.images?.length || 0,
-            firstImage: est.images?.[0]?.substring(0, 50) || 'Aucune'
-          });
-        });
 
         setEstablishments(establishments);
         setImagesLoaded(new Array(establishments.length).fill(false));
@@ -131,14 +121,7 @@ const HeroSection = memo(function HeroSection() {
     ? establishments.map((est, idx) => {
         const hasImage = est.images && est.images.length > 0;
         const imageUrl = hasImage ? est.images[0] : defaultSlides[0].image;
-        
-        console.log(`📸 Slide ${idx + 1} - ${est.name}:`, {
-          hasImage,
-          imageLength: imageUrl?.length || 0,
-          isBase64: imageUrl?.startsWith('data:image'),
-          imagePreview: imageUrl?.substring(0, 100)
-        });
-        
+
         return {
           image: imageUrl,
           fallback: defaultSlides[0].fallback,
@@ -152,11 +135,9 @@ const HeroSection = memo(function HeroSection() {
   // Preload images when establishments are loaded
   useEffect(() => {
     if (slides.length > 0 && !loading) {
-      console.log('🖼️ Préchargement des images Hero...');
       slides.forEach((slide, index) => {
         const img = new Image();
         img.onload = () => {
-          console.log(`✅ Hero image ${index + 1} chargée:`, slide.title);
           setImagesLoaded(prev => {
             const newState = [...prev];
             newState[index] = true;
@@ -269,9 +250,6 @@ const HeroSection = memo(function HeroSection() {
               loading="lazy"
               className={`w-full h-full object-cover transition-opacity duration-500 ${imagesLoaded[index] ? 'opacity-100' : 'opacity-0'
                 }`}
-              onLoad={() => {
-                console.log(`✅ Hero background ${index + 1} affiché:`, slide.title);
-              }}
               onError={(e) => {
                 console.error(`❌ Erreur affichage hero background ${index + 1}, essai fallback`);
                 // Try fallback image

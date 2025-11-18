@@ -34,7 +34,6 @@ export class BookingService {
       const cachedPool = await cache.get<string[]>(this.CODE_POOL_KEY);
       if (cachedPool && cachedPool.length > 0) {
         this.bookingCodePool = cachedPool;
-        console.log(`✅ Loaded ${cachedPool.length} booking codes from cache`);
         return;
       }
 
@@ -50,8 +49,7 @@ export class BookingService {
 
       // Cache the pool with TTL (refresh every hour)
       await cache.set(this.CODE_POOL_KEY, codes, 3600);
-      console.log(`✅ Generated and cached ${codes.length} booking codes`);
-    } catch (error) {
+      } catch (error) {
       console.error('❌ Failed to preload booking codes:', error);
       // Fallback: generate codes on demand if preloading fails
     }
@@ -559,7 +557,7 @@ export class BookingService {
      return {
        data: data.map((booking: any) => ({
          ...booking,
-         _id: booking._id.toString(),
+         id: booking._id.toString(),
          establishmentId: booking.establishmentId?.toString(),
          accommodationId: booking.accommodationId?.toString(),
          createdBy: booking.createdBy?.toString(),
@@ -819,7 +817,7 @@ export class BookingService {
      return {
        data: data.map((booking: any) => ({
          ...booking,
-         _id: booking._id.toString(),
+         id: booking._id.toString(),
          establishmentId: booking.establishmentId?.toString(),
          accommodationId: booking.accommodationId?.toString(),
          createdBy: booking.createdBy?.toString(),
@@ -1091,7 +1089,7 @@ export class BookingService {
     return {
       data: data.map((booking: any) => ({
         ...booking,
-        _id: booking._id.toString(),
+        id: booking._id.toString(),
         establishmentId: booking.establishmentId?.toString(),
         accommodationId: booking.accommodationId?.toString(),
         createdBy: booking.createdBy?.toString(),

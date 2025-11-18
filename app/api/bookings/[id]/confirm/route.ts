@@ -12,15 +12,9 @@ import {
  */
 export async function POST(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const resolvedParams = await params;
-  console.log('🔍 API Confirm - ID:', resolvedParams.id);
-  
   return requireAuth(async (req, user) => {
-    console.log('👤 User:', { id: (user as any).id, role: (user as any).role, establishmentId: (user as any).establishmentId });
-    
     try {
       const booking = await BookingService.confirm(resolvedParams.id);
-      console.log('📋 Booking après confirmation:', booking ? { id: booking.id, status: booking.status } : 'null');
-
       if (!booking) {
         console.error('❌ Booking not found');
         return createErrorResponse('NOT_FOUND', 'Booking not found', 404);
@@ -40,7 +34,6 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
         );
       }
 
-      console.log('✅ Confirmation réussie');
       return createSuccessResponse(booking, 'Booking confirmed successfully');
     } catch (error) {
       console.error('💥 Error in confirm route:', error);

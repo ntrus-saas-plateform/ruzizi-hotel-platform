@@ -32,7 +32,6 @@ export function LoginPage() {
 
     try {
       await login(email, password);
-      console.log('✅ Connexion réussie !');
       router.push('/dashboard');
     } catch (err) {
       console.error('❌ Erreur de connexion:', err);
@@ -112,7 +111,6 @@ export function CreateEstablishmentButton() {
         pricingMode: 'per_night',
       });
 
-      console.log('✅ Établissement créé avec succès:', etablissement);
       alert('Établissement créé avec succès !');
     } catch (error) {
       console.error('❌ Erreur lors de la création:', error);
@@ -195,8 +193,7 @@ export function EstablishmentsList() {
       });
       
       setEstablishments(data.establishments);
-      console.log('✅ Établissements chargés:', data.establishments.length);
-    } catch (err) {
+      } catch (err) {
       console.error('❌ Erreur de chargement:', err);
       setError(err instanceof Error ? err.message : 'Erreur de chargement');
     } finally {
@@ -252,7 +249,6 @@ export function ProtectedPage() {
 
   useEffect(() => {
     if (!isLoading && !isAuthenticated) {
-      console.log('❌ Non authentifié, redirection vers /login');
       router.push('/login');
     }
   }, [isAuthenticated, isLoading, router]);
@@ -281,28 +277,24 @@ export function ProtectedPage() {
 // GET
 async function getEstablishments() {
   const response = await apiClient.get('/api/establishments');
-  console.log('✅ Établissements:', response);
   return response;
 }
 
 // POST
 async function createEstablishment(data: any) {
   const response = await apiClient.post('/api/establishments', data);
-  console.log('✅ Établissement créé:', response);
   return response;
 }
 
 // PUT
 async function updateEstablishment(id: string, data: any) {
   const response = await apiClient.put(`/api/establishments/${id}`, data);
-  console.log('✅ Établissement mis à jour:', response);
   return response;
 }
 
 // DELETE
 async function deleteEstablishment(id: string) {
   const response = await apiClient.delete(`/api/establishments/${id}`);
-  console.log('✅ Établissement supprimé');
   return response;
 }
 
@@ -311,17 +303,11 @@ async function deleteEstablishment(id: string) {
 // ============================================
 
 export async function testAutoRefresh() {
-  console.log('🧪 Test du rafraîchissement automatique...');
-  
   // 1. Se connecter
-  console.log('1️⃣ Connexion...');
   // (utilisez le composant LoginPage ci-dessus)
   
   // 2. Attendre que le token expire (15 minutes ou 30 secondes si modifié)
-  console.log('2️⃣ Attente de l\'expiration du token...');
-  
   // 3. Faire une requête
-  console.log('3️⃣ Tentative de création d\'établissement...');
   try {
     const etablissement = await establishmentsApi.create({
       name: 'Test Auto Refresh',
@@ -338,9 +324,7 @@ export async function testAutoRefresh() {
       pricingMode: 'per_night',
     });
     
-    console.log('✅ SUCCESS ! Le token a été rafraîchi automatiquement');
-    console.log('✅ Établissement créé:', etablissement);
-  } catch (error) {
+    } catch (error) {
     console.error('❌ ÉCHEC ! Le rafraîchissement automatique ne fonctionne pas');
     console.error('Erreur:', error);
   }

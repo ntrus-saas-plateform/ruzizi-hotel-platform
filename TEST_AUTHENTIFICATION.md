@@ -42,8 +42,8 @@ npm run type-check
 3. Ouvrir la console du navigateur
 4. Vérifier que les tokens sont stockés :
    ```javascript
-   console.log('Access Token:', localStorage.getItem('accessToken'));
-   console.log('Refresh Token:', localStorage.getItem('refreshToken'));
+   );
+   );
    ```
 
 ### Test 4 : Tester le rafraîchissement automatique
@@ -79,7 +79,6 @@ const etablissement = await establishmentsApi.create({
   pricingMode: 'per_night',
 });
 
-console.log('✅ Établissement créé:', etablissement);
 ```
 
 ## 🔍 Points de vérification

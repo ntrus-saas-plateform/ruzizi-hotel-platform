@@ -461,7 +461,6 @@ export class DatabaseMigration {
 
     for (const migration of this.migrations) {
       if (migration.version > currentVersion) {
-        console.log(`Running migration: ${migration.name}`);
         await migration.up();
         await this.updateVersion(migration.version);
       }
@@ -1079,7 +1078,7 @@ node --inspect --max-old-space-size=4096
 
 # Implement memory monitoring
 const memUsage = process.memoryUsage();
-console.log(`Memory usage: ${Math.round(memUsage.heapUsed / 1024 / 1024)} MB`);
+} MB`);
 ```
 
 ### Emergency Procedures

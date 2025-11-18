@@ -63,6 +63,7 @@ export interface IAccommodation {
   _id: Types.ObjectId;
   establishmentId: Types.ObjectId;
   name: string;
+  description?: string;
   type: AccommodationType;
   pricingMode: AccommodationPricingMode;
   pricing: Pricing;
@@ -82,6 +83,7 @@ export interface IAccommodation {
 export interface CreateAccommodationInput {
   establishmentId: string;
   name: string;
+  description?: string;
   type: AccommodationType;
   pricingMode: AccommodationPricingMode;
   pricing: Pricing;
@@ -97,6 +99,7 @@ export interface CreateAccommodationInput {
  */
 export interface UpdateAccommodationInput {
   name?: string;
+  description?: string;
   type?: AccommodationType;
   pricingMode?: AccommodationPricingMode;
   pricing?: Pricing;
@@ -114,6 +117,7 @@ export interface AccommodationResponse {
   id: string;
   establishmentId: string;
   name: string;
+  description?: string;
   type: AccommodationType;
   pricingMode: AccommodationPricingMode;
   pricing: Pricing;

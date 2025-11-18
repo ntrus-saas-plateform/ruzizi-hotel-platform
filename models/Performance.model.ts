@@ -1,7 +1,7 @@
 import mongoose, { Schema, Model } from 'mongoose';
 
 export interface IPerformance {
-  _id: mongoose.Types.ObjectId;
+  id?: string;
   employeeId: mongoose.Types.ObjectId;
   evaluatorId: mongoose.Types.ObjectId;
   period: {
@@ -98,6 +98,18 @@ const PerformanceSchema = new Schema<IPerformance>(
   },
   {
     timestamps: true,
+    toJSON: {
+      virtuals: true,
+      transform: function (doc, ret) {
+        ret.id = ret._id?.toString();
+        delete (ret as any)._id;
+        delete (ret as any).__v;
+        return ret;
+      },
+    },
+    toObject: {
+      virtuals: true,
+    },
   }
 );
 

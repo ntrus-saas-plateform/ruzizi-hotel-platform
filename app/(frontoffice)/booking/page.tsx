@@ -33,9 +33,10 @@ export default function BookingPage() {
   const [guests, setGuests] = useState<GuestInfo>({ adults: 1, children: 0, infants: 0 });
 
   // Step 2: Establishment and accommodation
-  const [selectedEstablishment, setSelectedEstablishment] = useState<string | null>(null);
-  const [selectedAccommodation, setSelectedAccommodation] = useState<string | null>(null);
-  const [selectedAccommodationData, setSelectedAccommodationData] = useState<AccommodationResponse | null>(null);
+   const [selectedEstablishment, setSelectedEstablishment] = useState<string | null>(null);
+   const [selectedAccommodation, setSelectedAccommodation] = useState<string | null>(null);
+   const [selectedAccommodationData, setSelectedAccommodationData] = useState<AccommodationResponse | null>(null);
+   const [establishmentName, setEstablishmentName] = useState('');
 
   // Step 3: Guest details
   const [clientInfo, setClientInfo] = useState<ClientInfo>({
@@ -63,6 +64,21 @@ export default function BookingPage() {
     const savedLanguage = localStorage.getItem('language') || 'fr';
     setLanguage(savedLanguage);
   }, []);
+
+  useEffect(() => {
+    if (selectedEstablishment) {
+      fetch(`/api/public/establishments/${selectedEstablishment}`)
+        .then(res => res.json())
+        .then(data => {
+          if (data.success) {
+            setEstablishmentName(data.data.name);
+          }
+        })
+        .catch(error => console.error('Error fetching establishment:', error));
+    } else {
+      setEstablishmentName('');
+    }
+  }, [selectedEstablishment]);
 
   const content = {
     fr: {
@@ -178,16 +194,48 @@ export default function BookingPage() {
   const handleConfirmBooking = async () => {
     setLoading(true);
     try {
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 3000));
+      const bookingData = {
+        establishmentId: selectedAccommodationData?.establishmentId,
+        accommodationId: selectedAccommodation,
+        checkInDate,
+        checkOutDate,
+        numberOfNights: calculateNights(),
+        mainClient: clientInfo,
+        guests: [], // Additional guests not implemented yet
+        numberOfGuests: calculateTotalGuests(),
+        specialRequests,
+        arrivalTime,
+        totalAmount: selectedAccommodationData ? selectedAccommodationData.pricing.basePrice * calculateNights() : 0,
+        pricingDetails: selectedAccommodationData ? {
+          basePrice: selectedAccommodationData.pricing.basePrice,
+          seasonalPrice: selectedAccommodationData.pricing.seasonalPrice || selectedAccommodationData.pricing.basePrice,
+          pricingMode: selectedAccommodationData.pricingMode,
+          numberOfUnits: calculateNights(),
+          totalAmount: selectedAccommodationData.pricing.basePrice * calculateNights()
+        } : {}
+      };
 
-      // Generate a booking code
-      const bookingCode = `BK${Date.now().toString().slice(-8)}`;
+      const response = await fetch('/api/public/bookings', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(bookingData),
+      });
 
-      // Redirect to confirmation page
-      router.push(`/booking-confirmation/${bookingCode}`);
+      const data = await response.json();
+
+      if (data.success) {
+        // Redirect to confirmation page with booking code
+        router.push(`/booking-confirmation/${data.data.bookingCode}`);
+      } else {
+        // Handle error
+        console.error('Booking failed:', data.error);
+        alert(`Erreur lors de la réservation: ${data.error.message}`);
+      }
     } catch (error) {
       console.error('Booking error:', error);
+      alert('Erreur lors de la réservation. Veuillez réessayer.');
     } finally {
       setLoading(false);
     }
@@ -421,7 +469,7 @@ export default function BookingPage() {
                   </div>
                   <div className="flex justify-between">
                     <span className="text-gray-600">Établissement:</span>
-                    <span className="font-medium">{selectedAccommodationData?.establishmentId}</span>
+                    <span className="font-medium">{establishmentName || selectedAccommodationData?.establishmentId}</span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-gray-600">Voyageurs:</span>

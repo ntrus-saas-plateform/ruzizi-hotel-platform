@@ -105,9 +105,7 @@ export default function ImageUpload({
           
           // Convert to base64 with quality compression
           const compressedBase64 = canvas.toDataURL('image/jpeg', 0.85);
-          
-          console.log(`📸 Image compressed: ${Math.round(file.size / 1024)}KB → ${Math.round(compressedBase64.length / 1024)}KB`);
-          
+
           resolve(compressedBase64);
         };
         

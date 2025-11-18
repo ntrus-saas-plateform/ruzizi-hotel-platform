@@ -34,8 +34,6 @@ export class TokenManager {
     this.refreshTimer = setInterval(() => {
       this.checkAndRefreshToken(onTokenRefreshed);
     }, TOKEN_CHECK_INTERVAL);
-
-    console.log('🔄 Auto-refresh des tokens démarré');
   }
 
   /**
@@ -45,7 +43,6 @@ export class TokenManager {
     if (this.refreshTimer) {
       clearInterval(this.refreshTimer);
       this.refreshTimer = null;
-      console.log('⏹️ Auto-refresh des tokens arrêté');
     }
   }
 
@@ -57,20 +54,15 @@ export class TokenManager {
       const token = localStorage.getItem('accessToken');
       
       if (!token) {
-        console.log('⚠️ Pas de token à vérifier');
         return;
       }
 
       const timeRemaining = this.getTokenTimeRemaining(token);
       
       if (timeRemaining <= 0) {
-        console.log('❌ Token expiré, refresh nécessaire');
         await this.refreshToken(onTokenRefreshed);
       } else if (timeRemaining < TOKEN_REFRESH_THRESHOLD) {
-        console.log(`⏰ Token expire dans ${Math.floor(timeRemaining / 1000)}s, refresh préventif`);
         await this.refreshToken(onTokenRefreshed);
-      } else {
-        console.log(`✅ Token valide pour encore ${Math.floor(timeRemaining / 1000)}s`);
       }
     } catch (error) {
       console.error('❌ Erreur lors de la vérification du token:', error);
@@ -83,19 +75,15 @@ export class TokenManager {
   async refreshToken(onTokenRefreshed?: (newToken: string) => void): Promise<boolean> {
     // Éviter les refresh multiples simultanés
     if (this.isRefreshing) {
-      console.log('⏳ Refresh déjà en cours...');
       return false;
     }
 
     this.isRefreshing = true;
 
     try {
-      console.log('🔄 Tentative de refresh du token...');
-
       const refreshToken = localStorage.getItem('refreshToken');
       
       if (!refreshToken) {
-        console.log('❌ Pas de refresh token disponible');
         this.handleRefreshFailure();
         return false;
       }
@@ -109,7 +97,6 @@ export class TokenManager {
       });
 
       if (!response.ok) {
-        console.log('❌ Échec du refresh:', response.status);
         this.handleRefreshFailure();
         return false;
       }
@@ -125,8 +112,6 @@ export class TokenManager {
         // Mettre à jour le cookie
         document.cookie = `auth-token=${newToken}; path=/; max-age=${15 * 60}`;
 
-        console.log('✅ Token rafraîchi avec succès');
-
         // Callback optionnel
         if (onTokenRefreshed) {
           onTokenRefreshed(newToken);
@@ -134,7 +119,6 @@ export class TokenManager {
 
         return true;
       } else {
-        console.log('❌ Réponse invalide du serveur');
         this.handleRefreshFailure();
         return false;
       }
@@ -151,8 +135,6 @@ export class TokenManager {
    * Gérer l'échec du refresh
    */
   private handleRefreshFailure() {
-    console.log('🚪 Redirection vers la page de login...');
-    
     // Nettoyer le localStorage
     localStorage.removeItem('accessToken');
     localStorage.removeItem('refreshToken');

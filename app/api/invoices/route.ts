@@ -88,7 +88,21 @@ export const GET = withAuth(async (request: NextRequest, user) => {
  */
 export const POST = withAuth(async (request: NextRequest, user) => {
   try {
-    const body = await request.json();
+    let body;
+    try {
+      body = await request.json();
+    } catch (error) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: {
+            code: 'INVALID_JSON',
+            message: 'Invalid JSON in request body',
+          },
+        },
+        { status: 400 }
+      );
+    }
 
     // Validate request body
     const validatedData = CreateInvoiceSchema.parse(body);

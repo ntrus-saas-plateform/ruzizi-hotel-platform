@@ -53,14 +53,11 @@ async function testRoute(url) {
   try {
     const response = await fetch(url);
     if (response.status === 200) {
-      console.log(`SUCCESS: ${url} - Status: ${response.status}`);
       return { url, success: true, status: response.status };
     } else {
-      console.log(`FAILURE: ${url} - Status: ${response.status}`);
       return { url, success: false, status: response.status };
     }
   } catch (error) {
-    console.log(`ERROR: ${url} - ${error.message}`);
     return { url, success: false, error: error.message };
   }
 }
@@ -73,15 +70,10 @@ async function main() {
     const result = await testRoute(url);
     results.push(result);
   }
-  console.log('\nSummary:');
   const successes = results.filter(r => r.success);
   const failures = results.filter(r => !r.success);
-  console.log(`Total routes: ${results.length}`);
-  console.log(`Successes: ${successes.length}`);
-  console.log(`Failures: ${failures.length}`);
   if (failures.length > 0) {
-    console.log('\nFailed routes:');
-    failures.forEach(f => console.log(`${f.url} - Status: ${f.status || 'Error: ' + f.error}`));
+    failures.forEach(f => );
   }
 }
 

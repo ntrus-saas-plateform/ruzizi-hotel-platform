@@ -3,7 +3,6 @@ let token = null;
 let results = { successes: 0, failures: 0, details: [] };
 
 async function login() {
-  console.log('Logging in...');
   const res = await fetch(`${BASE_URL}/api/auth/login`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -12,11 +11,9 @@ async function login() {
   if (res.ok) {
     const data = await res.json();
     token = data.data.tokens.accessToken;
-    console.log('Login successful');
     results.successes++;
     results.details.push({ endpoint: '/api/auth/login', method: 'POST', status: 'success' });
   } else {
-    console.log('Login failed');
     results.failures++;
     results.details.push({ endpoint: '/api/auth/login', method: 'POST', status: 'failure', code: res.status });
   }
@@ -36,12 +33,11 @@ async function testEndpoint(method, path, body = null, auth = true) {
       results.failures++;
     }
     results.details.push({ endpoint: path, method, status: success ? 'success' : 'failure', code: res.status });
-    console.log(`${method} ${path}: ${success ? 'SUCCESS' : 'FAILURE'} (${res.status})`);
+    `);
   } catch (error) {
     results.failures++;
     results.details.push({ endpoint: path, method, status: 'error', error: error.message });
-    console.log(`${method} ${path}: ERROR - ${error.message}`);
-  }
+    }
 }
 
 async function runTests() {
@@ -60,7 +56,6 @@ async function runTests() {
   await login();
 
   if (!token) {
-    console.log('Cannot proceed without token');
     return;
   }
 
@@ -209,12 +204,8 @@ async function runTests() {
   // Alerts
   await testEndpoint('GET', '/api/alerts/check');
 
-  console.log('\n=== Test Summary ===');
-  console.log(`Successes: ${results.successes}`);
-  console.log(`Failures: ${results.failures}`);
-  console.log('\nDetails:');
   results.details.forEach(d => {
-    console.log(`${d.method} ${d.endpoint}: ${d.status} ${d.code ? `(${d.code})` : ''} ${d.error ? `Error: ${d.error}` : ''}`);
+    ` : ''} ${d.error ? `Error: ${d.error}` : ''}`);
   });
 }
 

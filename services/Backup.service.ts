@@ -207,20 +207,13 @@ class BackupService {
    */
   async scheduleDailyBackup(): Promise<void> {
     // Cette fonction devrait être appelée par un cron job
-    console.log('Démarrage du backup quotidien...');
-    
     const result = await this.createBackup({
       compress: true,
     });
 
     if (result.success) {
-      console.log(`Backup créé avec succès: ${result.filePath}`);
-      console.log(`Taille: ${(result.size! / 1024 / 1024).toFixed(2)} MB`);
-      console.log(`Durée: ${(result.duration! / 1000).toFixed(2)} secondes`);
-
       // Nettoyer les backups de plus de 30 jours
       const deletedCount = await this.cleanOldBackups(30);
-      console.log(`${deletedCount} ancien(s) backup(s) supprimé(s)`);
     } else {
       console.error(`Erreur lors du backup: ${result.error}`);
     }

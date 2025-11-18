@@ -16,8 +16,6 @@ export async function POST(request: NextRequest) {
 
     // TODO: Envoyer l'email avec le token
     // Pour l'instant, on retourne le token (à ne pas faire en production!)
-    console.log('Reset token:', resetToken);
-
     return NextResponse.json({
       message: 'Un email de réinitialisation a été envoyé',
       // En production, ne pas retourner le token!

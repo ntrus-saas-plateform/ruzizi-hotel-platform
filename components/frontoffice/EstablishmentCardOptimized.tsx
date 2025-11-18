@@ -35,7 +35,6 @@ export default function EstablishmentCardOptimized({
   // Use custom hook for better image handling
   const { imageSrc, isLoading, hasError } = useImageLoader({
     src: image,
-    onLoad: () => console.log('✅ Image loaded:', name),
     onError: (error) => console.error('❌ Image error:', name, error),
   });
 

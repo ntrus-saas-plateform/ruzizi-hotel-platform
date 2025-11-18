@@ -9,16 +9,9 @@ import { withValidation } from '@/lib/security/validation-middleware';
  */
 export const POST = withValidation(LoginSchema, async (request: NextRequest, validatedData) => {
   try {
-    console.log('🔐 API Login - Requête reçue');
-    console.log('📦 Body validé:', { email: validatedData.email, hasPassword: !!validatedData.password });
-
     // Login user
     const result = await AuthService.login(validatedData);
-    console.log('✅ Authentification réussie:', {
-      userId: result.user.id,
-      email: result.user.email,
-      hasTokens: !!result.tokens
-    });
+    
 
     return NextResponse.json(
       {

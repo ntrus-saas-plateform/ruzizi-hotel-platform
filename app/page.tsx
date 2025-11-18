@@ -28,13 +28,8 @@ export default function HomePage() {
       const data = await response.json();
       if (data.success) {
         const establishments = data.data.data || [];
-        console.log('📊 Établissements chargés:', establishments.length);
         establishments.forEach((est: any) => {
-          console.log(`🏨 ${est.name}:`, {
-            hasImages: est.images && est.images.length > 0,
-            imageCount: est.images?.length || 0,
-            firstImage: est.images?.[0] || 'Aucune'
-          });
+          
         });
         setEstablishments(establishments);
       }

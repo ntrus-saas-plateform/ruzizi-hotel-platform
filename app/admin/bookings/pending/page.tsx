@@ -56,15 +56,11 @@ export default function PendingBookingsPage() {
   };
 
   const handleConfirm = async (bookingId: string) => {
-    console.log('🔍 Tentative de confirmation:', bookingId);
-    
     if (!confirm('Confirmer cette réservation ?')) return;
 
     try {
       setActionLoading(bookingId);
       const token = localStorage.getItem('accessToken');
-      
-      console.log('📤 Envoi de la requête avec token:', token ? 'Présent' : 'Absent');
       
       const response = await fetch(`/api/bookings/${bookingId}/confirm`, {
         method: 'POST',
@@ -74,17 +70,12 @@ export default function PendingBookingsPage() {
         },
       });
 
-      console.log('📥 Status de la réponse:', response.status);
-      
       const data = await response.json();
-      console.log('📦 Données reçues:', data);
-
       if (!response.ok) {
         console.error('❌ Erreur:', data);
         throw new Error(data.error?.message || 'Erreur lors de la confirmation');
       }
 
-      console.log('✅ Confirmation réussie!');
       alert('Réservation confirmée avec succès!');
       fetchPendingBookings();
     } catch (err) {
@@ -225,8 +216,6 @@ export default function PendingBookingsPage() {
                     <button
                       type="button"
                       onClick={() => {
-                        console.log('🖱️ CLIC DETECTE sur le bouton Confirmer');
-                        console.log('📋 Booking ID:', booking._id);
                         handleConfirm(booking._id);
                       }}
                       disabled={actionLoading === booking._id}

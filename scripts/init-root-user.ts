@@ -4,7 +4,7 @@ import nodemailer from 'nodemailer';
 
 // Configuration
 const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/ruzizi-hotel';
-const ROOT_EMAIL = 'admin@ruzizihotel.com';
+const ROOT_EMAIL = 'ntrus07@oulook.fr';
 const ROOT_FIRST_NAME = 'Admin';
 const ROOT_LAST_NAME = 'Ruzizi';
 
@@ -46,7 +46,6 @@ function generatePassword(): string {
  */
 async function sendCredentialsEmail(email: string, password: string): Promise<void> {
   if (!SMTP_HOST || !SMTP_USER || !SMTP_PASS) {
-    console.log('⚠️  Configuration SMTP manquante, email non envoyé');
     return;
   }
 
@@ -133,8 +132,7 @@ async function sendCredentialsEmail(email: string, password: string): Promise<vo
     };
 
     await transporter.sendMail(mailOptions);
-    console.log('📧 Email envoyé avec succès à', email);
-  } catch (error) {
+    } catch (error) {
     console.error('❌ Erreur lors de l\'envoi de l\'email:', error);
   }
 }
@@ -146,44 +144,25 @@ async function createRootUser(): Promise<void> {
   let client: MongoClient | null = null;
 
   try {
-    console.log('🔄 Connexion à MongoDB...');
-    console.log(`📍 URI: ${MONGODB_URI.replace(/\/\/.*@/, '//***:***@')}`);
-    
+    console.log('🔧 Initialisation de l\'utilisateur root...');
+
     client = new MongoClient(MONGODB_URI);
     await client.connect();
-    console.log('✅ Connecté à MongoDB');
-
     const db = client.db();
     const usersCollection = db.collection<RootUser>('users');
 
     // Vérifier si l'utilisateur root existe déjà
-    console.log('🔍 Vérification de l\'existence de l\'utilisateur root...');
     const existingUser = await usersCollection.findOne({ email: ROOT_EMAIL });
 
     if (existingUser) {
-      console.log('');
-      console.log('⚠️  L\'utilisateur root existe déjà!');
-      console.log('═══════════════════════════════════════════════════════');
-      console.log(`📧 Email: ${ROOT_EMAIL}`);
-      console.log(`👤 Nom: ${existingUser.firstName} ${existingUser.lastName}`);
-      console.log(`🆔 ID: ${existingUser._id}`);
-      console.log(`📅 Créé le: ${existingUser.createdAt}`);
-      console.log('═══════════════════════════════════════════════════════');
-      console.log('');
-      console.log('ℹ️  Options:');
-      console.log('   1. Utilisez la fonction "Mot de passe oublié" sur la page de login');
-      console.log('   2. Supprimez l\'utilisateur en base et relancez ce script');
-      console.log('   3. Contactez un administrateur système');
       return;
     }
 
     // Générer le mot de passe
-    console.log('🔐 Génération du mot de passe sécurisé...');
     const password = generatePassword();
     const hashedPassword = await bcrypt.hash(password, 12);
 
     // Créer l'utilisateur root
-    console.log('👤 Création de l\'utilisateur root...');
     const rootUser: RootUser = {
       firstName: ROOT_FIRST_NAME,
       lastName: ROOT_LAST_NAME,
@@ -209,39 +188,20 @@ async function createRootUser(): Promise<void> {
     const result = await usersCollection.insertOne(rootUser as any);
 
     if (result.insertedId) {
-      console.log('✅ Utilisateur root créé avec succès!');
-      console.log('');
-      console.log('═══════════════════════════════════════════════════════');
-      console.log('📋 INFORMATIONS DE CONNEXION');
-      console.log('═══════════════════════════════════════════════════════');
-      console.log(`   📧 Email:        ${ROOT_EMAIL}`);
+      console.log('✅ Utilisateur root créé avec succès');
+      console.log(`   📧 Email: ${ROOT_EMAIL}`);
       console.log(`   🔑 Mot de passe: ${password}`);
-      console.log(`   🆔 ID:           ${result.insertedId}`);
-      console.log(`   👤 Rôle:         Super Administrateur`);
-      console.log('═══════════════════════════════════════════════════════');
-      console.log('');
-      console.log('🔐 IMPORTANT: Notez bien ce mot de passe, il ne sera plus affiché!');
-      console.log('🌐 URL de connexion: ' + FRONTEND_URL + '/backoffice/login');
-      console.log('');
+      console.log('   👤 Rôle: Super Administrateur');
 
       // Envoyer l'email si configuré
       if (SMTP_HOST && SMTP_USER && SMTP_PASS) {
-        console.log('📧 Envoi de l\'email avec les identifiants...');
         await sendCredentialsEmail(ROOT_EMAIL, password);
       }
-
-      console.log('💡 Conseils de sécurité:');
-      console.log('   1. Changez ce mot de passe après votre première connexion');
-      console.log('   2. Activez l\'authentification à deux facteurs');
-      console.log('   3. Ne partagez jamais vos identifiants');
-      console.log('   4. Créez des comptes séparés pour chaque administrateur');
-      console.log('');
     } else {
       throw new Error('Échec de la création de l\'utilisateur');
     }
   } catch (error) {
-    console.error('');
-    console.error('❌ ERREUR:');
+    console.error('\n❌ ERREUR lors de la création de l\'utilisateur root:');
     console.error('═══════════════════════════════════════════════════════');
     if (error instanceof Error) {
       console.error(error.message);
@@ -261,17 +221,12 @@ async function createRootUser(): Promise<void> {
   } finally {
     if (client) {
       await client.close();
-      console.log('🔌 Connexion MongoDB fermée.');
     }
   }
 }
 
 // Exécuter le script
 if (require.main === module) {
-  console.log('');
-  console.log('🏨 Ruzizi Hôtel - Initialisation Utilisateur Root');
-  console.log('═══════════════════════════════════════════════════════');
-  console.log('');
   createRootUser().catch((error) => {
     console.error('Erreur fatale:', error);
     process.exit(1);

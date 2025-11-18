@@ -5,13 +5,10 @@ import { isTokenBlacklisted } from '@/lib/auth/token-blacklist';
 
 export async function POST(request: NextRequest) {
   try {
-    console.log('🔄 Token refresh request received');
-
     const body = await request.json();
     const refreshToken = body.refreshToken || request.cookies.get('refresh-token')?.value;
 
     if (!refreshToken) {
-      console.log('❌ No refresh token provided');
       return NextResponse.json(
         {
           success: false,
@@ -24,11 +21,8 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    console.log('🔍 Checking if refresh token is blacklisted...');
-
     // Check if token is blacklisted
     if (isTokenBlacklisted(refreshToken)) {
-      console.log('🚫 Refresh token is blacklisted');
       return NextResponse.json(
         {
           success: false,
@@ -40,8 +34,6 @@ export async function POST(request: NextRequest) {
         { status: 401 }
       );
     }
-
-    console.log('✅ Refresh token not blacklisted, proceeding with refresh');
 
     // Utiliser le service d'authentification pour rafraîchir le token
     const tokens = await AuthService.refreshToken(refreshToken);

@@ -40,10 +40,9 @@ setupDatabaseEventListeners();
 import { isConnected, getConnectionState } from '@/lib/db';
 
 if (isConnected()) {
-  console.log('Database is connected');
-}
+  }
 
-console.log('Connection state:', getConnectionState());
+);
 ```
 
 ### Pagination
@@ -61,8 +60,8 @@ const result = await paginate(
   }
 );
 
-console.log(result.data); // Array of users
-console.log(result.pagination); // Pagination info
+// Array of users
+// Pagination info
 ```
 
 ### Transactions
@@ -90,8 +89,7 @@ try {
   const dbError = handleMongooseError(error);
   
   if (dbError instanceof DuplicateKeyError) {
-    console.log('Email already exists:', dbError.field);
-  }
+    }
 }
 ```
 

@@ -18,7 +18,6 @@ export default function AuthGuard({ children }: AuthGuardProps) {
         const token = localStorage.getItem('accessToken');
 
         if (!token) {
-          console.log('❌ No token found');
           window.location.href = '/backoffice/login';
           return;
         }
@@ -28,13 +27,11 @@ export default function AuthGuard({ children }: AuthGuardProps) {
         });
 
         if (!response.ok) {
-          console.log('❌ Token invalid');
           localStorage.clear();
           window.location.href = '/backoffice/login';
           return;
         }
 
-        console.log('✅ User authenticated');
         setIsAuthenticated(true);
       } catch (error) {
         console.error('❌ Auth error:', error);

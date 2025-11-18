@@ -22,8 +22,7 @@ export default function FormExample() {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    console.log('Form submitted:', formData);
-  };
+    };
 
   return (
     <div className="max-w-2xl mx-auto p-6">

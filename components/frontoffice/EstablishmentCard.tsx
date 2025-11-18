@@ -32,34 +32,21 @@ const EstablishmentCard = memo(function EstablishmentCard({
   const [imageLoaded, setImageLoaded] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
 
-  // Log pour debug
-  console.log(`🖼️ EstablishmentCard ${name}:`, { 
-    imageType: typeof image,
-    imageLength: image?.length || 0,
-    isBase64: image?.startsWith('data:image'),
-    imagePreview: image?.substring(0, 100),
-    hasComma: image?.includes(','),
-    mimeType: image?.match(/data:([^;]+);/)?.[1]
-  });
-
   const handleBookNow = (e: React.MouseEvent) => {
     e.stopPropagation();
     e.preventDefault();
-    console.log('🎯 Réserver établissement:', id);
     router.push(`/booking?establishment=${id}`);
   };
 
   const handleViewDetails = (e: React.MouseEvent) => {
     e.stopPropagation();
     e.preventDefault();
-    console.log('👁️ Voir détails établissement:', id);
     router.push(`/establishments/${id}`);
   };
 
   const handleViewOnMap = (e: React.MouseEvent) => {
     e.stopPropagation();
     e.preventDefault();
-    console.log('🗺️ Voir sur la carte');
     // Scroll to map section on homepage or navigate to map
     const mapSection = document.getElementById('map-section');
     if (mapSection) {
@@ -72,7 +59,6 @@ const EstablishmentCard = memo(function EstablishmentCard({
   const handleLike = (e: React.MouseEvent) => {
     e.stopPropagation();
     e.preventDefault();
-    console.log('❤️ Like établissement:', id);
     alert('Établissement ajouté aux favoris !');
   };
 
@@ -102,7 +88,6 @@ const EstablishmentCard = memo(function EstablishmentCard({
   };
 
   const handleCardClick = () => {
-    console.log('🖱️ Clic sur la carte établissement:', id);
     router.push(`/establishments/${id}`);
   };
 
@@ -141,11 +126,7 @@ const EstablishmentCard = memo(function EstablishmentCard({
             imageLoaded ? 'opacity-100 scale-100' : 'opacity-0 scale-110'
           } ${isHovered ? 'scale-110' : 'scale-100'}`}
           onLoad={(e) => {
-            console.log('✅ Image chargée:', name, {
-              naturalWidth: e.currentTarget.naturalWidth,
-              naturalHeight: e.currentTarget.naturalHeight,
-              complete: e.currentTarget.complete
-            });
+            
             setImageLoaded(true);
           }}
           onError={(e) => {

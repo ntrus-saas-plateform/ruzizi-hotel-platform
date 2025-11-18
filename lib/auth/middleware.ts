@@ -30,57 +30,43 @@ export async function authenticateUser(request: NextRequest): Promise<{
   error?: string;
 }> {
   try {
-    console.log('🔐 Starting user authentication...');
-
     // Try to get token from Authorization header first
     const authHeader = request.headers.get('authorization');
     let token: string | null = null;
 
     if (authHeader && authHeader.startsWith('Bearer ')) {
       token = authHeader.substring(7);
-      console.log('📋 Token found in Authorization header');
-    }
+      }
 
     // If no token in header, try cookies
     if (!token) {
       token = request.cookies.get('auth-token')?.value || null;
       if (token) {
-        console.log('🍪 Token found in cookies');
-      }
+        }
     }
 
     if (!token) {
-      console.log('❌ No authentication token found');
       return { success: false, error: 'Token d\'authentification manquant' };
     }
 
     // Check if token is blacklisted
-    console.log('🔍 Checking if token is blacklisted...');
     if (isTokenBlacklisted(token)) {
-      console.log('🚫 Token is blacklisted');
       return { success: false, error: 'Token invalidé' };
     }
 
     // Vérifier le token JWT
-    console.log('🔍 Verifying JWT token...');
     const payload = verifyAccessToken(token);
 
     if (!payload) {
-      console.log('❌ Token verification failed');
       return { success: false, error: 'Token invalide ou expiré' };
     }
-
-    console.log('👤 Token valid, checking user existence for:', payload.userId);
 
     // Vérifier que l'utilisateur existe toujours et est actif
     const user = await AuthService.getUserById(payload.userId);
 
     if (!user || !user.isActive) {
-      console.log('❌ User not found or inactive:', payload.userId);
       return { success: false, error: 'Utilisateur non trouvé ou inactif' };
     }
-
-    console.log('✅ Authentication successful for user:', user.email, 'role:', user.role);
 
     return {
       success: true,

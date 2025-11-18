@@ -33,17 +33,10 @@ function generatePassword(): string {
  */
 async function sendCredentialsEmail(email: string, password: string): Promise<void> {
     if (!SMTP_HOST || !SMTP_USER || !SMTP_PASS) {
-        console.log('⚠️  Configuration SMTP manquante, email non envoyé');
         return;
     }
 
     try {
-        console.log('📧 Configuration SMTP détectée, envoi de l\'email...');
-        console.log(`   Host: ${SMTP_HOST}`);
-        console.log(`   Port: ${SMTP_PORT}`);
-        console.log(`   User: ${SMTP_USER}`);
-        console.log(`   Secure: ${SMTP_SECURE || (SMTP_PORT === 465)}`);
-        
         const transporter = nodemailer.createTransport({
             host: SMTP_HOST,
             port: SMTP_PORT,
@@ -92,9 +85,7 @@ async function sendCredentialsEmail(email: string, password: string): Promise<vo
         };
 
         const info = await transporter.sendMail(mailOptions);
-        console.log('✅ Email envoyé avec succès à', email);
-        console.log('   Message ID:', info.messageId);
-    } catch (error) {
+        } catch (error) {
         console.error('❌ Erreur lors de l\'envoi de l\'email:');
         if (error instanceof Error) {
             console.error('   Message:', error.message);
@@ -123,9 +114,6 @@ export async function autoInitRootUser(): Promise<void> {
         if (userCount > 0) {
             return; // Des utilisateurs existent déjà
         }
-
-        console.log('');
-        console.log('🔄 Aucun utilisateur trouvé - Création de l\'utilisateur root...');
 
         // Générer le mot de passe
         const password = generatePassword();
@@ -158,19 +146,6 @@ export async function autoInitRootUser(): Promise<void> {
         const result = await usersCollection.insertOne(rootUser);
 
         if (result.insertedId) {
-            console.log('✅ Utilisateur root créé!');
-            console.log('');
-            console.log('═══════════════════════════════════════════════════════');
-            console.log('📋 IDENTIFIANTS DE CONNEXION');
-            console.log('═══════════════════════════════════════════════════════');
-            console.log(`   📧 Email:        ${ROOT_EMAIL}`);
-            console.log(`   🔑 Mot de passe: ${password}`);
-            console.log('═══════════════════════════════════════════════════════');
-            console.log('');
-            console.log('🌐 Connexion: ' + FRONTEND_URL + '/backoffice/login');
-            console.log('🔐 Changez ce mot de passe après la première connexion!');
-            console.log('');
-
             // Envoyer l'email si configuré
             if (SMTP_HOST && SMTP_USER && SMTP_PASS) {
                 await sendCredentialsEmail(ROOT_EMAIL, password);

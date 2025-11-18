@@ -22,11 +22,9 @@ export interface TokenPayload {
  * Générer un access token
  */
 export function generateAccessToken(payload: TokenPayload): string {
-  console.log('🔑 Generating access token for user:', payload.userId, 'role:', payload.role);
   const token = jwt.sign(payload, JWT_SECRET!, {
     expiresIn: ACCESS_TOKEN_EXPIRY,
   });
-  console.log('✅ Access token generated, expires in:', ACCESS_TOKEN_EXPIRY);
   return token;
 }
 
@@ -57,9 +55,7 @@ export function generateTokens(payload: TokenPayload): {
  */
 export function verifyAccessToken(token: string): TokenPayload | null {
   try {
-    console.log('🔍 Verifying access token...');
     const decoded = jwt.verify(token, JWT_SECRET!) as TokenPayload;
-    console.log('✅ Access token verified for user:', decoded.userId, 'role:', decoded.role);
     return decoded;
   } catch (error) {
     console.error('❌ Invalid access token:', error instanceof Error ? error.message : error);
@@ -72,9 +68,7 @@ export function verifyAccessToken(token: string): TokenPayload | null {
  */
 export function verifyRefreshToken(token: string): TokenPayload | null {
   try {
-    console.log('🔄 Verifying refresh token...');
     const decoded = jwt.verify(token, JWT_REFRESH_SECRET!) as TokenPayload;
-    console.log('✅ Refresh token verified for user:', decoded.userId);
     return decoded;
   } catch (error) {
     console.error('❌ Invalid refresh token:', error instanceof Error ? error.message : error);

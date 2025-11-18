@@ -62,24 +62,21 @@ const results: TestResult[] = [];
 function test(name: string, expected: any, actual: any, message?: string) {
   const passed = JSON.stringify(expected) === JSON.stringify(actual);
   results.push({ name, passed, expected, actual, message });
-  
+
   if (passed) {
     console.log(`✅ ${name}`);
   } else {
     console.log(`❌ ${name}`);
     console.log(`   Attendu: ${JSON.stringify(expected)}`);
-    console.log(`   Obtenu:  ${JSON.stringify(actual)}`);
-    if (message) console.log(`   Message: ${message}`);
+    console.log(`   Reçu: ${JSON.stringify(actual)}`);
+    if (message) console.log(`   ${message}`);
   }
 }
 
 // Tests
-console.log('\n🔐 Tests de Sécurité par Établissement\n');
-console.log('═'.repeat(60));
+console.log('🧪 Démarrage des tests de sécurité...\n');
 
 // Test 1: applyEstablishmentFilter
-console.log('\n📋 Test 1: applyEstablishmentFilter\n');
-
 test(
   'Root voit tout (pas de filtre)',
   {},
@@ -116,8 +113,6 @@ test(
 );
 
 // Test 2: canAccessEstablishment
-console.log('\n📋 Test 2: canAccessEstablishment\n');
-
 test(
   'Root peut accéder à n\'importe quel établissement',
   true,
@@ -161,8 +156,6 @@ test(
 );
 
 // Test 3: canModifyResource
-console.log('\n📋 Test 3: canModifyResource\n');
-
 test(
   'Root peut modifier n\'importe quelle ressource',
   true,
@@ -199,29 +192,27 @@ test(
 );
 
 // Résumé
-console.log('\n═'.repeat(60));
-console.log('\n📊 Résumé des Tests\n');
-
+console.log('\n📊 RÉSUMÉ DES TESTS\n');
 const passed = results.filter(r => r.passed).length;
 const failed = results.filter(r => !r.passed).length;
 const total = results.length;
 
-console.log(`Total:   ${total} tests`);
-console.log(`✅ Réussis: ${passed} (${Math.round((passed / total) * 100)}%)`);
-console.log(`❌ Échoués: ${failed} (${Math.round((failed / total) * 100)}%)`);
+console.log(`Total: ${total} tests`);
+console.log(`Réussis: ${passed} (${Math.round((passed / total) * 100)}%)`);
+console.log(`Échoués: ${failed} (${Math.round((failed / total) * 100)}%)`);
 
 if (failed > 0) {
-  console.log('\n⚠️  Tests échoués:\n');
+  console.log('\n❌ TESTS ÉCHOUÉS:');
   results
     .filter(r => !r.passed)
     .forEach(r => {
-      console.log(`   ❌ ${r.name}`);
-      console.log(`      Attendu: ${JSON.stringify(r.expected)}`);
-      console.log(`      Obtenu:  ${JSON.stringify(r.actual)}`);
+      console.log(`  - ${r.name}`);
+      console.log(`    Attendu: ${JSON.stringify(r.expected)}`);
+      console.log(`    Reçu: ${JSON.stringify(r.actual)}`);
     });
 }
 
-console.log('\n═'.repeat(60));
+console.log('\n🏁 Tests terminés\n');
 
 // Exit code
 process.exit(failed > 0 ? 1 : 0);

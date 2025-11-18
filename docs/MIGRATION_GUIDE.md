@@ -285,8 +285,7 @@ const handleSubmit = async (e) => {
     }
     
     const result = await response.json();
-    console.log('Success:', result);
-  } catch (error) {
+    } catch (error) {
     console.error('Error:', error);
   }
 };
@@ -301,8 +300,7 @@ const handleSubmit = async (e) => {
   
   try {
     const result = await establishmentsApi.create(formData);
-    console.log('Success:', result);
-  } catch (error) {
+    } catch (error) {
     console.error('Error:', error);
   }
 };

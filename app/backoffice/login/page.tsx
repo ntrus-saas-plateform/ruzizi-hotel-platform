@@ -16,19 +16,13 @@ export default function BackOfficeLoginPage() {
         setLoading(true);
 
         try {
-            console.log('🔐 Tentative de connexion...', { email });
-
             const response = await fetch('/api/auth/login', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ email, password }),
             });
 
-            console.log('📡 Réponse reçue:', response.status);
-
             const data = await response.json();
-            console.log('📦 Données:', data);
-
             if (!response.ok) {
                 throw new Error(data.error?.message || 'Erreur de connexion');
             }
@@ -36,8 +30,6 @@ export default function BackOfficeLoginPage() {
             if (!data.data?.tokens) {
                 throw new Error('Tokens manquants');
             }
-
-            console.log('✅ Connexion réussie');
 
             // Stocker les tokens
             localStorage.setItem('accessToken', data.data.tokens.accessToken);
@@ -48,7 +40,6 @@ export default function BackOfficeLoginPage() {
                 localStorage.setItem('user', JSON.stringify(data.data.user));
             }
 
-            console.log('🚀 Redirection...');
             window.location.href = '/admin/dashboard';
 
         } catch (err) {

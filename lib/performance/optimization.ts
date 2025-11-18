@@ -2,6 +2,8 @@
  * Performance optimization utilities
  */
 
+import React from 'react';
+
 /**
  * Debounce function
  */
@@ -148,7 +150,7 @@ export async function measureTime<T>(
   try {
     const result = await fn();
     const duration = performance.now() - start;
-    console.log(`[Performance] ${name}: ${duration.toFixed(2)}ms`);
+    console.log(`[Performance] ${name} completed in ${duration.toFixed(2)}ms`);
     return result;
   } catch (error) {
     const duration = performance.now() - start;
@@ -191,5 +193,3 @@ export async function parallelMap<T, R>(
   return results;
 }
 
-// React import for lazyLoad
-import React from 'react';

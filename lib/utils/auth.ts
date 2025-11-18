@@ -49,8 +49,15 @@ function onTokenRefreshed(token: string): void {
  * Parse JWT token
  */
 export function parseToken(token: string): TokenPayload | null {
+  if (!token || typeof token !== 'string') {
+    return null;
+  }
+
   try {
     const base64Url = token.split('.')[1];
+    if (!base64Url) {
+      return null;
+    }
     const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
     const jsonPayload = decodeURIComponent(
       atob(base64)
@@ -60,7 +67,6 @@ export function parseToken(token: string): TokenPayload | null {
     );
     return JSON.parse(jsonPayload);
   } catch (error) {
-    console.error('❌ Error parsing token:', error);
     return null;
   }
 }
@@ -114,8 +120,7 @@ export function storeTokens(accessToken: string, refreshToken?: string): void {
     localStorage.setItem('refreshToken', refreshToken);
   }
   
-  console.log('✅ Tokens stored successfully');
-}
+  }
 
 /**
  * Clear all authentication data
@@ -127,8 +132,7 @@ export function clearAuthData(): void {
   localStorage.removeItem('refreshToken');
   localStorage.removeItem('user');
   
-  console.log('🗑️ Auth data cleared');
-}
+  }
 
 /**
  * Redirect to login page
@@ -176,8 +180,6 @@ export async function refreshAccessToken(): Promise<string | null> {
   }
   
   try {
-    console.log('🔄 Refreshing access token...');
-    
     const response = await fetch('/api/auth/refresh', {
       method: 'POST',
       headers: {
@@ -194,7 +196,6 @@ export async function refreshAccessToken(): Promise<string | null> {
       // Store new tokens
       storeTokens(accessToken, newRefreshToken);
       
-      console.log('✅ Token refreshed successfully');
       return accessToken;
     } else {
       console.error('❌ Token refresh failed:', data.error?.message);
@@ -234,8 +235,6 @@ export async function getAccessToken(): Promise<string | null> {
   }
   // Token needs refresh soon
   else if (shouldRefreshToken(token)) {
-    console.log('🔄 Token expiring soon, refreshing proactively...');
-    
     // Refresh in background, but continue with current token
     refreshAccessToken().catch(err => {
       console.error('Background refresh failed:', err);
@@ -316,7 +315,6 @@ export async function fetchWithAuth(
     
     // Retry if needed
     if (data.__retry && retryCount < MAX_RETRY_ATTEMPTS) {
-      console.log('🔄 Retrying request with new token...');
       return fetchWithAuth(url, options, retryCount + 1);
     }
     

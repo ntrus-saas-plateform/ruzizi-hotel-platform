@@ -21,8 +21,7 @@ class InMemoryCache {
     // Cleanup expired entries every 5 minutes
     this.cleanupInterval = setInterval(() => this.cleanup(), this.cleanupIntervalMs);
 
-    console.log('In-memory cache initialized with max size:', this.maxSize);
-  }
+    }
 
   /**
    * Get value from cache
@@ -232,8 +231,7 @@ class InMemoryCache {
     }
 
     this.cache.clear();
-    console.log('In-memory cache destroyed');
-  }
+    }
 }
 
 // Singleton instance

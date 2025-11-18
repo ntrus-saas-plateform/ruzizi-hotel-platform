@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { fetchWithAuth } from '@/lib/utils/auth';
 import type { NotificationResponse } from '@/types/notification.types';
 
 export default function NotificationBell() {
@@ -16,41 +17,36 @@ export default function NotificationBell() {
 
   const fetchNotifications = async () => {
     try {
-      const token = localStorage.getItem('accessToken');
-      if (!token) {
-        console.log('No token found for notifications');
-        return;
-      }
-
-      const response = await fetch('/api/notifications', {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-        },
-      });
-      const data = await response.json();
+      const data = await fetchWithAuth('/api/notifications');
       if (data.success) {
         setNotifications(data.data.notifications || []);
         setUnreadCount(data.data.unreadCount || 0);
       }
     } catch (err) {
+      // Handle auth errors gracefully without logging
+      if (err instanceof Error && err.message === 'No valid access token') {
+        // Auth error handled by fetchWithAuth (redirect), no need to log
+        return;
+      }
       console.error('Failed to fetch notifications:', err);
+      // If auth error, the fetchWithAuth handles redirect
     }
   };
 
   const markAsRead = async (id: string) => {
     try {
-      const token = localStorage.getItem('accessToken');
-      if (!token) return;
-
-      await fetch(`/api/notifications/${id}/read`, {
+      await fetchWithAuth(`/api/notifications/${id}/read`, {
         method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-        },
       });
       fetchNotifications();
     } catch (err) {
+      // Handle auth errors gracefully without logging
+      if (err instanceof Error && err.message === 'No valid access token') {
+        // Auth error handled by fetchWithAuth (redirect), no need to log
+        return;
+      }
       console.error('Failed to mark as read:', err);
+      // If auth error, the fetchWithAuth handles redirect
     }
   };
 

@@ -396,8 +396,9 @@ export default function BookingsPage() {
                       </p>
                     </div>
                     <button
-                      onClick={() => router.push(`/admin/bookings/${booking.id}`)}
+                      onClick={() => booking.id && router.push(`/admin/bookings/${booking.id}`)}
                       className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition font-medium text-sm"
+                      disabled={!booking.id}
                     >
                       Détails
                     </button>
@@ -451,8 +452,9 @@ export default function BookingsPage() {
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm">
                         <button
-                          onClick={() => router.push(`/admin/bookings/${booking.id}`)}
+                          onClick={() => booking.id && router.push(`/admin/bookings/${booking.id}`)}
                           className="text-blue-600 hover:text-blue-900 font-medium"
+                          disabled={!booking.id}
                         >
                           Détails
                         </button>

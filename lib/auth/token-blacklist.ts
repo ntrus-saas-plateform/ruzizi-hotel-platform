@@ -21,9 +21,7 @@ export function blacklistToken(token: string): void {
       token,
       expiresAt,
     });
-
-    console.log(`Token blacklisted, expires at: ${new Date(expiresAt).toISOString()}`);
-  } catch (error) {
+   } catch (error) {
     console.error('Failed to blacklist token:', error);
   }
 }
@@ -51,8 +49,7 @@ export function cleanupExpiredTokens(): void {
   }
 
   if (cleaned > 0) {
-    console.log(`Cleaned up ${cleaned} expired blacklisted tokens`);
-  }
+    }
 }
 
 // Clean up expired tokens every 30 minutes

@@ -14,7 +14,6 @@ export default function EstablishmentsPage() {
   const [filters, setFilters] = useState({
     city: '',
     type: '',
-    priceRange: '',
     amenities: [] as string[],
   });
 
@@ -46,14 +45,9 @@ export default function EstablishmentsPage() {
       filters: 'Filtres',
       city: 'Ville',
       type: 'Type',
-      priceRange: 'Gamme de prix',
       amenities: 'Équipements',
       allCities: 'Toutes les villes',
       allTypes: 'Tous les types',
-      allPrices: 'Tous les prix',
-      budget: 'Économique',
-      moderate: 'Modéré',
-      luxury: 'Luxe',
       results: 'résultat(s)',
       noResults: 'Aucun établissement trouvé',
       noResultsDesc: 'Essayez de modifier vos critères de recherche',
@@ -65,14 +59,9 @@ export default function EstablishmentsPage() {
       filters: 'Filters',
       city: 'City',
       type: 'Type',
-      priceRange: 'Price Range',
       amenities: 'Amenities',
       allCities: 'All cities',
       allTypes: 'All types',
-      allPrices: 'All prices',
-      budget: 'Budget',
-      moderate: 'Moderate',
-      luxury: 'Luxury',
       results: 'result(s)',
       noResults: 'No establishments found',
       noResultsDesc: 'Try modifying your search criteria',
@@ -97,7 +86,6 @@ export default function EstablishmentsPage() {
     setFilters({
       city: '',
       type: '',
-      priceRange: '',
       amenities: [],
     });
   };
@@ -259,7 +247,7 @@ export default function EstablishmentsPage() {
                     location={`${establishment.location?.city || 'Bujumbura'}, ${establishment.location?.country || 'Burundi'}`}
                     rating={4.8}
                     reviewCount={127}
-                    priceRange="$"
+                    priceRange={establishment.pricingMode === 'nightly' ? '🌙 Nuitée' : '📅 Mois'}
                     amenities={establishment.services && establishment.services.length > 0 
                       ? establishment.services.slice(0, 5) 
                       : ['WiFi gratuit', 'Piscine', 'Restaurant']}

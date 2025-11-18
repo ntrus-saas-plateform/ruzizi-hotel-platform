@@ -116,8 +116,7 @@ function MonComposant() {
         pricingMode: 'per_night',
       });
       
-      console.log('✅ Établissement créé:', etablissement);
-    } catch (error) {
+      } catch (error) {
       console.error('❌ Erreur:', error);
     }
   };

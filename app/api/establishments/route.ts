@@ -62,14 +62,11 @@ export async function POST(request: NextRequest) {
 
       // Validate request body
       const validatedData = CreateEstablishmentSchema.parse(body);
-      console.log("validatedData : ", validatedData)
-
       // Create establishment
       const establishment = await EstablishmentService.create(validatedData);
 
       return createSuccessResponse(establishment, 'Establishment created successfully', 201);
     } catch (error) {
-      console.log("error : ", error)
       if (error instanceof ZodError) {
         return NextResponse.json(
           {

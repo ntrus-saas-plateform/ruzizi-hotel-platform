@@ -107,8 +107,6 @@ class ValidationCache {
    */
   static async preloadSchemas(): Promise<void> {
     try {
-      console.log('🔄 Preloading validation schemas...');
-
       // Cache each schema individually for better granularity
       const schemaEntries = Object.entries(this.schemas);
 
@@ -117,8 +115,7 @@ class ValidationCache {
         await cache.set(cacheKey, schema, this.CACHE_TTL);
       }
 
-      console.log(`✅ Preloaded ${schemaEntries.length} validation schemas`);
-    } catch (error) {
+      } catch (error) {
       console.error('❌ Failed to preload validation schemas:', error);
     }
   }

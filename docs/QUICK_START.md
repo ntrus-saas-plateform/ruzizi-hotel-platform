@@ -67,8 +67,7 @@ function LoginButton() {
   const handleLogin = async () => {
     try {
       await login('admin@ruzizihotel.com', 'votre-mot-de-passe');
-      console.log('✅ Connecté avec succès');
-    } catch (error) {
+      } catch (error) {
       console.error('❌ Erreur:', error);
     }
   };
@@ -99,8 +98,7 @@ async function createEstablishment() {
       pricingMode: 'per_night',
     });
     
-    console.log('✅ Établissement créé:', establishment);
-  } catch (error) {
+    } catch (error) {
     console.error('❌ Erreur:', error);
   }
 }
@@ -136,8 +134,8 @@ Pour tester que le token se rafraîchit automatiquement :
 
 Après login, vérifiez que les tokens sont stockés :
 ```javascript
-console.log('Access Token:', localStorage.getItem('accessToken'));
-console.log('Refresh Token:', localStorage.getItem('refreshToken'));
+);
+);
 ```
 
 ### Vérifier l'état d'authentification

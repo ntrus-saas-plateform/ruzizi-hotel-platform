@@ -5,8 +5,6 @@ import { ValidationCache } from '@/lib/validations';
 
 export async function GET() {
   try {
-    console.log('🚀 Starting application initialization...');
-
     // Initialize root user
     await autoInitRootUser();
 
@@ -16,7 +14,6 @@ export async function GET() {
     // Preload validation schemas
     await ValidationCache.preloadSchemas();
 
-    console.log('✅ Application initialization complete');
     return createSuccessResponse({
       preloaded: ['booking_codes', 'validation_schemas']
     }, 'Initialization complete');

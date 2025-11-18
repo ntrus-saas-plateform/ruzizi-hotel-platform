@@ -9,6 +9,14 @@ export default function BookingDetailPage() {
   const params = useParams();
   const bookingId = params.id as string;
 
+  // Validate booking ID
+  useEffect(() => {
+    if (!bookingId || bookingId === 'undefined') {
+      router.push('/admin/bookings');
+      return;
+    }
+  }, [bookingId, router]);
+
   const [booking, setBooking] = useState<BookingResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');

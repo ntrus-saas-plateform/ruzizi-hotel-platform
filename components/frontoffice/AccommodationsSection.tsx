@@ -6,7 +6,8 @@ import { useRouter } from 'next/navigation';
 interface Accommodation {
   id: string;
   name: string;
-  type: 'room' | 'guesthouse';
+  description?: string;
+  type: 'standard_room' | 'suite' | 'house' | 'apartment';
   establishmentId: string;
   establishmentName?: string;
   price?: number;
@@ -21,6 +22,36 @@ interface Accommodation {
   amenities: string[];
   isAvailable: boolean;
 }
+
+// Helper function to get amenity icons
+const getAmenityIcon = (amenity: string) => {
+  const lowerAmenity = amenity.toLowerCase();
+  if (lowerAmenity.includes('wifi') || lowerAmenity.includes('internet')) {
+    return '📶';
+  }
+  if (lowerAmenity.includes('pool') || lowerAmenity.includes('piscine')) {
+    return '🏊';
+  }
+  if (lowerAmenity.includes('restaurant') || lowerAmenity.includes('food')) {
+    return '🍽️';
+  }
+  if (lowerAmenity.includes('parking')) {
+    return '🚗';
+  }
+  if (lowerAmenity.includes('gym') || lowerAmenity.includes('fitness')) {
+    return '💪';
+  }
+  if (lowerAmenity.includes('spa')) {
+    return '🧖';
+  }
+  if (lowerAmenity.includes('air') || lowerAmenity.includes('climatisation')) {
+    return '❄️';
+  }
+  if (lowerAmenity.includes('tv') || lowerAmenity.includes('télévision')) {
+    return '📺';
+  }
+  return '✨'; // Default icon
+};
 
 export default function AccommodationsSection() {
   const router = useRouter();
@@ -55,16 +86,9 @@ export default function AccommodationsSection() {
       const accomData = await accomResponse.json();
       const estabData = await estabResponse.json();
 
-      console.log('Accommodations API response:', accomData);
-      console.log('Establishments API response:', estabData);
-
       if (accomData.success) {
         // Normalize accommodations to extract establishment info
         const normalizedAccommodations = (accomData.data.data || accomData.data || []).map((accom: any) => {
-          console.log('🔍 Processing accommodation:', accom.name);
-          console.log('  Raw establishmentId:', accom.establishmentId);
-          console.log('  Type:', typeof accom.establishmentId);
-
           let estId: string | undefined;
           let estName: string | undefined;
 
@@ -74,16 +98,9 @@ export default function AccommodationsSection() {
                     accom.establishmentId.id || 
                     (typeof accom.establishmentId.toString === 'function' ? accom.establishmentId.toString() : undefined);
             estName = accom.establishmentId.name;
-            console.log('  Object - _id:', accom.establishmentId._id);
-            console.log('  Object - id:', accom.establishmentId.id);
-            console.log('  Object - name:', accom.establishmentId.name);
-          } else if (typeof accom.establishmentId === 'string') {
+            } else if (typeof accom.establishmentId === 'string') {
             estId = accom.establishmentId;
-            console.log('  String ID:', estId);
-          }
-
-          console.log('✅ Extracted estId:', estId);
-          console.log('✅ Extracted estName:', estName);
+            }
 
           const normalized = {
             ...accom,
@@ -93,17 +110,11 @@ export default function AccommodationsSection() {
             isAvailable: accom.isAvailable !== undefined ? accom.isAvailable : accom.status === 'available'
           };
 
-          console.log('📦 Normalized:', { 
-            id: normalized.id, 
-            name: normalized.name, 
-            establishmentId: normalized.establishmentId,
-            isAvailable: normalized.isAvailable 
-          });
+          
 
           return normalized;
         });
 
-        console.log('Normalized accommodations:', normalizedAccommodations);
         setAccommodations(normalizedAccommodations);
       }
       if (estabData.success) {
@@ -372,7 +383,7 @@ export default function AccommodationsSection() {
               {paginatedAccommodations.map((accom) => (
                 <div
                   key={accom.id}
-                  className="group bg-white rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-300 overflow-hidden border border-gray-100 hover:transform hover:-translate-y-2"
+                  className="group bg-white rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-300 overflow-hidden border border-gray-100 hover:transform hover:-translate-y-2 hover:border-amber-200"
                 >
                   {/* Image */}
                   <div className="relative h-56 overflow-hidden">
@@ -381,17 +392,28 @@ export default function AccommodationsSection() {
                       alt={accom.name}
                       className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
                     />
+                    {/* Image gallery indicator */}
+                    {accom.images.length > 1 && (
+                      <div className="absolute bottom-4 right-4 bg-black/50 text-white px-2 py-1 rounded-full text-xs flex items-center space-x-1">
+                        <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                        </svg>
+                        <span>{accom.images.length}</span>
+                      </div>
+                    )}
                     <div className="absolute top-4 right-4">
                       <span className={`px-3 py-1 rounded-full text-xs font-medium ${accom.isAvailable
-                          ? 'bg-green-500 text-white'
-                          : 'bg-red-500 text-white'
+                          ? 'bg-green-500 text-white shadow-lg'
+                          : 'bg-red-500 text-white shadow-lg'
                         }`}>
                         {accom.isAvailable ? t.available : t.unavailable}
                       </span>
                     </div>
                     <div className="absolute top-4 left-4">
-                      <span className="px-3 py-1 bg-amber-600 text-white rounded-full text-xs font-medium">
-                        {accom.type === 'room' ? t.room : t.guesthouse}
+                      <span className="px-3 py-1 bg-amber-600 text-white rounded-full text-xs font-medium shadow-lg">
+                        {accom.type === 'standard_room' || accom.type === 'suite' ? t.room :
+                         accom.type === 'house' || accom.type === 'apartment' ? t.guesthouse :
+                         accom.type}
                       </span>
                     </div>
                   </div>
@@ -401,7 +423,7 @@ export default function AccommodationsSection() {
                     <h3 className="text-xl font-bold text-gray-900 mb-2 group-hover:text-amber-600 transition">
                       {accom.name}
                     </h3>
-                    <p className="text-sm text-gray-600 mb-4 flex items-center">
+                    <p className="text-sm text-gray-600 mb-2 flex items-center">
                       <svg className="w-4 h-4 mr-1 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
                       </svg>
@@ -409,17 +431,23 @@ export default function AccommodationsSection() {
                         {accom.establishmentName || 'Établissement'}
                       </span>
                     </p>
+                    {accom.description && (
+                      <p className="text-sm text-gray-700 mb-4 line-clamp-2 leading-relaxed">
+                        {accom.description}
+                      </p>
+                    )}
 
                     {/* Amenities */}
                     <div className="flex flex-wrap gap-2 mb-4">
                       {accom.amenities.slice(0, 3).map((amenity, idx) => (
-                        <span key={idx} className="px-2 py-1 bg-amber-50 text-amber-700 rounded text-xs">
-                          {amenity}
+                        <span key={idx} className="px-3 py-1 bg-amber-50 text-amber-700 rounded-full text-xs font-medium flex items-center space-x-1">
+                          <span>{getAmenityIcon(amenity)}</span>
+                          <span>{amenity}</span>
                         </span>
                       ))}
                       {accom.amenities.length > 3 && (
-                        <span className="px-2 py-1 bg-gray-100 text-gray-600 rounded text-xs">
-                          +{accom.amenities.length - 3}
+                        <span className="px-3 py-1 bg-gray-100 text-gray-600 rounded-full text-xs font-medium">
+                          +{accom.amenities.length - 3} autres
                         </span>
                       )}
                     </div>
@@ -437,10 +465,10 @@ export default function AccommodationsSection() {
                         </span>
                       </div>
                       <div className="text-right">
-                        <div className="text-2xl font-bold text-amber-600">
+                        <div className="text-2xl font-bold text-amber-600 mb-1">
                           {(accom.price || accom.pricing?.basePrice || 0).toLocaleString()} FBU
                         </div>
-                        <div className="text-xs text-gray-500">{t.perNight}</div>
+                        <div className="text-xs text-gray-500 font-medium">{t.perNight}</div>
                       </div>
                     </div>
 
@@ -460,14 +488,8 @@ export default function AccommodationsSection() {
                         <button
                           onClick={(e) => {
                             e.stopPropagation();
-                            console.log('Book button clicked for:', accom.name);
-                            console.log('establishmentId:', accom.establishmentId);
-                            console.log('accommodation id:', accom.id);
-                            console.log('isAvailable:', accom.isAvailable);
-
                             if (accom.isAvailable && accom.establishmentId) {
                               const bookingUrl = `/booking?establishment=${accom.establishmentId}&accommodation=${accom.id}`;
-                              console.log('Navigating to:', bookingUrl);
                               router.push(bookingUrl);
                             } else {
                               console.warn('Cannot book:', {

@@ -312,18 +312,12 @@ export const indexDefinitions: IndexDefinition[] = [
  */
 export async function createIndexes(): Promise<void> {
   try {
-    console.log('📊 Creating MongoDB indexes...');
-
     for (const definition of indexDefinitions) {
       const collection = mongoose.connection.collection(definition.collection);
 
       for (const index of definition.indexes) {
         try {
           await collection.createIndex(index.fields, index.options as any);
-          console.log(
-            `✅ Index created for ${definition.collection}:`,
-            JSON.stringify(index.fields)
-          );
         } catch (error) {
           // Index might already exist, which is fine
           if (error instanceof Error && !error.message.includes('already exists')) {
@@ -336,7 +330,6 @@ export async function createIndexes(): Promise<void> {
       }
     }
 
-    console.log('✅ All indexes created successfully');
   } catch (error) {
     console.error('❌ Error creating indexes:', error);
     throw error;
@@ -349,13 +342,10 @@ export async function createIndexes(): Promise<void> {
  */
 export async function dropAllIndexes(): Promise<void> {
   try {
-    console.log('🗑️  Dropping all indexes...');
-
     for (const definition of indexDefinitions) {
       const collection = mongoose.connection.collection(definition.collection);
       try {
         await collection.dropIndexes();
-        console.log(`✅ Indexes dropped for ${definition.collection}`);
       } catch (error) {
         // Collection might not exist yet
         if (error instanceof Error && !error.message.includes('ns not found')) {
@@ -364,7 +354,6 @@ export async function dropAllIndexes(): Promise<void> {
       }
     }
 
-    console.log('✅ All indexes dropped successfully');
   } catch (error) {
     console.error('❌ Error dropping indexes:', error);
     throw error;

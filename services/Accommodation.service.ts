@@ -427,7 +427,7 @@ export class AccommodationService {
     return {
       data: data.map((acc: any) => ({
         ...acc,
-        _id: acc._id.toString(),
+        id: acc._id.toString(),
         establishmentId: acc.establishmentId?.toString(),
       })) as AccommodationResponse[],
       total,

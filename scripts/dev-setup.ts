@@ -11,45 +11,36 @@ import { createRootUser } from './init-root-user';
  */
 class DevSetup {
   private async checkEnvironment(): Promise<void> {
-    console.log('🔍 Vérification de l\'environnement de développement...');
-    
     // Vérifier si .env existe
     const envPath = join(process.cwd(), '.env');
     if (!existsSync(envPath)) {
-      console.log('⚠️  Fichier .env non trouvé');
-      console.log('📋 Copiez .env.example vers .env et configurez vos variables');
       process.exit(1);
     }
     
     // Vérifier les variables essentielles
     const requiredVars = ['MONGODB_URI', 'JWT_SECRET'];
     const missingVars = requiredVars.filter(varName => !process.env[varName]);
-    
+
     if (missingVars.length > 0) {
-      console.log('❌ Variables d\'environnement manquantes:');
-      missingVars.forEach(varName => console.log(`   - ${varName}`));
+      console.error('❌ Variables d\'environnement manquantes:');
+      missingVars.forEach(varName => console.error(`   - ${varName}`));
       process.exit(1);
     }
-    
-    console.log('✅ Environnement configuré correctement');
+
+    console.log('✅ Environnement validé');
   }
 
   private async initializeRootUser(): Promise<void> {
-    console.log('🔐 Initialisation de l\'utilisateur root...');
-    
     try {
       await createRootUser();
       console.log('✅ Utilisateur root initialisé');
     } catch (error) {
       console.error('❌ Erreur lors de l\'initialisation:', error);
       // Ne pas arrêter le processus en développement
-      console.log('⚠️  Continuons sans l\'utilisateur root...');
     }
   }
 
   private async startDevelopmentServer(): Promise<void> {
-    console.log('🚀 Démarrage du serveur de développement...');
-    
     const devProcess = spawn('npm', ['run', 'dev'], {
       stdio: 'inherit',
       shell: true
@@ -61,30 +52,24 @@ class DevSetup {
     });
 
     devProcess.on('close', (code) => {
-      console.log(`🛑 Serveur arrêté avec le code: ${code}`);
       process.exit(code || 0);
     });
 
     // Gestion des signaux pour un arrêt propre
     process.on('SIGINT', () => {
-      console.log('\n🛑 Arrêt du serveur...');
       devProcess.kill('SIGINT');
     });
 
     process.on('SIGTERM', () => {
-      console.log('\n🛑 Arrêt du serveur...');
       devProcess.kill('SIGTERM');
     });
   }
 
   async run(): Promise<void> {
     try {
-      console.log('🏨 Ruzizi Hôtel - Configuration de Développement\n');
-      
       await this.checkEnvironment();
       await this.initializeRootUser();
       await this.startDevelopmentServer();
-      
     } catch (error) {
       console.error('💥 Erreur fatale:', error);
       process.exit(1);

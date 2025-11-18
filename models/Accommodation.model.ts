@@ -152,6 +152,10 @@ const AccommodationSchema = new Schema<IAccommodationDocument, IAccommodationMod
       trim: true,
       maxlength: [100, 'Name cannot exceed 100 characters'],
     },
+    description: {
+      type: String,
+      maxlength: [500, 'Description cannot exceed 500 characters'],
+    },
     type: {
       type: String,
       enum: {
