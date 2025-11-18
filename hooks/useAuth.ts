@@ -1,74 +1,143 @@
-/**
- * React Hook for Authentication
- */
-
 import { useState, useEffect, useCallback } from 'react';
-import {
-  isAuthenticated,
-  getCurrentUser,
-  hasRole,
-  logout,
-  getAccessToken,
-} from '@/lib/utils/auth';
+import { apiClient } from '@/lib/api/client';
 
 interface User {
-  userId: string;
+  id: string;
+  email: string;
+  firstName: string;
+  lastName: string;
   role: string;
-  exp: number;
-  iat: number;
+  establishmentId?: string;
+  permissions?: string[];
 }
 
-interface UseAuthReturn {
-  isAuthenticated: boolean;
+interface AuthState {
   user: User | null;
-  loading: boolean;
-  hasRole: (role: string | string[]) => boolean;
-  logout: () => Promise<void>;
-  refreshAuth: () => Promise<void>;
+  isAuthenticated: boolean;
+  isLoading: boolean;
 }
 
-export function useAuth(): UseAuthReturn {
-  const [user, setUser] = useState<User | null>(null);
-  const [loading, setLoading] = useState(true);
+export function useAuth() {
+  const [authState, setAuthState] = useState<AuthState>({
+    user: null,
+    isAuthenticated: false,
+    isLoading: true,
+  });
 
-  const refreshAuth = useCallback(async () => {
+  /**
+   * Charger l'utilisateur actuel
+   */
+  const loadUser = useCallback(async () => {
     try {
-      const token = await getAccessToken();
-      if (token) {
-        const currentUser = getCurrentUser();
-        setUser(currentUser);
+      const token = apiClient.getAccessToken();
+      
+      if (!token) {
+        setAuthState({
+          user: null,
+          isAuthenticated: false,
+          isLoading: false,
+        });
+        return;
+      }
+
+      const response = await apiClient.get<any>('/api/auth/me');
+      
+      if (response.success && response.data) {
+        setAuthState({
+          user: response.data,
+          isAuthenticated: true,
+          isLoading: false,
+        });
       } else {
-        setUser(null);
+        throw new Error('Failed to load user');
       }
     } catch (error) {
-      console.error('Auth refresh error:', error);
-      setUser(null);
-    } finally {
-      setLoading(false);
+      console.error('Error loading user:', error);
+      apiClient.clearTokens();
+      setAuthState({
+        user: null,
+        isAuthenticated: false,
+        isLoading: false,
+      });
     }
   }, []);
 
-  useEffect(() => {
-    refreshAuth();
-  }, [refreshAuth]);
+  /**
+   * Login
+   */
+  const login = useCallback(async (email: string, password: string) => {
+    try {
+      const response = await apiClient.post<any>('/api/auth/login', {
+        email,
+        password,
+      });
 
-  const checkRole = useCallback(
-    (role: string | string[]) => {
-      return hasRole(role);
-    },
-    [user]
-  );
+      if (response.success && response.data) {
+        // Sauvegarder les tokens
+        apiClient.setTokens(response.data.tokens);
 
-  const handleLogout = useCallback(async () => {
-    await logout();
+        // Mettre à jour l'état
+        setAuthState({
+          user: response.data.user,
+          isAuthenticated: true,
+          isLoading: false,
+        });
+
+        return { success: true, user: response.data.user };
+      }
+
+      throw new Error(response.error?.message || 'Login failed');
+    } catch (error) {
+      console.error('Login error:', error);
+      throw error;
+    }
   }, []);
 
+  /**
+   * Logout
+   */
+  const logout = useCallback(async () => {
+    try {
+      // Appeler l'API de logout (optionnel)
+      await apiClient.post('/api/auth/logout').catch(() => {
+        // Ignorer les erreurs de logout
+      });
+    } finally {
+      // Nettoyer les tokens et l'état
+      apiClient.clearTokens();
+      setAuthState({
+        user: null,
+        isAuthenticated: false,
+        isLoading: false,
+      });
+
+      // Rediriger vers la page de login
+      if (typeof window !== 'undefined') {
+        window.location.href = '/login';
+      }
+    }
+  }, []);
+
+  /**
+   * Rafraîchir le token manuellement
+   */
+  const refreshAuth = useCallback(async () => {
+    await loadUser();
+  }, [loadUser]);
+
+  /**
+   * Charger l'utilisateur au montage
+   */
+  useEffect(() => {
+    loadUser();
+  }, [loadUser]);
+
   return {
-    isAuthenticated: isAuthenticated(),
-    user,
-    loading,
-    hasRole: checkRole,
-    logout: handleLogout,
+    user: authState.user,
+    isAuthenticated: authState.isAuthenticated,
+    isLoading: authState.isLoading,
+    login,
+    logout,
     refreshAuth,
   };
 }
