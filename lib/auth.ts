@@ -2,7 +2,12 @@ import { NextRequest } from 'next/server';
 import jwt from 'jsonwebtoken';
 import { AuthenticatedUser } from '@/middleware/establishmentAccess';
 
-const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key';
+const JWT_SECRET = process.env.JWT_SECRET;
+const JWT_REFRESH_SECRET = process.env.JWT_REFRESH_SECRET;
+
+if (!JWT_SECRET || !JWT_REFRESH_SECRET) {
+  throw new Error('JWT_SECRET and JWT_REFRESH_SECRET environment variables must be set');
+}
 
 /**
  * Extrait et valide le token JWT de la requête
@@ -19,7 +24,7 @@ export async function getAuthenticatedUser(request: NextRequest): Promise<Authen
     const token = authHeader.replace('Bearer ', '');
 
     // Vérifier et décoder le token
-    const decoded = jwt.verify(token, JWT_SECRET) as any;
+    const decoded = jwt.verify(token, JWT_SECRET!) as any;
 
     if (!decoded || !decoded.userId) {
       return null;

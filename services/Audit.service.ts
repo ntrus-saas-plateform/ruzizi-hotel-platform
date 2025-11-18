@@ -1,3 +1,4 @@
+import { PipelineStage } from 'mongoose';
 import AuditLog from '@/models/AuditLog.model';
 import { CreateAuditLogInput, AuditAction, AuditEntity } from '@/types/audit.types';
 import connectDB from '@/lib/db/mongodb';
@@ -139,7 +140,7 @@ class AuditService {
         {
           $sort: { total: -1 },
         },
-      ]);
+      ] as PipelineStage[]);
 
       return stats;
     } catch (error) {

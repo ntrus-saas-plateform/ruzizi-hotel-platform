@@ -147,13 +147,11 @@ class ApiClient {
     const url = endpoint.startsWith('http') ? endpoint : `${this.baseURL}${endpoint}`;
     
     // Ajouter le token d'authentification
-    const headers: HeadersInit = {
-      'Content-Type': 'application/json',
-      ...options.headers,
-    };
+    const headers = new Headers(options.headers);
+    headers.set('Content-Type', 'application/json');
 
     if (this.accessToken) {
-      headers['Authorization'] = `Bearer ${this.accessToken}`;
+      headers.set('Authorization', `Bearer ${this.accessToken}`);
     }
 
     try {
@@ -170,7 +168,7 @@ class ApiClient {
             this.subscribeTokenRefresh(async (token: string) => {
               try {
                 // Réessayer la requête avec le nouveau token
-                headers['Authorization'] = `Bearer ${token}`;
+                headers.set('Authorization', `Bearer ${token}`);
                 const retryResponse = await fetch(url, { ...options, headers });
                 const data = await retryResponse.json();
                 resolve(data);
@@ -190,7 +188,7 @@ class ApiClient {
           this.onTokenRefreshed(newToken);
 
           // Réessayer la requête avec le nouveau token
-          headers['Authorization'] = `Bearer ${newToken}`;
+          headers.set('Authorization', `Bearer ${newToken}`);
           const retryResponse = await fetch(url, { ...options, headers });
           return await retryResponse.json();
         } catch (refreshError) {
@@ -202,7 +200,14 @@ class ApiClient {
       // Gérer les autres erreurs
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.error?.message || `HTTP ${response.status}`);
+
+        // Create a more structured error
+        const error = new Error(errorData.error?.message || `HTTP ${response.status}`);
+        (error as any).status = response.status;
+        (error as any).code = errorData.error?.code;
+        (error as any).details = errorData.error;
+
+        throw error;
       }
 
       return await response.json();

@@ -1,3 +1,4 @@
+import { PipelineStage } from 'mongoose';
 import { ExpenseModel } from '@/models/Expense.model';
 import { connectDB } from '@/lib/db';
 import { paginate, type PaginationResult, toObjectId } from '@/lib/db/utils';
@@ -280,7 +281,7 @@ export class ExpenseService {
           ],
         },
       },
-    ]);
+    ] as PipelineStage[]);
 
     const data = result[0];
 
@@ -332,7 +333,7 @@ export class ExpenseService {
           totalExpenses: { $sum: '$amount' },
         },
       },
-    ]);
+    ] as PipelineStage[]);
 
     const expenses = result.length > 0 ? result[0].totalExpenses : 0;
     const netProfit = revenue - expenses;

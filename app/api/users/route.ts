@@ -1,6 +1,8 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { withRole } from '@/lib/auth/middleware';
+import { NextRequest } from 'next/server';
+import { withRole, createErrorResponse, createSuccessResponse, createValidationErrorResponse } from '@/lib/auth/middleware';
 import UserService from '@/services/User.service';
+import { UserFilterSchema } from '@/lib/validations/user.validation';
+import { ZodError } from 'zod';
 
 /**
  * GET /api/users
@@ -9,33 +11,31 @@ import UserService from '@/services/User.service';
 export const GET = withRole(['super_admin'], async (request: NextRequest, user) => {
   try {
     const { searchParams } = new URL(request.url);
-    const page = parseInt(searchParams.get('page') || '1');
-    const limit = parseInt(searchParams.get('limit') || '10');
-    const search = searchParams.get('search') || '';
 
-    // Récupérer tous les utilisateurs
-    const allUsers = await UserService.getAll({ search });
+    // Validate query parameters
+    const filters = UserFilterSchema.parse({
+      role: searchParams.get('role') || undefined,
+      establishmentId: searchParams.get('establishmentId') || undefined,
+      isActive: searchParams.get('isActive') === 'true' ? true : searchParams.get('isActive') === 'false' ? false : undefined,
+      search: searchParams.get('search') || undefined,
+      page: parseInt(searchParams.get('page') || '1'),
+      limit: parseInt(searchParams.get('limit') || '10'),
+    });
 
-    // Implémenter la pagination côté API
-    const startIndex = (page - 1) * limit;
-    const endIndex = startIndex + limit;
-    const users = allUsers.slice(startIndex, endIndex);
+    // Récupérer tous les utilisateurs avec pagination
+    const result = await UserService.getAll(filters);
 
     // Retourner avec métadonnées de pagination
-    return NextResponse.json({
-      users,
-      pagination: {
-        page,
-        limit,
-        total: allUsers.length,
-        pages: Math.ceil(allUsers.length / limit)
-      }
+    return createSuccessResponse({
+      users: result.data,
+      pagination: result.pagination
     });
   } catch (error: any) {
-    return NextResponse.json(
-      { error: error.message || 'Erreur serveur' },
-      { status: 500 }
-    );
+    if (error instanceof ZodError) {
+      return createValidationErrorResponse(error, 'Invalid query parameters');
+    }
+
+    return createErrorResponse('DATABASE_ERROR', error.message || 'Erreur serveur', 500);
   }
 });
 
@@ -48,11 +48,8 @@ export const POST = withRole(['super_admin'], async (request: NextRequest, user)
     const data = await request.json();
     const newUser = await UserService.create(data);
 
-    return NextResponse.json(newUser, { status: 201 });
+    return createSuccessResponse(newUser, 'Utilisateur créé avec succès', 201);
   } catch (error: any) {
-    return NextResponse.json(
-      { error: error.message || 'Erreur serveur' },
-      { status: 500 }
-    );
+    return createErrorResponse('DATABASE_ERROR', error.message || 'Erreur serveur', 500);
   }
 });

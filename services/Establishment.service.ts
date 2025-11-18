@@ -2,6 +2,8 @@ import { EstablishmentModel } from '@/models/Establishment.model';
 import UserModel from '@/models/User.model';
 import { connectDB } from '@/lib/db';
 import { paginate, type PaginationResult } from '@/lib/db/utils';
+import { getEstablishmentsWithStats } from '@/lib/db/optimized-queries';
+import { cache } from '@/lib/performance/cache';
 import type {
   CreateEstablishmentInput,
   UpdateEstablishmentInput,
@@ -132,6 +134,53 @@ export class EstablishmentService {
   }
 
   /**
+   * Get all establishments with optimized aggregation and statistics
+   * Uses Redis caching for better performance
+   */
+  static async getAllOptimized(
+    filters: EstablishmentFilterOptions = {},
+    useCache: boolean = true
+  ): Promise<EstablishmentResponse[]> {
+    await connectDB();
+
+    // For now, use the optimized query without filters
+    // TODO: Add filter support to optimized query
+    const establishments = await getEstablishmentsWithStats({ useCache });
+
+    // Apply basic filters client-side for now
+    let filtered = establishments;
+
+    if (filters.city) {
+      filtered = filtered.filter(est =>
+        est.location?.city?.toLowerCase().includes(filters.city!.toLowerCase())
+      );
+    }
+
+    if (filters.pricingMode) {
+      filtered = filtered.filter(est => est.pricingMode === filters.pricingMode);
+    }
+
+    if (filters.isActive !== undefined) {
+      filtered = filtered.filter(est => est.isActive === filters.isActive);
+    }
+
+    if (filters.managerId) {
+      filtered = filtered.filter(est => est.managerId === filters.managerId);
+    }
+
+    if (filters.search) {
+      const searchLower = filters.search.toLowerCase();
+      filtered = filtered.filter(est =>
+        est.name?.toLowerCase().includes(searchLower) ||
+        est.description?.toLowerCase().includes(searchLower) ||
+        est.location?.city?.toLowerCase().includes(searchLower)
+      );
+    }
+
+    return filtered as EstablishmentResponse[];
+  }
+
+  /**
    * Update establishment
    */
   static async update(
@@ -225,37 +274,76 @@ export class EstablishmentService {
   }
 
   /**
-   * Get establishments by city
+   * Get establishments by city with pagination
    */
-  static async getByCity(city: string): Promise<EstablishmentResponse[]> {
+  static async getByCity(
+    city: string,
+    page: number = 1,
+    limit: number = 20
+  ): Promise<PaginationResult<EstablishmentResponse>> {
     await connectDB();
 
-    const establishments = await EstablishmentModel.findByCity(city);
+    // Execute query with pagination
+    const result = await paginate(
+      EstablishmentModel.find({ 'location.city': new RegExp(city, 'i') })
+        .hint({ 'location.city': 1 })
+        .select('name location contacts pricingMode isActive createdAt'),
+      {
+        page,
+        limit,
+        sort: { createdAt: -1 },
+      }
+    );
 
-    return establishments.map((est) => est.toJSON() as unknown as EstablishmentResponse);
+    return {
+      data: result.data.map((est) => est.toJSON() as unknown as EstablishmentResponse),
+      pagination: result.pagination,
+    };
   }
 
   /**
-   * Get establishments by manager
+   * Get establishments by manager with pagination
    */
-  static async getByManager(managerId: string): Promise<EstablishmentResponse[]> {
+  static async getByManager(
+    managerId: string,
+    page: number = 1,
+    limit: number = 20
+  ): Promise<PaginationResult<EstablishmentResponse>> {
     await connectDB();
 
-    const establishments = await EstablishmentModel.findByManager(managerId);
+    // Execute query with pagination
+    const result = await paginate(
+      EstablishmentModel.find({ managerId: toObjectId(managerId) })
+        .hint({ managerId: 1 })
+        .select('name location contacts pricingMode isActive createdAt'),
+      {
+        page,
+        limit,
+        sort: { createdAt: -1 },
+      }
+    );
 
-    return establishments.map((est) => est.toJSON() as unknown as EstablishmentResponse);
+    return {
+      data: result.data.map((est) => est.toJSON() as unknown as EstablishmentResponse),
+      pagination: result.pagination,
+    };
   }
 
   /**
-   * Get active establishments
-   */
-  static async getActive(): Promise<EstablishmentResponse[]> {
-    await connectDB();
+    * Get active establishments
+    */
+   static async getActive(): Promise<EstablishmentResponse[]> {
+     await connectDB();
 
-    const establishments = await EstablishmentModel.findActive();
-
-    return establishments.map((est) => est.toJSON() as unknown as EstablishmentResponse);
-  }
+     return cache.getOrSet(
+       'active_establishments',
+       async () => {
+         const establishments = await EstablishmentModel.findActive();
+         return establishments.map((est) => est.toJSON() as unknown as EstablishmentResponse);
+       },
+       600 // Cache for 10 minutes - establishments don't change frequently
+     );
+   }
 
   /**
    * Add staff member to establishment

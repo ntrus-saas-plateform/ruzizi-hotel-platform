@@ -1,3 +1,4 @@
+import { PipelineStage } from 'mongoose';
 import { BookingModel } from '@/models/Booking.model';
 import { InvoiceModel } from '@/models/Invoice.model';
 import { ExpenseModel } from '@/models/Expense.model';
@@ -54,7 +55,7 @@ export class AnalyticsService {
           total: { $sum: { $subtract: ['$total', '$balance'] } },
         },
       },
-    ]);
+    ] as PipelineStage[]);
 
     return result.length > 0 ? result[0].total : 0;
   }
@@ -80,7 +81,7 @@ export class AnalyticsService {
           total: { $sum: '$amount' },
         },
       },
-    ]);
+    ] as PipelineStage[]);
 
     return result.length > 0 ? result[0].total : 0;
   }
@@ -105,7 +106,7 @@ export class AnalyticsService {
           count: { $sum: 1 },
         },
       },
-    ]);
+    ] as PipelineStage[]);
 
     const stats = {
       total: 0,
@@ -202,7 +203,7 @@ export class AnalyticsService {
       {
         $sort: { _id: 1 },
       },
-    ]);
+    ] as PipelineStage[]);
 
     return result.map((item) => ({
       period: item._id,
@@ -236,7 +237,7 @@ export class AnalyticsService {
       {
         $sort: { total: -1 },
       },
-    ]);
+    ] as PipelineStage[]);
 
     return result.map((item) => ({
       category: item._id,

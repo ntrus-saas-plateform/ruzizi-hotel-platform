@@ -197,7 +197,6 @@ const BookingSchema = new Schema<IBookingDocument, IBookingModel>(
 /**
  * Indexes
  */
-BookingSchema.index({ bookingCode: 1 });
 BookingSchema.index({ establishmentId: 1 });
 BookingSchema.index({ accommodationId: 1 });
 BookingSchema.index({ status: 1 });

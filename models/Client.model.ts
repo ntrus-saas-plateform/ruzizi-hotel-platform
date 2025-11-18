@@ -1,10 +1,10 @@
-import mongoose, { Schema, Model } from 'mongoose';
+import mongoose, { Schema, Model, Types } from 'mongoose';
 import type { IClient, ClientClassification } from '@/types/client.types';
 
 /**
  * Client document interface with methods
  */
-export interface IClientDocument extends Omit<IClient, '_id'>, mongoose.Document {
+export interface IClientDocument extends Omit<IClient, '_id'>, mongoose.Document<Types.ObjectId> {
   toJSON(): Partial<IClient>;
 }
 
@@ -141,8 +141,8 @@ const ClientSchema = new Schema<IClientDocument, IClientModel>(
       virtuals: true,
       transform: function (doc, ret) {
         ret.id = ret._id?.toString();
-        if (ret._id) delete ret._id;
-        if ('__v' in ret) delete (ret as any).__v;
+        delete (ret as any)._id;
+        delete (ret as any).__v;
         return ret;
       },
     },
@@ -155,7 +155,6 @@ const ClientSchema = new Schema<IClientDocument, IClientModel>(
 /**
  * Indexes
  */
-ClientSchema.index({ 'personalInfo.email': 1 });
 ClientSchema.index({ 'personalInfo.phone': 1 });
 ClientSchema.index({ classification: 1 });
 ClientSchema.index({ totalStays: -1 });

@@ -177,9 +177,22 @@ export const ResetPasswordSchema = z
     path: ['confirmPassword'],
   });
 
+/**
+ * User filter schema for GET requests
+ */
+export const UserFilterSchema = z.object({
+  role: UserRoleSchema.optional(),
+  establishmentId: z.string().optional(),
+  isActive: z.boolean().optional(),
+  search: z.string().optional(),
+  page: z.number().int().min(1).default(1),
+  limit: z.number().int().min(1).max(100).default(10),
+});
+
 // Export types inferred from schemas
 export type CreateUserInput = z.infer<typeof CreateUserSchema>;
 export type UpdateUserInput = z.infer<typeof UpdateUserSchema>;
 export type LoginInput = z.infer<typeof LoginSchema>;
 export type ChangePasswordInput = z.infer<typeof ChangePasswordSchema>;
 export type ResetPasswordInput = z.infer<typeof ResetPasswordSchema>;
+export type UserFilterInput = z.infer<typeof UserFilterSchema>;

@@ -111,6 +111,18 @@ export const indexDefinitions: IndexDefinition[] = [
       {
         fields: { establishmentId: 1, status: 1, checkIn: 1 },
       },
+      {
+        fields: { establishmentId: 1, createdAt: -1 },
+      },
+      {
+        fields: { accommodationId: 1, checkIn: 1, checkOut: 1 },
+      },
+      {
+        fields: { 'clientInfo.email': 1, status: 1 },
+      },
+      {
+        fields: { bookingType: 1, status: 1, checkIn: 1 },
+      },
     ],
   },
 

@@ -1,3 +1,4 @@
+import { PipelineStage } from 'mongoose';
 import User, { IUser } from '@/models/User.model';
 import connectDB from '@/lib/db/mongodb';
 import crypto from 'crypto';
@@ -43,22 +44,28 @@ class UserService {
     }
   }
 
-  // Récupérer tous les utilisateurs
+  // Récupérer tous les utilisateurs avec pagination
   async getAll(filters: {
     role?: string;
     establishmentId?: string;
     isActive?: boolean;
     search?: string;
+    page?: number;
+    limit?: number;
   } = {}) {
     try {
       await connectDB();
+
+      const page = Math.max(1, filters.page || 1);
+      const limit = Math.max(1, Math.min(100, filters.limit || 20));
+      const skip = (page - 1) * limit;
 
       const query: any = {};
 
       if (filters.role) query.role = filters.role;
       if (filters.establishmentId) query.establishmentId = filters.establishmentId;
       if (filters.isActive !== undefined) query.isActive = filters.isActive;
-      
+
       if (filters.search) {
         query.$or = [
           { name: { $regex: filters.search, $options: 'i' } },
@@ -66,12 +73,28 @@ class UserService {
         ];
       }
 
+      // Get total count for pagination
+      const total = await User.countDocuments(query);
+      const totalPages = Math.ceil(total / limit);
+
       const users = await User.find(query)
         .populate('establishmentId', 'name')
         .select('-password')
-        .sort({ createdAt: -1 });
+        .sort({ createdAt: -1 })
+        .skip(skip)
+        .limit(limit);
 
-      return users;
+      return {
+        data: users,
+        pagination: {
+          page,
+          limit,
+          total,
+          totalPages,
+          hasNextPage: page < totalPages,
+          hasPrevPage: page > 1,
+        },
+      };
     } catch (error) {
       console.error('Erreur lors de la récupération des utilisateurs:', error);
       throw error;
@@ -332,7 +355,7 @@ class UserService {
             },
           },
         },
-      ]);
+      ] as PipelineStage[]);
 
       const total = await User.countDocuments();
       const active = await User.countDocuments({ isActive: true });

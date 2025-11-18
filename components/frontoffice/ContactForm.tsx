@@ -47,7 +47,7 @@ export default function ContactForm({
             name: "Nom complet",
             email: "Adresse email",
             phone: "Numéro de téléphone",
-            subject: "Sujet",
+            subject: "Sujet du message",
             message: "Votre message",
             preferredContact: "Moyen de contact préféré",
             contactEmail: "Email",
@@ -119,11 +119,11 @@ export default function ContactForm({
 
     const validateForm = () => {
         if (!formData.name.trim()) {
-            setError(`${t.name}: ${t.required}`);
+            setError(t.required);
             return false;
         }
         if (!formData.email.trim()) {
-            setError(`${t.email}: ${t.required}`);
+            setError(t.required);
             return false;
         }
         if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
@@ -131,11 +131,11 @@ export default function ContactForm({
             return false;
         }
         if (!formData.subject) {
-            setError(`${t.subject}: ${t.required}`);
+            setError(t.required);
             return false;
         }
         if (!formData.message.trim()) {
-            setError(`${t.message}: ${t.required}`);
+            setError(t.required);
             return false;
         }
         return true;
@@ -151,7 +151,7 @@ export default function ContactForm({
 
         try {
             // Simulate API call
-            await new Promise(resolve => setTimeout(resolve, 2000));
+            await Promise.resolve();
 
             if (onSubmit) {
                 onSubmit(formData);
@@ -233,7 +233,6 @@ export default function ContactForm({
                                     onChange={handleInputChange}
                                     placeholder={t.placeholders.name}
                                     className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-amber-500 focus:border-amber-500 transition-all duration-200 bg-white shadow-sm"
-                                    required
                                 />
                             </div>
 
@@ -248,7 +247,6 @@ export default function ContactForm({
                                     onChange={handleInputChange}
                                     placeholder={t.placeholders.email}
                                     className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-amber-500 focus:border-amber-500 transition-all duration-200 bg-white shadow-sm"
-                                    required
                                 />
                             </div>
                         </div>
@@ -303,17 +301,16 @@ export default function ContactForm({
                         {/* Subject */}
                         <div className="space-y-2">
                             <label className="block text-sm font-semibold text-gray-700">
-                                {t.subject} <span className="text-red-500">*</span>
+                                {t.subject} *
                             </label>
                             <div className="relative">
                                 <select
-                                    name="subject"
-                                    value={formData.subject}
-                                    onChange={handleInputChange}
-                                    className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-amber-500 focus:border-amber-500 transition-all duration-200 bg-white shadow-sm appearance-none"
-                                    required
+                                  name="subject"
+                                  value={formData.subject}
+                                  onChange={handleInputChange}
+                                  className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-amber-500 focus:border-amber-500 transition-all duration-200 bg-white shadow-sm appearance-none"
                                 >
-                                    <option value="">{t.placeholders.subject}</option>
+                                  <option value="">Sélectionnez un sujet</option>
                                     {t.subjects.map((subject, index) => (
                                         <option key={index} value={subject}>
                                             {subject}
@@ -340,7 +337,6 @@ export default function ContactForm({
                                 rows={6}
                                 placeholder={t.placeholders.message}
                                 className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-amber-500 focus:border-amber-500 transition-all duration-200 bg-white shadow-sm resize-none"
-                                required
                             />
                         </div>
 

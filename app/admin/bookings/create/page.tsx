@@ -2,19 +2,29 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import { useEstablishments, useAccommodations, useCreateBooking } from '@/hooks/useQueries';
 import type { AccommodationResponse } from '@/types/accommodation.types';
+import type { EstablishmentResponse } from '@/types/establishment.types';
 
 export default function CreateBookingPage() {
   const router = useRouter();
-  const [establishments, setEstablishments] = useState<any[]>([]);
-  const [accommodations, setAccommodations] = useState<AccommodationResponse[]>([]);
   const [selectedEstablishment, setSelectedEstablishment] = useState('');
   const [selectedAccommodation, setSelectedAccommodation] = useState<AccommodationResponse | null>(
     null
   );
-  const [loading, setLoading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
+
+  // React Query hooks
+  const { data: establishmentsData } = useEstablishments();
+  const { data: accommodationsData, isLoading: loading } = useAccommodations(
+    selectedEstablishment ? { establishmentId: selectedEstablishment, status: 'available' } : undefined
+  );
+
+  const establishments = establishmentsData?.data || [];
+  const accommodations = accommodationsData?.data || [];
+
+  const createBookingMutation = useCreateBooking();
 
   // Form data
   const [formData, setFormData] = useState({
@@ -29,44 +39,7 @@ export default function CreateBookingPage() {
     notes: '',
   });
 
-  useEffect(() => {
-    fetchEstablishments();
-  }, []);
 
-  useEffect(() => {
-    if (selectedEstablishment) {
-      fetchAccommodations();
-    }
-  }, [selectedEstablishment]);
-
-  const fetchEstablishments = async () => {
-    try {
-      const response = await fetch('/api/establishments');
-      const data = await response.json();
-      if (data.success) {
-        setEstablishments(data.data.data || []);
-      }
-    } catch (err) {
-      console.error('Failed to fetch establishments:', err);
-    }
-  };
-
-  const fetchAccommodations = async () => {
-    try {
-      setLoading(true);
-      const response = await fetch(
-        `/api/accommodations?establishmentId=${selectedEstablishment}&status=available`
-      );
-      const data = await response.json();
-      if (data.success) {
-        setAccommodations(data.data.data || []);
-      }
-    } catch (err) {
-      console.error('Failed to fetch accommodations:', err);
-    } finally {
-      setLoading(false);
-    }
-  };
 
   const handleInputChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
@@ -80,56 +53,41 @@ export default function CreateBookingPage() {
 
   const handleAccommodationChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const accommodationId = e.target.value;
-    const accommodation = accommodations.find((acc) => acc.id === accommodationId);
+    const accommodation = accommodations.find((acc: AccommodationResponse) => acc.id === accommodationId);
     setSelectedAccommodation(accommodation || null);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setSubmitting(true);
     setError('');
 
+    if (!selectedEstablishment || !selectedAccommodation) {
+      setError('Please select establishment and accommodation');
+      return;
+    }
+
+    const bookingData = {
+      establishmentId: selectedEstablishment,
+      accommodationId: selectedAccommodation.id,
+      clientInfo: {
+        firstName: formData.firstName,
+        lastName: formData.lastName,
+        email: formData.email,
+        phone: formData.phone,
+        idNumber: formData.idNumber || undefined,
+      },
+      bookingType: 'onsite',
+      checkIn: new Date(formData.checkIn),
+      checkOut: new Date(formData.checkOut),
+      numberOfGuests: formData.numberOfGuests,
+      notes: formData.notes || undefined,
+    };
+
     try {
-      if (!selectedEstablishment || !selectedAccommodation) {
-        throw new Error('Please select establishment and accommodation');
-      }
-
-      const bookingData = {
-        establishmentId: selectedEstablishment,
-        accommodationId: selectedAccommodation.id,
-        clientInfo: {
-          firstName: formData.firstName,
-          lastName: formData.lastName,
-          email: formData.email,
-          phone: formData.phone,
-          idNumber: formData.idNumber || undefined,
-        },
-        bookingType: 'onsite',
-        checkIn: new Date(formData.checkIn),
-        checkOut: new Date(formData.checkOut),
-        numberOfGuests: formData.numberOfGuests,
-        notes: formData.notes || undefined,
-      };
-
-      const response = await fetch('/api/bookings', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(bookingData),
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error?.message || 'Failed to create booking');
-      }
-
-      router.push(`/bookings/${data.data.id}`);
+      await createBookingMutation.mutateAsync(bookingData);
+      router.push('/admin/bookings');
     } catch (err) {
       setError(err instanceof Error ? err.message : 'An error occurred');
-    } finally {
-      setSubmitting(false);
     }
   };
 
@@ -180,11 +138,11 @@ export default function CreateBookingPage() {
                         className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                       >
                         <option value="">Sélectionner un établissement</option>
-                        {establishments.map((est) => (
-                          <option key={est.id} value={est.id}>
-                            {est.name}
-                          </option>
-                        ))}
+                         {establishments.map((est: EstablishmentResponse, index: number) => (
+                           <option key={est.id + '-' + index} value={est.id}>
+                             {est.name}
+                           </option>
+                         ))}
                       </select>
                     </div>
 
@@ -200,11 +158,11 @@ export default function CreateBookingPage() {
                         className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100"
                       >
                         <option value="">Sélectionner un hébergement</option>
-                        {accommodations.map((acc) => (
-                          <option key={acc.id} value={acc.id}>
-                            {acc.name} - {acc.pricing.basePrice.toLocaleString()} BIF
-                          </option>
-                        ))}
+                         {accommodations.map((acc: AccommodationResponse, index: number) => (
+                           <option key={acc.id + '-' + index} value={acc.id}>
+                             {acc.name} - {acc.pricing.basePrice.toLocaleString()} BIF
+                           </option>
+                         ))}
                       </select>
                     </div>
                   </div>
@@ -355,10 +313,10 @@ export default function CreateBookingPage() {
 
                 <button
                   type="submit"
-                  disabled={submitting}
+                  disabled={createBookingMutation.isPending}
                   className="w-full px-4 py-3 bg-blue-600 text-white font-medium rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  {submitting ? 'Création en cours...' : 'Créer la réservation'}
+                  {createBookingMutation.isPending ? 'Création en cours...' : 'Créer la réservation'}
                 </button>
               </form>
             </div>

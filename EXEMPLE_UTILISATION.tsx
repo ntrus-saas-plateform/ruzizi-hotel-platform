@@ -11,9 +11,11 @@
 
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuthContext } from '@/components/AuthProvider';
+import { establishmentsApi, Establishment } from '@/lib/api/establishments';
+import { apiClient } from '@/lib/api/client';
 
 export function LoginPage() {
   const router = useRouter();
@@ -85,11 +87,6 @@ export function LoginPage() {
 // EXEMPLE 2 : Créer un établissement
 // ============================================
 
-'use client';
-
-import { useState } from 'react';
-import { establishmentsApi } from '@/lib/api/establishments';
-
 export function CreateEstablishmentButton() {
   const [isLoading, setIsLoading] = useState(false);
 
@@ -140,10 +137,6 @@ export function CreateEstablishmentButton() {
 // EXEMPLE 3 : Afficher les informations utilisateur
 // ============================================
 
-'use client';
-
-import { useAuthContext } from '@/components/AuthProvider';
-
 export function UserProfile() {
   const { user, isAuthenticated, isLoading, logout } = useAuthContext();
 
@@ -181,11 +174,6 @@ export function UserProfile() {
 // ============================================
 // EXEMPLE 4 : Liste des établissements
 // ============================================
-
-'use client';
-
-import { useState, useEffect } from 'react';
-import { establishmentsApi, Establishment } from '@/lib/api/establishments';
 
 export function EstablishmentsList() {
   const [establishments, setEstablishments] = useState<Establishment[]>([]);
@@ -258,12 +246,6 @@ export function EstablishmentsList() {
 // EXEMPLE 5 : Page protégée
 // ============================================
 
-'use client';
-
-import { useEffect } from 'react';
-import { useRouter } from 'next/navigation';
-import { useAuthContext } from '@/components/AuthProvider';
-
 export function ProtectedPage() {
   const router = useRouter();
   const { isAuthenticated, isLoading, user } = useAuthContext();
@@ -295,8 +277,6 @@ export function ProtectedPage() {
 // ============================================
 // EXEMPLE 6 : Utilisation directe de l'API client
 // ============================================
-
-import { apiClient } from '@/lib/api/client';
 
 // GET
 async function getEstablishments() {

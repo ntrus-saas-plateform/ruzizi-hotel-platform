@@ -55,10 +55,11 @@ export default function GuestForm({ guest, index, onChange, onRemove }: GuestFor
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {/* Prénom */}
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            Prénom <span className="text-red-500">*</span>
+          <label htmlFor={`firstName-${index}`} className="block text-sm font-medium text-gray-700 mb-1">
+            Prénom<span className="text-red-500">*</span>
           </label>
           <input
+            id={`firstName-${index}`}
             type="text"
             value={guest.firstName}
             onChange={(e) => updateField('firstName', e.target.value)}
@@ -69,10 +70,11 @@ export default function GuestForm({ guest, index, onChange, onRemove }: GuestFor
 
         {/* Nom */}
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            Nom <span className="text-red-500">*</span>
+          <label htmlFor={`lastName-${index}`} className="block text-sm font-medium text-gray-700 mb-1">
+            Nom<span className="text-red-500">*</span>
           </label>
           <input
+            id={`lastName-${index}`}
             type="text"
             value={guest.lastName}
             onChange={(e) => updateField('lastName', e.target.value)}
@@ -83,10 +85,11 @@ export default function GuestForm({ guest, index, onChange, onRemove }: GuestFor
 
         {/* Genre */}
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            Genre <span className="text-red-500">*</span>
+          <label htmlFor={`gender-${index}`} className="block text-sm font-medium text-gray-700 mb-1">
+            Genre<span className="text-red-500">*</span>
           </label>
           <select
+            id={`gender-${index}`}
             value={guest.gender}
             onChange={(e) => updateField('gender', e.target.value as Gender)}
             className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
@@ -100,10 +103,11 @@ export default function GuestForm({ guest, index, onChange, onRemove }: GuestFor
 
         {/* Date de naissance */}
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            Date de naissance <span className="text-red-500">*</span>
+          <label htmlFor={`dateOfBirth-${index}`} className="block text-sm font-medium text-gray-700 mb-1">
+            Date de naissance<span className="text-red-500">*</span>
           </label>
           <input
+            id={`dateOfBirth-${index}`}
             type="date"
             value={guest.dateOfBirth instanceof Date ? guest.dateOfBirth.toISOString().split('T')[0] : ''}
             onChange={(e) => updateField('dateOfBirth', new Date(e.target.value))}
@@ -114,10 +118,11 @@ export default function GuestForm({ guest, index, onChange, onRemove }: GuestFor
 
         {/* Nationalité */}
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            Nationalité <span className="text-red-500">*</span>
+          <label htmlFor={`nationality-${index}`} className="block text-sm font-medium text-gray-700 mb-1">
+            Nationalité<span className="text-red-500">*</span>
           </label>
           <input
+            id={`nationality-${index}`}
             type="text"
             value={guest.nationality}
             onChange={(e) => updateField('nationality', e.target.value)}
@@ -128,10 +133,11 @@ export default function GuestForm({ guest, index, onChange, onRemove }: GuestFor
 
         {/* Type de pièce d'identité */}
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            Type de pièce d'identité <span className="text-red-500">*</span>
+          <label htmlFor={`idType-${index}`} className="block text-sm font-medium text-gray-700 mb-1">
+            Type de pièce d'identité<span className="text-red-500">*</span>
           </label>
           <select
+            id={`idType-${index}`}
             value={guest.idType}
             onChange={(e) => updateField('idType', e.target.value as IDType)}
             className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
@@ -146,10 +152,11 @@ export default function GuestForm({ guest, index, onChange, onRemove }: GuestFor
 
         {/* Numéro de pièce d'identité */}
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            Numéro de pièce d'identité <span className="text-red-500">*</span>
+          <label htmlFor={`idNumber-${index}`} className="block text-sm font-medium text-gray-700 mb-1">
+            Numéro de pièce d'identité<span className="text-red-500">*</span>
           </label>
           <input
+            id={`idNumber-${index}`}
             type="text"
             value={guest.idNumber}
             onChange={(e) => updateField('idNumber', e.target.value)}
@@ -160,10 +167,11 @@ export default function GuestForm({ guest, index, onChange, onRemove }: GuestFor
 
         {/* Date d'expiration */}
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
+          <label htmlFor={`idExpiryDate-${index}`} className="block text-sm font-medium text-gray-700 mb-1">
             Date d'expiration de la pièce
           </label>
           <input
+            id={`idExpiryDate-${index}`}
             type="date"
             value={guest.idExpiryDate instanceof Date ? guest.idExpiryDate.toISOString().split('T')[0] : ''}
             onChange={(e) => updateField('idExpiryDate', e.target.value ? new Date(e.target.value) : undefined)}
@@ -173,10 +181,11 @@ export default function GuestForm({ guest, index, onChange, onRemove }: GuestFor
 
         {/* Lien avec le client principal */}
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            Lien avec le client principal <span className="text-red-500">*</span>
+          <label htmlFor={`relationship-${index}`} className="block text-sm font-medium text-gray-700 mb-1">
+            Lien avec le client principal<span className="text-red-500">*</span>
           </label>
           <select
+            id={`relationship-${index}`}
             value={guest.relationshipToMainClient}
             onChange={(e) => updateField('relationshipToMainClient', e.target.value as RelationshipType)}
             className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
@@ -196,10 +205,11 @@ export default function GuestForm({ guest, index, onChange, onRemove }: GuestFor
         {/* Détails de la relation (si autre) */}
         {guest.relationshipToMainClient === 'other' && (
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label htmlFor={`relationshipDetails-${index}`} className="block text-sm font-medium text-gray-700 mb-1">
               Précisez la relation
             </label>
             <input
+              id={`relationshipDetails-${index}`}
               type="text"
               value={guest.relationshipDetails || ''}
               onChange={(e) => updateField('relationshipDetails', e.target.value)}
@@ -210,10 +220,11 @@ export default function GuestForm({ guest, index, onChange, onRemove }: GuestFor
 
         {/* Notes */}
         <div className="md:col-span-2">
-          <label className="block text-sm font-medium text-gray-700 mb-1">
+          <label htmlFor={`notes-${index}`} className="block text-sm font-medium text-gray-700 mb-1">
             Notes (Allergies, préférences, besoins spéciaux)
           </label>
           <textarea
+            id={`notes-${index}`}
             value={guest.notes || ''}
             onChange={(e) => updateField('notes', e.target.value)}
             rows={2}

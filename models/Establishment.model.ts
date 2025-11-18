@@ -1,10 +1,10 @@
-import mongoose, { Schema, Model } from 'mongoose';
+import mongoose, { Schema, Model, Types } from 'mongoose';
 import type { IEstablishment, PricingMode } from '@/types/establishment.types';
 
 /**
  * Establishment document interface with methods
  */
-export interface IEstablishmentDocument extends Omit<IEstablishment, '_id'>, mongoose.Document {
+export interface IEstablishmentDocument extends Omit<IEstablishment, '_id'>, mongoose.Document<Types.ObjectId> {
   toJSON(): Partial<IEstablishment>;
 }
 
@@ -147,8 +147,8 @@ const EstablishmentSchema = new Schema<IEstablishmentDocument, IEstablishmentMod
       virtuals: true,
       transform: function (doc, ret) {
         ret.id = ret._id?.toString();
-        if (ret._id) delete ret._id;
-        if ('__v' in ret) delete (ret as any).__v;
+        delete (ret as any)._id;
+        delete (ret as any).__v;
         return ret;
       },
     },

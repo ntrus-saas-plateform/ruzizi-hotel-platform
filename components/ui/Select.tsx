@@ -1,4 +1,4 @@
-import React, { forwardRef, SelectHTMLAttributes } from 'react';
+import React, { forwardRef, SelectHTMLAttributes, memo } from 'react';
 
 export interface SelectProps extends SelectHTMLAttributes<HTMLSelectElement> {
   label?: string;
@@ -9,7 +9,7 @@ export interface SelectProps extends SelectHTMLAttributes<HTMLSelectElement> {
   options?: Array<{ value: string | number; label: string }>;
 }
 
-const Select = forwardRef<HTMLSelectElement, SelectProps>(
+const Select = memo(forwardRef<HTMLSelectElement, SelectProps>(
   (
     {
       label,
@@ -65,21 +65,29 @@ const Select = forwardRef<HTMLSelectElement, SelectProps>(
       ${className}
     `;
 
+    const selectId = props.id || `select-${Math.random().toString(36).substr(2, 9)}`;
+    const errorId = error ? `${selectId}-error` : undefined;
+    const helperId = helperText ? `${selectId}-helper` : undefined;
+    const describedBy = [errorId, helperId].filter(Boolean).join(' ') || undefined;
+  
     return (
       <div className="w-full">
         {label && (
-          <label className="block text-sm font-semibold text-gray-700 mb-2">
+          <label htmlFor={selectId} className="block text-sm font-semibold text-gray-700 mb-2">
             {label}
-            {required && <span className="text-red-500 ml-1">*</span>}
+            {required && <span className="text-red-500 ml-1" aria-label="requis">*</span>}
           </label>
         )}
-
+  
         <div className="relative">
           <select
             ref={ref}
+            id={selectId}
             disabled={disabled}
             required={required}
             className={baseClasses}
+            aria-invalid={error ? 'true' : 'false'}
+            aria-describedby={describedBy}
             {...props}
           >
             {options
@@ -90,18 +98,18 @@ const Select = forwardRef<HTMLSelectElement, SelectProps>(
                 ))
               : children}
           </select>
-
+  
           {/* Icône de flèche personnalisée */}
-          <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-gray-400">
+          <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-gray-400" aria-hidden="true">
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
             </svg>
           </div>
         </div>
-
+  
         {error && (
-          <p className="mt-2 text-sm font-medium text-red-600 flex items-center gap-1">
-            <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+          <p id={errorId} className="mt-2 text-sm font-medium text-red-600 flex items-center gap-1" role="alert">
+            <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
               <path
                 fillRule="evenodd"
                 d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z"
@@ -111,14 +119,16 @@ const Select = forwardRef<HTMLSelectElement, SelectProps>(
             {error}
           </p>
         )}
-
+  
         {helperText && !error && (
-          <p className="mt-2 text-sm text-gray-500">{helperText}</p>
+          <p id={helperId} className="mt-2 text-sm text-gray-500">
+            {helperText}
+          </p>
         )}
       </div>
     );
   }
-);
+));
 
 Select.displayName = 'Select';
 

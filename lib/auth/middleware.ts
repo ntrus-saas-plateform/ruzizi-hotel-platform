@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { verifyAccessToken } from '@/lib/auth/jwt';
+import { isTokenBlacklisted } from '@/lib/auth/token-blacklist';
 import { AuthService } from '@/services/Auth.service';
 import type { SystemPermission, UserRole } from '@/types/user.types';
 
@@ -29,36 +30,57 @@ export async function authenticateUser(request: NextRequest): Promise<{
   error?: string;
 }> {
   try {
+    console.log('🔐 Starting user authentication...');
+
     // Try to get token from Authorization header first
     const authHeader = request.headers.get('authorization');
     let token: string | null = null;
 
     if (authHeader && authHeader.startsWith('Bearer ')) {
       token = authHeader.substring(7);
+      console.log('📋 Token found in Authorization header');
     }
 
     // If no token in header, try cookies
     if (!token) {
       token = request.cookies.get('auth-token')?.value || null;
+      if (token) {
+        console.log('🍪 Token found in cookies');
+      }
     }
 
     if (!token) {
+      console.log('❌ No authentication token found');
       return { success: false, error: 'Token d\'authentification manquant' };
     }
 
+    // Check if token is blacklisted
+    console.log('🔍 Checking if token is blacklisted...');
+    if (isTokenBlacklisted(token)) {
+      console.log('🚫 Token is blacklisted');
+      return { success: false, error: 'Token invalidé' };
+    }
+
     // Vérifier le token JWT
+    console.log('🔍 Verifying JWT token...');
     const payload = verifyAccessToken(token);
 
     if (!payload) {
+      console.log('❌ Token verification failed');
       return { success: false, error: 'Token invalide ou expiré' };
     }
+
+    console.log('👤 Token valid, checking user existence for:', payload.userId);
 
     // Vérifier que l'utilisateur existe toujours et est actif
     const user = await AuthService.getUserById(payload.userId);
 
     if (!user || !user.isActive) {
+      console.log('❌ User not found or inactive:', payload.userId);
       return { success: false, error: 'Utilisateur non trouvé ou inactif' };
     }
+
+    console.log('✅ Authentication successful for user:', user.email, 'role:', user.role);
 
     return {
       success: true,
@@ -70,6 +92,7 @@ export async function authenticateUser(request: NextRequest): Promise<{
       },
     };
   } catch (error) {
+    console.error('❌ Authentication error:', error);
     return {
       success: false,
       error: error instanceof Error ? error.message : 'Erreur d\'authentification'
@@ -249,21 +272,46 @@ export function withRole(
 export const requireAuth = withAuth;
 export const verifyAuth = authenticateUser;
 
-export function createErrorResponse(code: string, message: string, status: number = 500): NextResponse {
-  return NextResponse.json(
-    {
-      success: false,
-      error: {
-        code,
-        message,
-      },
+export function createErrorResponse(code: string, message: string, status: number = 500, details?: any): NextResponse {
+  // In production, don't leak internal error details for 5xx errors
+  const isProduction = process.env.NODE_ENV === 'production';
+  const safeMessage = (status >= 500 && isProduction) ? 'Internal server error' : message;
+
+  // For security, never include stack traces or sensitive information
+  const sanitizedMessage = safeMessage
+    .replace(/stack:.*/gi, '') // Remove stack traces
+    .replace(/at\s+.*?\(.*?\)/gi, '') // Remove file paths
+    .replace(/password|token|secret|key/gi, '[REDACTED]') // Redact sensitive data
+    .trim();
+
+  const errorResponse: any = {
+    success: false,
+    error: {
+      code,
+      message: sanitizedMessage,
     },
-    { status }
-  );
+  };
+
+  if (details) {
+    errorResponse.error.details = details;
+  }
+
+  return NextResponse.json(errorResponse, { status });
 }
 
 export const createSuccessResponse = (data: any, message?: string, status: number = 200) =>
   NextResponse.json({ success: true, data, message }, { status });
+
+/**
+ * Helper for creating validation error responses from Zod errors
+ */
+export function createValidationErrorResponse(error: any, message: string = 'Validation failed'): NextResponse {
+  if (error && typeof error === 'object' && 'issues' in error) {
+    // ZodError
+    return createErrorResponse('VALIDATION_ERROR', message, 400, error.issues);
+  }
+  return createErrorResponse('VALIDATION_ERROR', message, 400);
+}
 
 // Wrappers spécifiques pour les rôles
 export const requireManager = (

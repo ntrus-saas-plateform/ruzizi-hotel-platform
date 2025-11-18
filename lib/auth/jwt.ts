@@ -1,7 +1,11 @@
 import jwt from 'jsonwebtoken';
 
-const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key-change-in-production';
-const JWT_REFRESH_SECRET = process.env.JWT_REFRESH_SECRET || 'your-refresh-secret-key';
+const JWT_SECRET = process.env.JWT_SECRET;
+const JWT_REFRESH_SECRET = process.env.JWT_REFRESH_SECRET;
+
+if (!JWT_SECRET || !JWT_REFRESH_SECRET) {
+  throw new Error('JWT_SECRET and JWT_REFRESH_SECRET environment variables must be set');
+}
 
 // Durées de validité
 const ACCESS_TOKEN_EXPIRY = '15m'; // 15 minutes
@@ -18,16 +22,19 @@ export interface TokenPayload {
  * Générer un access token
  */
 export function generateAccessToken(payload: TokenPayload): string {
-  return jwt.sign(payload, JWT_SECRET, {
+  console.log('🔑 Generating access token for user:', payload.userId, 'role:', payload.role);
+  const token = jwt.sign(payload, JWT_SECRET!, {
     expiresIn: ACCESS_TOKEN_EXPIRY,
   });
+  console.log('✅ Access token generated, expires in:', ACCESS_TOKEN_EXPIRY);
+  return token;
 }
 
 /**
  * Générer un refresh token
  */
 export function generateRefreshToken(payload: TokenPayload): string {
-  return jwt.sign(payload, JWT_REFRESH_SECRET, {
+  return jwt.sign(payload, JWT_REFRESH_SECRET!, {
     expiresIn: REFRESH_TOKEN_EXPIRY,
   });
 }
@@ -50,10 +57,12 @@ export function generateTokens(payload: TokenPayload): {
  */
 export function verifyAccessToken(token: string): TokenPayload | null {
   try {
-    const decoded = jwt.verify(token, JWT_SECRET) as TokenPayload;
+    console.log('🔍 Verifying access token...');
+    const decoded = jwt.verify(token, JWT_SECRET!) as TokenPayload;
+    console.log('✅ Access token verified for user:', decoded.userId, 'role:', decoded.role);
     return decoded;
   } catch (error) {
-    console.error('Invalid access token:', error);
+    console.error('❌ Invalid access token:', error instanceof Error ? error.message : error);
     return null;
   }
 }
@@ -63,10 +72,12 @@ export function verifyAccessToken(token: string): TokenPayload | null {
  */
 export function verifyRefreshToken(token: string): TokenPayload | null {
   try {
-    const decoded = jwt.verify(token, JWT_REFRESH_SECRET) as TokenPayload;
+    console.log('🔄 Verifying refresh token...');
+    const decoded = jwt.verify(token, JWT_REFRESH_SECRET!) as TokenPayload;
+    console.log('✅ Refresh token verified for user:', decoded.userId);
     return decoded;
   } catch (error) {
-    console.error('Invalid refresh token:', error);
+    console.error('❌ Invalid refresh token:', error instanceof Error ? error.message : error);
     return null;
   }
 }

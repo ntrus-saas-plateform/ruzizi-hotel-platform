@@ -88,9 +88,9 @@ const EmployeeSchema = new Schema<IEmployee, IEmployeeModel>(
   }
 );
 
-EmployeeSchema.index({ 'employmentInfo.employeeNumber': 1 });
 EmployeeSchema.index({ 'employmentInfo.establishmentId': 1 });
 EmployeeSchema.index({ 'employmentInfo.status': 1 });
+console.log('Employee: Creating index for personalInfo.email');
 EmployeeSchema.index({ 'personalInfo.email': 1 });
 
 EmployeeSchema.pre('save', async function (next) {

@@ -3,170 +3,239 @@
 import { useState, useEffect } from 'react';
 
 interface FAQItem {
+  id: string;
   question: string;
   answer: string;
-  category: string;
 }
 
 export default function FAQPage() {
-  const [openIndex, setOpenIndex] = useState<number | null>(null);
   const [language, setLanguage] = useState('fr');
-  const [selectedCategory, setSelectedCategory] = useState<string>('all');
+  const [openItems, setOpenItems] = useState<Set<string>>(new Set());
 
   useEffect(() => {
     const savedLanguage = localStorage.getItem('language') || 'fr';
     setLanguage(savedLanguage);
   }, []);
 
+  const toggleItem = (id: string) => {
+    const newOpenItems = new Set(openItems);
+    if (newOpenItems.has(id)) {
+      newOpenItems.delete(id);
+    } else {
+      newOpenItems.add(id);
+    }
+    setOpenItems(newOpenItems);
+  };
+
   const content = {
     fr: {
-      title: "Questions Fréquentes (FAQ)",
+      title: "Questions Fréquemment Posées",
       subtitle: "Trouvez rapidement les réponses à vos questions",
+      description: "Consultez notre FAQ pour obtenir des réponses aux questions les plus courantes concernant nos services, réservations et politiques.",
       categories: {
-        all: "Toutes",
-        booking: "Réservation",
+        booking: "Réservations",
         payment: "Paiement",
-        services: "Services",
+        stay: "Séjour",
         policies: "Politiques"
       },
-      noQuestion: "Vous ne trouvez pas la réponse à votre question?",
-      noQuestionDesc: "Notre équipe est disponible pour répondre à toutes vos questions.",
-      contactUs: "Contactez-nous",
-      callUs: "Appelez-nous",
-      faqs: [
-        {
-          question: 'Comment puis-je effectuer une réservation?',
-          answer: 'Vous pouvez effectuer une réservation directement sur notre site web en sélectionnant l\'établissement et l\'hébergement de votre choix, puis en remplissant le formulaire de réservation avec toutes les informations nécessaires.',
-          category: 'booking'
-        },
-        {
-          question: 'Quelles sont les heures d\'arrivée et de départ?',
-          answer: 'L\'heure d\'arrivée est à partir de 14h00 et l\'heure de départ est avant 12h00. Si vous avez besoin d\'un départ tardif ou d\'une arrivée anticipée, veuillez nous contacter.',
-          category: 'policies'
-        },
-        {
-          question: 'Puis-je annuler ou modifier ma réservation?',
-          answer: 'Oui, vous pouvez annuler ou modifier votre réservation en nous contactant au +257 69 65 75 54 ou par email à contact@ruzizihotel.com. Les conditions d\'annulation varient selon le type de réservation.',
-          category: 'booking'
-        },
-        {
-          question: 'Quels modes de paiement acceptez-vous?',
-          answer: 'Nous acceptons les paiements en espèces (BIF), par carte bancaire, et par virement bancaire. Le paiement peut être effectué à l\'arrivée ou en ligne lors de la réservation.',
-          category: 'payment'
-        },
-        {
-          question: 'Proposez-vous un service de navette depuis l\'aéroport?',
-          answer: 'Oui, nous proposons un service de navette depuis l\'aéroport international de Bujumbura. Veuillez nous informer de votre heure d\'arrivée lors de votre réservation.',
-          category: 'services'
-        },
-        {
-          question: 'Les animaux de compagnie sont-ils acceptés?',
-          answer: 'Certains de nos établissements acceptent les animaux de compagnie. Veuillez nous contacter avant votre réservation pour vérifier la disponibilité et les conditions.',
-          category: 'policies'
-        },
-        {
-          question: 'Y a-t-il une connexion Wi-Fi gratuite?',
-          answer: 'Oui, tous nos établissements offrent une connexion Wi-Fi gratuite et haut débit dans toutes les chambres et espaces communs.',
-          category: 'services'
-        },
-        {
-          question: 'Proposez-vous des services de restauration?',
-          answer: 'Oui, nos établissements disposent de restaurants proposant une cuisine locale et internationale. Le petit-déjeuner peut être inclus selon le type de réservation.',
-          category: 'services'
-        },
-        {
-          question: 'Quelles pièces d\'identité sont requises lors de l\'enregistrement?',
-          answer: 'Vous devez présenter une pièce d\'identité valide (passeport, carte d\'identité nationale ou permis de conduire) lors de votre arrivée. Pour les ressortissants étrangers, un passeport est requis.',
-          category: 'policies'
-        },
-        {
-          question: 'Offrez-vous des réductions pour les longs séjours?',
-          answer: 'Oui, nous proposons des tarifs préférentiels pour les séjours de longue durée. Contactez-nous pour obtenir un devis personnalisé.',
-          category: 'payment'
-        },
-      ]
+      faqs: {
+        booking: [
+          {
+            id: "booking-1",
+            question: "Comment effectuer une réservation?",
+            answer: "Vous pouvez effectuer une réservation directement sur notre site web en sélectionnant vos dates, le nombre de voyageurs et l'hébergement souhaité. Le processus est simple et sécurisé."
+          },
+          {
+            id: "booking-2",
+            question: "Puis-je modifier ou annuler ma réservation?",
+            answer: "Oui, vous pouvez modifier ou annuler votre réservation jusqu'à 24h avant la date d'arrivée. Contactez-nous par téléphone ou email pour effectuer ces changements."
+          },
+          {
+            id: "booking-3",
+            question: "Y a-t-il une caution requise?",
+            answer: "Une caution peut être demandée selon le type d'hébergement et la durée du séjour. Cette information vous sera communiquée lors de la réservation."
+          },
+          {
+            id: "booking-4",
+            question: "Quels documents dois-je apporter?",
+            answer: "Veuillez apporter une pièce d'identité valide (passeport ou carte d'identité nationale) et votre confirmation de réservation. Pour les mineurs, des documents supplémentaires peuvent être requis."
+          }
+        ],
+        payment: [
+          {
+            id: "payment-1",
+            question: "Quels modes de paiement acceptez-vous?",
+            answer: "Nous acceptons les cartes de crédit (Visa, MasterCard), les virements bancaires et le paiement en espèces à l'arrivée. Les paiements en ligne sont sécurisés."
+          },
+          {
+            id: "payment-2",
+            question: "Quand suis-je débité?",
+            answer: "Pour les réservations en ligne, un acompte peut être demandé à la confirmation. Le solde est généralement payé à l'arrivée à l'établissement."
+          },
+          {
+            id: "payment-3",
+            question: "Proposez-vous des tarifs préférentiels?",
+            answer: "Oui, nous proposons des tarifs préférentiels pour les séjours prolongés, les groupes et nos clients fidèles. Contactez-nous pour obtenir un devis personnalisé."
+          }
+        ],
+        stay: [
+          {
+            id: "stay-1",
+            question: "Quelles sont les heures d'arrivée et de départ?",
+            answer: "L'arrivée se fait généralement à partir de 14h00 et le départ avant 12h00. Cependant, nous pouvons arranger des horaires flexibles selon vos besoins."
+          },
+          {
+            id: "stay-2",
+            question: "Le petit-déjeuner est-il inclus?",
+            answer: "Le petit-déjeuner est inclus dans la plupart de nos tarifs. Les détails sont précisés lors de la réservation selon l'établissement choisi."
+          },
+          {
+            id: "stay-3",
+            question: "Y a-t-il un parking disponible?",
+            answer: "La plupart de nos établissements disposent d'un parking sécurisé. Cette information est disponible sur la page de chaque établissement."
+          },
+          {
+            id: "stay-4",
+            question: "Puis-je amener des animaux de compagnie?",
+            answer: "Les animaux de compagnie sont acceptés dans certains de nos établissements. Veuillez nous contacter à l'avance pour confirmer la disponibilité."
+          }
+        ],
+        policies: [
+          {
+            id: "policies-1",
+            question: "Quelle est votre politique de confidentialité?",
+            answer: "Nous respectons votre vie privée et protégeons vos données personnelles. Consultez notre politique de confidentialité pour plus de détails."
+          },
+          {
+            id: "policies-2",
+            question: "Acceptez-vous les enfants?",
+            answer: "Oui, nous accueillons les enfants. Des lits supplémentaires peuvent être disponibles selon l'hébergement choisi."
+          },
+          {
+            id: "policies-3",
+            question: "Y a-t-il des restrictions d'âge?",
+            answer: "Il n'y a pas de restrictions d'âge générales, mais certains établissements peuvent avoir des politiques spécifiques pour les mineurs non accompagnés."
+          },
+          {
+            id: "policies-4",
+            question: "Que faire en cas d'urgence?",
+            answer: "En cas d'urgence pendant votre séjour, contactez immédiatement la réception de votre établissement ou appelez notre ligne d'urgence 24h/24."
+          }
+        ]
+      },
+      contactUs: "Vous n'avez pas trouvé la réponse à votre question?",
+      contactDesc: "Notre équipe est là pour vous aider. Contactez-nous directement.",
+      contactButton: "Nous contacter"
     },
     en: {
-      title: "Frequently Asked Questions (FAQ)",
+      title: "Frequently Asked Questions",
       subtitle: "Find answers to your questions quickly",
+      description: "Check our FAQ to get answers to the most common questions about our services, bookings, and policies.",
       categories: {
-        all: "All",
-        booking: "Booking",
+        booking: "Bookings",
         payment: "Payment",
-        services: "Services",
+        stay: "Stay",
         policies: "Policies"
       },
-      noQuestion: "Can't find the answer to your question?",
-      noQuestionDesc: "Our team is available to answer all your questions.",
-      contactUs: "Contact us",
-      callUs: "Call us",
-      faqs: [
-        {
-          question: 'How can I make a reservation?',
-          answer: 'You can make a reservation directly on our website by selecting the establishment and accommodation of your choice, then filling out the reservation form with all necessary information.',
-          category: 'booking'
-        },
-        {
-          question: 'What are the check-in and check-out times?',
-          answer: 'Check-in time is from 2:00 PM and check-out time is before 12:00 PM. If you need a late checkout or early arrival, please contact us.',
-          category: 'policies'
-        },
-        {
-          question: 'Can I cancel or modify my reservation?',
-          answer: 'Yes, you can cancel or modify your reservation by contacting us at +257 69 65 75 54 or by email at contact@ruzizihotel.com. Cancellation conditions vary depending on the type of reservation.',
-          category: 'booking'
-        },
-        {
-          question: 'What payment methods do you accept?',
-          answer: 'We accept cash payments (BIF), credit cards, and bank transfers. Payment can be made upon arrival or online during booking.',
-          category: 'payment'
-        },
-        {
-          question: 'Do you offer airport shuttle service?',
-          answer: 'Yes, we offer shuttle service from Bujumbura International Airport. Please inform us of your arrival time when making your reservation.',
-          category: 'services'
-        },
-        {
-          question: 'Are pets allowed?',
-          answer: 'Some of our establishments accept pets. Please contact us before your reservation to check availability and conditions.',
-          category: 'policies'
-        },
-        {
-          question: 'Is there free Wi-Fi?',
-          answer: 'Yes, all our establishments offer free high-speed Wi-Fi in all rooms and common areas.',
-          category: 'services'
-        },
-        {
-          question: 'Do you offer dining services?',
-          answer: 'Yes, our establishments have restaurants offering local and international cuisine. Breakfast may be included depending on the type of reservation.',
-          category: 'services'
-        },
-        {
-          question: 'What identification is required during check-in?',
-          answer: 'You must present valid identification (passport, national ID card, or driver\'s license) upon arrival. For foreign nationals, a passport is required.',
-          category: 'policies'
-        },
-        {
-          question: 'Do you offer discounts for long stays?',
-          answer: 'Yes, we offer preferential rates for long-term stays. Contact us for a personalized quote.',
-          category: 'payment'
-        },
-      ]
+      faqs: {
+        booking: [
+          {
+            id: "booking-1",
+            question: "How do I make a reservation?",
+            answer: "You can make a reservation directly on our website by selecting your dates, number of travelers, and desired accommodation. The process is simple and secure."
+          },
+          {
+            id: "booking-2",
+            question: "Can I modify or cancel my reservation?",
+            answer: "Yes, you can modify or cancel your reservation up to 24 hours before the arrival date. Contact us by phone or email to make these changes."
+          },
+          {
+            id: "booking-3",
+            question: "Is a deposit required?",
+            answer: "A deposit may be required depending on the type of accommodation and length of stay. This information will be communicated to you during the booking process."
+          },
+          {
+            id: "booking-4",
+            question: "What documents should I bring?",
+            answer: "Please bring a valid ID (passport or national ID card) and your booking confirmation. Additional documents may be required for minors."
+          }
+        ],
+        payment: [
+          {
+            id: "payment-1",
+            question: "What payment methods do you accept?",
+            answer: "We accept credit cards (Visa, MasterCard), bank transfers, and cash payment upon arrival. Online payments are secure."
+          },
+          {
+            id: "payment-2",
+            question: "When am I charged?",
+            answer: "For online reservations, a deposit may be requested upon confirmation. The balance is usually paid upon arrival at the establishment."
+          },
+          {
+            id: "payment-3",
+            question: "Do you offer preferential rates?",
+            answer: "Yes, we offer preferential rates for extended stays, groups, and loyal customers. Contact us for a personalized quote."
+          }
+        ],
+        stay: [
+          {
+            id: "stay-1",
+            question: "What are the check-in and check-out times?",
+            answer: "Check-in is generally from 2:00 PM and check-out before 12:00 PM. However, we can arrange flexible schedules according to your needs."
+          },
+          {
+            id: "stay-2",
+            question: "Is breakfast included?",
+            answer: "Breakfast is included in most of our rates. Details are specified during booking according to the chosen establishment."
+          },
+          {
+            id: "stay-3",
+            question: "Is parking available?",
+            answer: "Most of our establishments have secure parking. This information is available on each establishment's page."
+          },
+          {
+            id: "stay-4",
+            question: "Can I bring pets?",
+            answer: "Pets are accepted in some of our establishments. Please contact us in advance to confirm availability."
+          }
+        ],
+        policies: [
+          {
+            id: "policies-1",
+            question: "What is your privacy policy?",
+            answer: "We respect your privacy and protect your personal data. Check our privacy policy for more details."
+          },
+          {
+            id: "policies-2",
+            question: "Do you accept children?",
+            answer: "Yes, we welcome children. Extra beds may be available depending on the chosen accommodation."
+          },
+          {
+            id: "policies-3",
+            question: "Are there age restrictions?",
+            answer: "There are no general age restrictions, but some establishments may have specific policies for unaccompanied minors."
+          },
+          {
+            id: "policies-4",
+            question: "What to do in case of emergency?",
+            answer: "In case of emergency during your stay, immediately contact your establishment's reception or call our 24/7 emergency line."
+          }
+        ]
+      },
+      contactUs: "Didn't find the answer to your question?",
+      contactDesc: "Our team is here to help you. Contact us directly.",
+      contactButton: "Contact Us"
     }
   };
 
   const t = content[language as keyof typeof content];
 
-  const filteredFaqs = selectedCategory === 'all' 
-    ? t.faqs 
-    : t.faqs.filter(faq => faq.category === selectedCategory);
-
-  const categoryIcons: Record<string, string> = {
-    booking: "📅",
-    payment: "💳",
-    services: "🛎️",
-    policies: "📋"
-  };
+  const categories = [
+    { key: 'booking', label: t.categories.booking, icon: '📅' },
+    { key: 'payment', label: t.categories.payment, icon: '💳' },
+    { key: 'stay', label: t.categories.stay, icon: '🏨' },
+    { key: 'policies', label: t.categories.policies, icon: '📋' }
+  ];
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-amber-50 pt-32">
@@ -189,110 +258,74 @@ export default function FAQPage() {
         </div>
       </section>
 
-      {/* Category Filter */}
-      <section className="py-8 bg-white border-b border-gray-200">
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex flex-wrap gap-3 justify-center">
-            {Object.entries(t.categories).map(([key, label]) => (
-              <button
-                key={key}
-                onClick={() => setSelectedCategory(key)}
-                className={`px-6 py-3 rounded-xl font-medium transition-all duration-300 transform hover:scale-105 ${
-                  selectedCategory === key
-                    ? 'bg-gradient-to-r from-amber-600 to-amber-700 text-white shadow-lg'
-                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                }`}
-              >
-                {key !== 'all' && categoryIcons[key]} {label}
-              </button>
-            ))}
-          </div>
-        </div>
-      </section>
-
       {/* Content */}
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-        <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-2xl border border-white/20 overflow-hidden">
-          <div className="divide-y divide-gray-200">
-            {filteredFaqs.map((faq, index) => (
-              <div key={index} className="p-6 hover:bg-gray-50 transition-colors duration-200">
-                <button
-                  onClick={() => setOpenIndex(openIndex === index ? null : index)}
-                  className="w-full flex justify-between items-start text-left group"
+      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
+        <div className="text-center mb-12">
+          <p className="text-lg text-gray-600 max-w-2xl mx-auto">{t.description}</p>
+        </div>
+
+        {/* FAQ Categories */}
+        {categories.map((category) => (
+          <div key={category.key} className="mb-12">
+            <div className="flex items-center mb-6">
+              <span className="text-3xl mr-3">{category.icon}</span>
+              <h2 className="text-3xl font-bold text-gray-900">{category.label}</h2>
+            </div>
+
+            <div className="space-y-4">
+              {t.faqs[category.key as keyof typeof t.faqs].map((faq: FAQItem) => (
+                <div
+                  key={faq.id}
+                  className="bg-white/80 backdrop-blur-sm rounded-xl shadow-lg border border-white/20 overflow-hidden"
                 >
-                  <div className="flex items-start flex-1 pr-4">
-                    <span className="text-2xl mr-4 flex-shrink-0">{categoryIcons[faq.category]}</span>
-                    <span className="text-lg font-semibold text-gray-900 group-hover:text-amber-700 transition-colors">
-                      {faq.question}
-                    </span>
-                  </div>
-                  <div className={`flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center transition-all duration-300 ${
-                    openIndex === index 
-                      ? 'bg-gradient-to-br from-amber-500 to-amber-600 rotate-180' 
-                      : 'bg-gray-200 group-hover:bg-amber-100'
-                  }`}>
+                  <button
+                    onClick={() => toggleItem(faq.id)}
+                    className="w-full px-6 py-4 text-left flex items-center justify-between hover:bg-gray-50 transition-colors"
+                  >
+                    <h3 className="text-lg font-semibold text-gray-900 pr-4">{faq.question}</h3>
                     <svg
-                      className={`w-5 h-5 transition-colors ${
-                        openIndex === index ? 'text-white' : 'text-gray-600 group-hover:text-amber-600'
+                      className={`w-5 h-5 text-amber-600 transform transition-transform flex-shrink-0 ${
+                        openItems.has(faq.id) ? 'rotate-180' : ''
                       }`}
                       fill="none"
                       stroke="currentColor"
                       viewBox="0 0 24 24"
                     >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M19 9l-7 7-7-7"
-                      />
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                     </svg>
-                  </div>
-                </button>
-                {openIndex === index && (
-                  <div className="mt-4 ml-14 text-gray-700 leading-relaxed animate-fadeIn">
-                    <p>{faq.answer}</p>
-                  </div>
-                )}
-              </div>
-            ))}
-          </div>
-        </div>
+                  </button>
 
-        {/* Contact CTA */}
-        <div className="mt-12 bg-gradient-to-br from-amber-50 via-orange-50 to-amber-100 border-2 border-amber-200 rounded-2xl p-8 shadow-xl">
-          <div className="text-center mb-6">
-            <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-amber-500 to-amber-700 rounded-full mb-4 shadow-lg">
-              <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18.364 5.636l-3.536 3.536m0 5.656l3.536 3.536M9.172 9.172L5.636 5.636m3.536 9.192l-3.536 3.536M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-5 0a4 4 0 11-8 0 4 4 0 018 0z" />
-              </svg>
+                  {openItems.has(faq.id) && (
+                    <div className="px-6 pb-4">
+                      <div className="border-t border-gray-200 pt-4">
+                        <p className="text-gray-700 leading-relaxed">{faq.answer}</p>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              ))}
             </div>
-            <h2 className="text-2xl font-bold text-gray-900 mb-2">
-              {t.noQuestion}
-            </h2>
-            <p className="text-gray-700 text-lg">
-              {t.noQuestionDesc}
-            </p>
           </div>
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <a
-              href="/contact"
-              className="inline-flex items-center justify-center px-8 py-4 bg-gradient-to-r from-amber-600 to-amber-700 text-white font-semibold rounded-xl hover:from-amber-700 hover:to-amber-800 transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105"
-            >
-              <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-              </svg>
-              {t.contactUs}
-            </a>
-            <a
-              href="tel:+25769657554"
-              className="inline-flex items-center justify-center px-8 py-4 bg-white border-2 border-amber-600 text-amber-700 font-semibold rounded-xl hover:bg-amber-50 transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105"
-            >
-              <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
-              </svg>
-              {t.callUs}
-            </a>
+        ))}
+
+        {/* Contact Section */}
+        <div className="mt-16 bg-gradient-to-r from-amber-50 to-orange-50 rounded-2xl p-8 border border-amber-200 text-center">
+          <div className="w-16 h-16 bg-gradient-to-br from-amber-500 to-amber-600 rounded-full flex items-center justify-center mx-auto mb-6">
+            <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
           </div>
+          <h3 className="text-2xl font-bold text-gray-900 mb-4">{t.contactUs}</h3>
+          <p className="text-gray-600 mb-6 max-w-md mx-auto">{t.contactDesc}</p>
+          <a
+            href="/contact"
+            className="inline-flex items-center px-6 py-3 bg-gradient-to-r from-amber-600 to-amber-700 text-white rounded-xl hover:from-amber-700 hover:to-amber-800 transition-all duration-300 shadow-lg hover:shadow-xl font-medium"
+          >
+            <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+            </svg>
+            {t.contactButton}
+          </a>
         </div>
       </div>
     </div>

@@ -105,7 +105,6 @@ export function CreateEstablishmentForm({ onSuccess }: { onSuccess?: () => void 
           name="name"
           value={formData.name}
           onChange={handleChange}
-          required
           className="w-full px-3 py-2 border border-gray-300 rounded-md"
         />
       </div>
@@ -135,7 +134,6 @@ export function CreateEstablishmentForm({ onSuccess }: { onSuccess?: () => void 
             name="address.street"
             value={formData.address.street}
             onChange={handleChange}
-            required
             className="w-full px-3 py-2 border border-gray-300 rounded-md"
           />
         </div>
@@ -150,7 +148,6 @@ export function CreateEstablishmentForm({ onSuccess }: { onSuccess?: () => void 
             name="address.city"
             value={formData.address.city}
             onChange={handleChange}
-            required
             className="w-full px-3 py-2 border border-gray-300 rounded-md"
           />
         </div>
@@ -167,7 +164,6 @@ export function CreateEstablishmentForm({ onSuccess }: { onSuccess?: () => void 
             name="contact.phone"
             value={formData.contact.phone}
             onChange={handleChange}
-            required
             className="w-full px-3 py-2 border border-gray-300 rounded-md"
           />
         </div>
@@ -182,7 +178,6 @@ export function CreateEstablishmentForm({ onSuccess }: { onSuccess?: () => void 
             name="contact.email"
             value={formData.contact.email}
             onChange={handleChange}
-            required
             className="w-full px-3 py-2 border border-gray-300 rounded-md"
           />
         </div>
@@ -197,7 +192,6 @@ export function CreateEstablishmentForm({ onSuccess }: { onSuccess?: () => void 
           name="pricingMode"
           value={formData.pricingMode}
           onChange={handleChange}
-          required
           className="w-full px-3 py-2 border border-gray-300 rounded-md"
         >
           <option value="per_night">Par nuit</option>

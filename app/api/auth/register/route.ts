@@ -1,19 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { AuthService } from '@/services/Auth.service';
 import { CreateUserSchema } from '@/lib/validations/user.validation';
-import { ZodError } from 'zod';
+import { withValidation } from '@/lib/security/validation-middleware';
 
 /**
  * POST /api/auth/register
  * Register a new user
  */
-export async function POST(request: NextRequest) {
+export const POST = withValidation(CreateUserSchema, async (request: NextRequest, validatedData) => {
   try {
-    const body = await request.json();
-
-    // Validate request body
-    const validatedData = CreateUserSchema.parse(body);
-
     // Register user
     const result = await AuthService.register(validatedData);
 
@@ -26,21 +21,6 @@ export async function POST(request: NextRequest) {
       { status: 201 }
     );
   } catch (error) {
-    // Validation error
-    if (error instanceof ZodError) {
-      return NextResponse.json(
-        {
-          success: false,
-          error: {
-            code: 'VALIDATION_ERROR',
-            message: 'Invalid input data',
-            details: error.issues,
-          },
-        },
-        { status: 400 }
-      );
-    }
-
     // Duplicate email error
     if (error instanceof Error && error.message.includes('already exists')) {
       return NextResponse.json(
@@ -81,4 +61,4 @@ export async function POST(request: NextRequest) {
       { status: 500 }
     );
   }
-}
+});

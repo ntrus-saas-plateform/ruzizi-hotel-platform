@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev",
+    "dev": "next dev -p 3000",
     "dev:setup": "ts-node scripts/dev-setup.ts",
     "build": "next build",
     "start": "next start",
@@ -29,10 +29,12 @@
     "docker:stop-dev": "docker-compose -f docker-compose.dev.yml down",
     "docker:logs": "docker-compose logs -f",
     "docker:clean": "docker-compose down -v && docker system prune -af",
+    "analyze-bundle": "ANALYZE=true next build",
     "migrate": "echo 'Migration placeholder - implement as needed'",
     "seed": "echo 'Seeding placeholder - implement as needed'"
   },
   "dependencies": {
+    "@tanstack/react-query": "^5.90.10",
     "@types/bcryptjs": "^2.4.6",
     "@types/jsonwebtoken": "^9.0.10",
     "bcryptjs": "^3.0.3",
@@ -64,6 +66,7 @@
     "tailwindcss": "^4",
     "ts-jest": "^29.4.5",
     "ts-node": "^10.9.2",
-    "typescript": "^5"
+    "typescript": "^5",
+    "webpack-bundle-analyzer": "^4.9.0"
   }
 }

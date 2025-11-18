@@ -27,7 +27,7 @@ const TOKEN_REFRESH_THRESHOLD = 5 * 60 * 1000; // Refresh 5 minutes before expir
 const MAX_RETRY_ATTEMPTS = 1;
 
 // State management
-let isRefreshing = false;
+const isRefreshing = false;
 let refreshSubscribers: Array<(token: string) => void> = [];
 
 /**

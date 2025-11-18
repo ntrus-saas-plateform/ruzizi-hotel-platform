@@ -1,4 +1,4 @@
-import React, { forwardRef, TextareaHTMLAttributes } from 'react';
+import React, { forwardRef, TextareaHTMLAttributes, memo } from 'react';
 
 export interface TextareaProps extends TextareaHTMLAttributes<HTMLTextAreaElement> {
   label?: string;
@@ -8,7 +8,7 @@ export interface TextareaProps extends TextareaHTMLAttributes<HTMLTextAreaElemen
   textareaSize?: 'sm' | 'md' | 'lg';
 }
 
-const Textarea = forwardRef<HTMLTextAreaElement, TextareaProps>(
+const Textarea = memo(forwardRef<HTMLTextAreaElement, TextareaProps>(
   (
     {
       label,
@@ -63,27 +63,35 @@ const Textarea = forwardRef<HTMLTextAreaElement, TextareaProps>(
       ${className}
     `;
 
+    const textareaId = props.id || `textarea-${Math.random().toString(36).substr(2, 9)}`;
+    const errorId = error ? `${textareaId}-error` : undefined;
+    const helperId = helperText ? `${textareaId}-helper` : undefined;
+    const describedBy = [errorId, helperId].filter(Boolean).join(' ') || undefined;
+  
     return (
       <div className="w-full">
         {label && (
-          <label className="block text-sm font-semibold text-gray-700 mb-2">
+          <label htmlFor={textareaId} className="block text-sm font-semibold text-gray-700 mb-2">
             {label}
-            {required && <span className="text-red-500 ml-1">*</span>}
+            {required && <span className="text-red-500 ml-1" aria-label="requis">*</span>}
           </label>
         )}
-
+  
         <textarea
           ref={ref}
+          id={textareaId}
           disabled={disabled}
           required={required}
           rows={rows}
           className={baseClasses}
+          aria-invalid={error ? 'true' : 'false'}
+          aria-describedby={describedBy}
           {...props}
         />
-
+  
         {error && (
-          <p className="mt-2 text-sm font-medium text-red-600 flex items-center gap-1">
-            <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+          <p id={errorId} className="mt-2 text-sm font-medium text-red-600 flex items-center gap-1" role="alert">
+            <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
               <path
                 fillRule="evenodd"
                 d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z"
@@ -93,14 +101,16 @@ const Textarea = forwardRef<HTMLTextAreaElement, TextareaProps>(
             {error}
           </p>
         )}
-
+  
         {helperText && !error && (
-          <p className="mt-2 text-sm text-gray-500">{helperText}</p>
+          <p id={helperId} className="mt-2 text-sm text-gray-500">
+            {helperText}
+          </p>
         )}
       </div>
     );
   }
-);
+));
 
 Textarea.displayName = 'Textarea';
 

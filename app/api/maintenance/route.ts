@@ -1,5 +1,5 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { withRole } from '@/lib/auth/middleware';
+import { NextRequest } from 'next/server';
+import { withRole, createErrorResponse, createSuccessResponse } from '@/lib/auth/middleware';
 import MaintenanceService from '@/services/Maintenance.service';
 
 export const GET = withRole(['manager', 'super_admin'], async (request: NextRequest, user) => {
@@ -15,11 +15,8 @@ export const GET = withRole(['manager', 'super_admin'], async (request: NextRequ
     if (assignedTo) filters.assignedTo = assignedTo;
 
     const maintenances = await MaintenanceService.getAll(filters);
-    return NextResponse.json(maintenances);
+    return createSuccessResponse(maintenances);
   } catch (error: any) {
-    return NextResponse.json(
-      { error: error.message || 'Erreur serveur' },
-      { status: 500 }
-    );
+    return createErrorResponse('DATABASE_ERROR', error.message || 'Erreur serveur', 500);
   }
 });

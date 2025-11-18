@@ -194,7 +194,6 @@ const InvoiceSchema = new Schema<IInvoice, IInvoiceModel>(
 );
 
 // Indexes
-InvoiceSchema.index({ invoiceNumber: 1 });
 InvoiceSchema.index({ bookingId: 1 });
 InvoiceSchema.index({ establishmentId: 1, status: 1 });
 InvoiceSchema.index({ 'clientInfo.email': 1 });

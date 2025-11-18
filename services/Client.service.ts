@@ -1,4 +1,5 @@
 import { ClientModel } from '@/models/Client.model';
+import { BookingModel } from '@/models/Booking.model';
 import { connectDB } from '@/lib/db';
 import { paginate, type PaginationResult } from '@/lib/db/utils';
 import type {
@@ -7,6 +8,7 @@ import type {
   ClientResponse,
   ClientFilterOptions,
 } from '@/types/client.types';
+import type { BookingResponse } from '@/types/booking.types';
 
 /**
  * Client Service
@@ -33,12 +35,32 @@ export class ClientService {
   }
 
   /**
-   * Get client by ID
+   * Get client by ID with optional booking history loading
    */
-  static async getById(id: string): Promise<ClientResponse | null> {
+  static async getById(
+    id: string,
+    includeBookingHistory: boolean = false,
+    bookingHistoryPage: number = 1,
+    bookingHistoryLimit: number = 10
+  ): Promise<ClientResponse | null> {
     await connectDB();
 
-    const client = await ClientModel.findById(id).populate('bookingHistory');
+    let clientQuery = ClientModel.findById(id);
+
+    if (includeBookingHistory) {
+      // Populate booking history with pagination
+      clientQuery = clientQuery.populate({
+        path: 'bookingHistory',
+        options: {
+          sort: { createdAt: -1 },
+          skip: (bookingHistoryPage - 1) * bookingHistoryLimit,
+          limit: bookingHistoryLimit,
+        },
+        select: 'bookingCode status checkIn checkOut pricingDetails createdAt',
+      });
+    }
+
+    const client = await clientQuery;
 
     if (!client) {
       return null;
@@ -172,16 +194,31 @@ export class ClientService {
   }
 
   /**
-   * Get clients by classification
+   * Get clients by classification with pagination
    */
   static async getByClassification(
-    classification: 'regular' | 'walkin' | 'corporate'
-  ): Promise<ClientResponse[]> {
+    classification: 'regular' | 'walkin' | 'corporate',
+    page: number = 1,
+    limit: number = 20
+  ): Promise<PaginationResult<ClientResponse>> {
     await connectDB();
 
-    const clients = await ClientModel.findByClassification(classification);
+    // Execute query with pagination
+    const result = await paginate(
+      ClientModel.find({ classification })
+        .hint({ classification: 1 })
+        .select('personalInfo classification totalStays totalSpent debt createdAt'),
+      {
+        page,
+        limit,
+        sort: { totalSpent: -1 }, // Sort by spending
+      }
+    );
 
-    return clients.map((client) => client.toJSON() as unknown as ClientResponse);
+    return {
+      data: result.data.map((client) => client.toJSON() as unknown as ClientResponse),
+      pagination: result.pagination,
+    };
   }
 
   /**
@@ -237,16 +274,91 @@ export class ClientService {
   }
 
   /**
-   * Search clients
+   * Get client's booking history with lazy loading
    */
-  static async search(searchTerm: string): Promise<ClientResponse[]> {
+  static async getClientBookingHistory(
+    clientId: string,
+    page: number = 1,
+    limit: number = 10
+  ): Promise<PaginationResult<BookingResponse>> {
     await connectDB();
 
-    const clients = await ClientModel.find({
-      $text: { $search: searchTerm },
-    });
+    const client = await ClientModel.findById(clientId);
 
-    return clients.map((client) => client.toJSON() as unknown as ClientResponse);
+    if (!client) {
+      throw new Error('Client not found');
+    }
+
+    // Get booking history IDs with pagination
+    const bookingIds = client.bookingHistory.slice(
+      (page - 1) * limit,
+      page * limit
+    );
+
+    if (bookingIds.length === 0) {
+      return {
+        data: [],
+        pagination: {
+          page,
+          limit,
+          total: client.bookingHistory.length,
+          totalPages: Math.ceil(client.bookingHistory.length / limit),
+          hasNextPage: false,
+          hasPrevPage: page > 1,
+        },
+      };
+    }
+
+    // Fetch booking details
+    const bookings = await BookingModel.find({
+      _id: { $in: bookingIds },
+    })
+      .select('bookingCode status paymentStatus bookingType checkIn checkOut numberOfGuests pricingDetails createdAt')
+      .sort({ createdAt: -1 });
+
+    return {
+      data: bookings.map((booking) => booking.toJSON() as unknown as BookingResponse),
+      pagination: {
+        page,
+        limit,
+        total: client.bookingHistory.length,
+        totalPages: Math.ceil(client.bookingHistory.length / limit),
+        hasNextPage: page * limit < client.bookingHistory.length,
+        hasPrevPage: page > 1,
+      },
+    };
+  }
+
+  /**
+   * Search clients with pagination
+   */
+  static async search(
+    searchTerm: string,
+    page: number = 1,
+    limit: number = 20
+  ): Promise<PaginationResult<ClientResponse>> {
+    await connectDB();
+
+    const query = {
+      $text: { $search: searchTerm },
+    };
+
+    // Execute query with pagination
+    const result = await paginate(
+      ClientModel.find(query).select(
+        'personalInfo classification totalStays totalSpent debt createdAt'
+      ),
+      {
+        page,
+        limit,
+        sort: { score: { $meta: 'textScore' } } as any, // Sort by relevance
+      }
+    );
+
+    return {
+      data: result.data.map((client) => client.toJSON() as unknown as ClientResponse),
+      pagination: result.pagination,
+    };
   }
 }
 

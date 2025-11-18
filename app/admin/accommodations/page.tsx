@@ -2,13 +2,12 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import { useAccommodations, useEstablishments, useDeleteAccommodation } from '@/hooks/useQueries';
 import type { AccommodationResponse } from '@/types/accommodation.types';
+import type { EstablishmentResponse } from '@/types/establishment.types';
 
 export default function AccommodationsPage() {
   const router = useRouter();
-  const [accommodations, setAccommodations] = useState<AccommodationResponse[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
   const [showFilters, setShowFilters] = useState(false);
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
 
@@ -23,53 +22,16 @@ export default function AccommodationsPage() {
     pricingMode: '',
   });
 
-  const [establishments, setEstablishments] = useState<any[]>([]);
+  // React Query hooks
+  const { data: accommodationsData, isLoading: loading, error: accommodationsError } = useAccommodations(filters);
+  const { data: establishmentsData } = useEstablishments();
 
-  useEffect(() => {
-    fetchEstablishments();
-  }, []);
+  const accommodations = accommodationsData?.data || [];
+  const establishments = establishmentsData?.data || [];
+  const error = accommodationsError?.message || '';
 
-  useEffect(() => {
-    fetchAccommodations();
-  }, [filters]);
+  const deleteAccommodationMutation = useDeleteAccommodation();
 
-  const fetchEstablishments = async () => {
-    try {
-      const response = await fetch('/api/establishments');
-      const data = await response.json();
-      if (data.success) {
-        setEstablishments(data.data.data || []);
-      }
-    } catch (err) {
-      console.error('Failed to fetch establishments:', err);
-    }
-  };
-
-  const fetchAccommodations = async () => {
-    try {
-      setLoading(true);
-      setError('');
-
-      const params = new URLSearchParams(
-        Object.fromEntries(
-          Object.entries(filters).filter(([_, value]) => value !== '')
-        )
-      );
-
-      const response = await fetch(`/api/accommodations?${params}`);
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error?.message || 'Failed to fetch accommodations');
-      }
-
-      setAccommodations(data.data.data || []);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'An error occurred');
-    } finally {
-      setLoading(false);
-    }
-  };
 
   const handleFilterChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
@@ -94,15 +56,7 @@ export default function AccommodationsPage() {
     }
 
     try {
-      const response = await fetch(`/api/accommodations/${id}`, {
-        method: 'DELETE',
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to delete accommodation');
-      }
-
-      fetchAccommodations();
+      await deleteAccommodationMutation.mutateAsync(id);
     } catch (err) {
       alert(err instanceof Error ? err.message : 'Failed to delete accommodation');
     }
@@ -216,7 +170,7 @@ export default function AccommodationsPage() {
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   >
                     <option value="">Tous</option>
-                    {establishments.map((est) => (
+                    {establishments.map((est: EstablishmentResponse) => (
                       <option key={est.id} value={est.id}>{est.name}</option>
                     ))}
                   </select>
@@ -384,7 +338,7 @@ export default function AccommodationsPage() {
         ) : viewMode === 'grid' ? (
           /* Grid View */
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {accommodations.map((accommodation) => (
+            {accommodations.map((accommodation: AccommodationResponse) => (
               <div
                 key={accommodation.id}
                 className="bg-white rounded-xl shadow-sm border border-gray-200 hover:shadow-lg transition-all duration-200 overflow-hidden"
@@ -459,7 +413,7 @@ export default function AccommodationsPage() {
                   {accommodation.amenities.length > 0 && (
                     <div className="mb-4">
                       <div className="flex flex-wrap gap-1.5">
-                        {accommodation.amenities.slice(0, 3).map((amenity, index) => (
+                        {accommodation.amenities.slice(0, 3).map((amenity: string, index: number) => (
                           <span key={index} className="px-2.5 py-1 bg-blue-50 text-blue-700 text-xs rounded-full font-medium">
                             {amenity}
                           </span>
@@ -516,7 +470,7 @@ export default function AccommodationsPage() {
         ) : (
           /* List View */
           <div className="space-y-4">
-            {accommodations.map((accommodation) => (
+            {accommodations.map((accommodation: AccommodationResponse) => (
               <div
                 key={accommodation.id}
                 className="bg-white rounded-xl shadow-sm border border-gray-200 hover:shadow-lg transition-all duration-200 overflow-hidden"

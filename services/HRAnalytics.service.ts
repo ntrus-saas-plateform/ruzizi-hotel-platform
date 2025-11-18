@@ -1,3 +1,4 @@
+import { PipelineStage } from 'mongoose';
 import { EmployeeModel } from '@/models/Employee.model';
 import { AttendanceModel } from '@/models/Attendance.model';
 import { PayrollModel } from '@/models/Payroll.model';
@@ -42,7 +43,7 @@ class HRAnalyticsService {
             },
           },
         },
-      ]);
+      ] as PipelineStage[]);
 
       const attendanceRate =
         attendanceStats.length > 0
@@ -67,7 +68,7 @@ class HRAnalyticsService {
             totalCost: { $sum: '$netSalary' },
           },
         },
-      ]);
+      ] as PipelineStage[]);
 
       const totalPayrollCost = payrollCost.length > 0 ? payrollCost[0].totalCost : 0;
 
@@ -91,7 +92,7 @@ class HRAnalyticsService {
             averageScore: { $avg: '$overallScore' },
           },
         },
-      ]);
+      ] as PipelineStage[]);
 
       const averagePerformance =
         performanceStats.length > 0 ? performanceStats[0].averageScore : 0;
@@ -139,7 +140,7 @@ class HRAnalyticsService {
           },
         },
         { $sort: { '_id.year': 1, '_id.month': 1 } },
-      ]);
+      ] as PipelineStage[]);
 
       // Coût par établissement
       const costByEstablishment = await PayrollModel.aggregate([
@@ -168,7 +169,7 @@ class HRAnalyticsService {
             averageCost: { $divide: ['$totalCost', { $size: '$employeeCount' }] },
           },
         },
-      ]);
+      ] as PipelineStage[]);
 
       return {
         costByMonth,
@@ -250,7 +251,7 @@ class HRAnalyticsService {
           },
         },
         { $sort: { '_id.year': 1, '_id.month': 1 } },
-      ]);
+      ] as PipelineStage[]);
 
       return {
         hired,
@@ -286,7 +287,7 @@ class HRAnalyticsService {
             totalDays: { $sum: '$workingDays' },
           },
         },
-      ]);
+      ] as PipelineStage[]);
 
       // Taux d'absentéisme
       const totalWorkingDays = months * 30 * (await EmployeeModel.countDocuments());
@@ -327,7 +328,7 @@ class HRAnalyticsService {
         },
         { $sort: { totalDays: -1 } },
         { $limit: 10 },
-      ]);
+      ] as PipelineStage[]);
 
       return {
         absencesByType,
@@ -363,7 +364,7 @@ class HRAnalyticsService {
             },
           },
         },
-      ]);
+      ] as PipelineStage[]);
 
       // Performance par catégorie
       const performanceByCategory = await Performance.aggregate([
@@ -376,7 +377,7 @@ class HRAnalyticsService {
             count: { $sum: 1 },
           },
         },
-      ]);
+      ] as PipelineStage[]);
 
       // Tendance de performance
       const performanceTrend = await Performance.aggregate([
@@ -392,7 +393,7 @@ class HRAnalyticsService {
           },
         },
         { $sort: { '_id.year': 1, '_id.quarter': 1 } },
-      ]);
+      ] as PipelineStage[]);
 
       // Top performers
       const topPerformers = await Performance.aggregate([
@@ -425,7 +426,7 @@ class HRAnalyticsService {
         },
         { $sort: { averageScore: -1 } },
         { $limit: 10 },
-      ]);
+      ] as PipelineStage[]);
 
       return {
         scoreDistribution,

@@ -1,4 +1,4 @@
-import mongoose, { Schema, Model } from 'mongoose';
+import mongoose, { Schema, Model, Types } from 'mongoose';
 import type {
   IAccommodation,
   AccommodationType,
@@ -9,7 +9,7 @@ import type {
 /**
  * Accommodation document interface with methods
  */
-export interface IAccommodationDocument extends Omit<IAccommodation, '_id'>, mongoose.Document {
+export interface IAccommodationDocument extends Omit<IAccommodation, '_id'>, mongoose.Document<Types.ObjectId> {
   toJSON(): Partial<IAccommodation>;
 }
 
@@ -207,8 +207,8 @@ const AccommodationSchema = new Schema<IAccommodationDocument, IAccommodationMod
       virtuals: true,
       transform: function (doc, ret) {
         ret.id = ret._id?.toString();
-        if (ret._id) delete ret._id;
-        if ('__v' in ret) delete (ret as any).__v;
+        delete (ret as any)._id;
+        delete (ret as any).__v;
         return ret;
       },
     },

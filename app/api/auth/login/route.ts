@@ -1,29 +1,23 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { AuthService } from '@/services/Auth.service';
 import { LoginSchema } from '@/lib/validations/user.validation';
-import { ZodError } from 'zod';
+import { withValidation } from '@/lib/security/validation-middleware';
 
 /**
  * POST /api/auth/login
  * Login user with email and password
  */
-export async function POST(request: NextRequest) {
+export const POST = withValidation(LoginSchema, async (request: NextRequest, validatedData) => {
   try {
     console.log('🔐 API Login - Requête reçue');
-    
-    const body = await request.json();
-    console.log('📦 Body reçu:', { email: body.email, hasPassword: !!body.password });
-
-    // Validate request body
-    const validatedData = LoginSchema.parse(body);
-    console.log('✅ Validation réussie');
+    console.log('📦 Body validé:', { email: validatedData.email, hasPassword: !!validatedData.password });
 
     // Login user
     const result = await AuthService.login(validatedData);
-    console.log('✅ Authentification réussie:', { 
-      userId: result.user.id, 
+    console.log('✅ Authentification réussie:', {
+      userId: result.user.id,
       email: result.user.email,
-      hasTokens: !!result.tokens 
+      hasTokens: !!result.tokens
     });
 
     return NextResponse.json(
@@ -36,20 +30,6 @@ export async function POST(request: NextRequest) {
     );
   } catch (error) {
     console.error('❌ Erreur dans API Login:', error);
-    // Validation error
-    if (error instanceof ZodError) {
-      return NextResponse.json(
-        {
-          success: false,
-          error: {
-            code: 'VALIDATION_ERROR',
-            message: 'Invalid input data',
-            details: error.issues,
-          },
-        },
-        { status: 400 }
-      );
-    }
 
     // Authentication error
     if (error instanceof Error) {
@@ -81,4 +61,4 @@ export async function POST(request: NextRequest) {
       { status: 500 }
     );
   }
-}
+});

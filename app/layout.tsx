@@ -1,7 +1,6 @@
 import type { Metadata } from 'next';
 import { Geist, Geist_Mono } from 'next/font/google';
-import { AuthProvider } from '@/lib/auth/AuthContext';
-import AutoInit from '@/components/AutoInit';
+import ClientLayout from './ClientLayout';
 import './globals.css';
 
 const geistSans = Geist({
@@ -15,8 +14,25 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: 'Ruzizi Hôtel - Gestion Hôtelière',
-  description: 'Plateforme de gestion pour la chaîne hôtelière Ruzizi Hôtel au Burundi',
+  title: 'Ruzizi Hôtel - Plateforme de Gestion Hôtelière',
+  description: 'Plateforme de gestion complète pour la chaîne hôtelière Ruzizi Hôtel au Burundi. Réservations, gestion des établissements et services hôteliers.',
+  keywords: ['hôtel', 'Burundi', 'Ruzizi', 'réservation', 'gestion hôtelière', 'hébergement', "appartement"],
+  authors: [{ name: 'Ruzizi Hôtel' }],
+  viewport: 'width=device-width, initial-scale=1',
+  icons: {
+    icon: '/favicon.ico',
+  },
+  openGraph: {
+    title: 'Ruzizi Hôtel - Gestion Hôtelière',
+    description: 'Plateforme moderne de gestion pour les hôtels Ruzizi au Burundi.',
+    type: 'website',
+    locale: 'fr_FR',
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'Ruzizi Hôtel',
+    description: 'Gestion hôtelière au Burundi',
+  },
 };
 
 export default function RootLayout({
@@ -27,8 +43,7 @@ export default function RootLayout({
   return (
     <html lang="fr">
       <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
-        <AutoInit />
-        <AuthProvider>{children}</AuthProvider>
+        <ClientLayout>{children}</ClientLayout>
       </body>
     </html>
   );

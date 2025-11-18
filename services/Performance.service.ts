@@ -1,3 +1,4 @@
+import { PipelineStage } from 'mongoose';
 import Performance, { IPerformance } from '@/models/Performance.model';
 import connectDB from '@/lib/db/mongodb';
 
@@ -242,7 +243,7 @@ class PerformanceService {
             totalEvaluations: { $sum: 1 },
           },
         },
-      ]);
+      ] as PipelineStage[]);
 
       const scoreDistribution = await Performance.aggregate([
         { $match: matchStage },
@@ -256,7 +257,7 @@ class PerformanceService {
             },
           },
         },
-      ]);
+      ] as PipelineStage[]);
 
       return {
         ...(stats[0] || {

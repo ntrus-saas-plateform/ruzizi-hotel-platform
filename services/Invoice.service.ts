@@ -1,3 +1,4 @@
+import { PipelineStage } from 'mongoose';
 import { InvoiceModel } from '@/models/Invoice.model';
 import { BookingModel } from '@/models/Booking.model';
 import { connectDB } from '@/lib/db';
@@ -348,7 +349,7 @@ export class InvoiceService {
           totalUnpaid: { $sum: '$balance' },
         },
       },
-    ]);
+    ] as PipelineStage[]);
 
     if (result.length === 0) {
       return {

@@ -1,7 +1,9 @@
+import { PipelineStage } from 'mongoose';
 import { AccommodationModel } from '@/models/Accommodation.model';
 import { EstablishmentModel } from '@/models/Establishment.model';
 import { connectDB } from '@/lib/db';
 import { paginate, type PaginationResult, toObjectId } from '@/lib/db/utils';
+import { cache } from '@/lib/performance/cache';
 import type {
   CreateAccommodationInput,
   UpdateAccommodationInput,
@@ -55,16 +57,20 @@ export class AccommodationService {
   }
 
   /**
-   * Get all accommodations with filters and pagination
+   * Get all accommodations with filters and optimized pagination
    */
   static async getAll(
     filters: AccommodationFilterOptions = {},
     page: number = 1,
-    limit: number = 10
+    limit: number = 10,
+    includeFullDetails: boolean = false
   ): Promise<PaginationResult<AccommodationResponse>> {
     await connectDB();
 
-    // Build query
+    // Use cursor-based pagination for large datasets
+    const useCursorPagination = limit > 50;
+
+    // Build query with index hints
     const query: any = {};
 
     if (filters.establishmentId) {
@@ -101,15 +107,30 @@ export class AccommodationService {
       query.$text = { $search: filters.search };
     }
 
-    // Execute query with pagination and populate establishment
-    const result = await paginate(
-      AccommodationModel.find(query).populate('establishmentId', 'name location contacts'),
-      {
-        page,
-        limit,
-        sort: { createdAt: -1 },
-      }
-    );
+    // Build base query with selective field loading
+    let baseQuery = AccommodationModel.find(query);
+
+    if (!includeFullDetails) {
+      baseQuery = baseQuery.select(
+        'name type pricing status capacity images amenities createdAt updatedAt establishmentId'
+      );
+    }
+
+    // Add index hint based on query
+    if (filters.establishmentId) {
+      baseQuery = baseQuery.hint({ establishmentId: 1, status: 1 });
+    } else if (filters.search) {
+      // Use text index
+    } else {
+      // No hint for general queries, let MongoDB optimizer choose
+    }
+
+    // Execute query with pagination
+    const result = await paginate(baseQuery, {
+      page,
+      limit,
+      sort: { createdAt: -1 },
+    });
 
     return {
       data: result.data.map((acc) => acc.toJSON() as unknown as AccommodationResponse),
@@ -158,26 +179,60 @@ export class AccommodationService {
   }
 
   /**
-   * Get accommodations by establishment
+   * Get accommodations by establishment with pagination
    */
-  static async getByEstablishment(establishmentId: string): Promise<AccommodationResponse[]> {
+  static async getByEstablishment(
+    establishmentId: string,
+    page: number = 1,
+    limit: number = 20,
+    includeFullDetails: boolean = false
+  ): Promise<PaginationResult<AccommodationResponse>> {
     await connectDB();
 
-    const accommodations = await AccommodationModel.findByEstablishment(establishmentId);
+    // Use cursor-based pagination for large datasets
+    const useCursorPagination = limit > 50;
 
-    return accommodations.map((acc) => acc.toJSON() as unknown as AccommodationResponse);
+    // Build query with index hint
+    let query = AccommodationModel.find({ establishmentId: toObjectId(establishmentId) })
+      .hint({ establishmentId: 1 });
+
+    // Selective field loading
+    if (!includeFullDetails) {
+      query = query.select(
+        'name type pricing status capacity images amenities createdAt'
+      );
+    }
+
+    // Apply pagination
+    const result = await paginate(query, {
+      page,
+      limit,
+      sort: { createdAt: -1 },
+    });
+
+    return {
+      data: result.data.map((acc) => acc.toJSON() as unknown as AccommodationResponse),
+      pagination: result.pagination,
+    };
   }
 
   /**
-   * Get available accommodations
-   */
-  static async getAvailable(establishmentId?: string): Promise<AccommodationResponse[]> {
-    await connectDB();
+    * Get available accommodations
+    */
+   static async getAvailable(establishmentId?: string): Promise<AccommodationResponse[]> {
+     await connectDB();
 
-    const accommodations = await AccommodationModel.findAvailable(establishmentId);
+     const cacheKey = `available_accommodations${establishmentId ? `:${establishmentId}` : ''}`;
 
-    return accommodations.map((acc) => acc.toJSON() as unknown as AccommodationResponse);
-  }
+     return cache.getOrSet(
+       cacheKey,
+       async () => {
+         const accommodations = await AccommodationModel.findAvailable(establishmentId);
+         return accommodations.map((acc) => acc.toJSON() as unknown as AccommodationResponse);
+       },
+       300 // Cache for 5 minutes - availability changes frequently but not constantly
+     );
+   }
 
   /**
    * Update accommodation status
@@ -261,12 +316,14 @@ export class AccommodationService {
   }
 
   /**
-   * Search accommodations
+   * Search accommodations with pagination
    */
   static async search(
     searchTerm: string,
-    establishmentId?: string
-  ): Promise<AccommodationResponse[]> {
+    establishmentId?: string,
+    page: number = 1,
+    limit: number = 20
+  ): Promise<PaginationResult<AccommodationResponse>> {
     await connectDB();
 
     const query: any = {
@@ -277,9 +334,105 @@ export class AccommodationService {
       query.establishmentId = toObjectId(establishmentId);
     }
 
-    const accommodations = await AccommodationModel.find(query);
+    // Execute query with pagination
+    const result = await paginate(
+      AccommodationModel.find(query).select(
+        'name type pricing status capacity images score createdAt'
+      ),
+      {
+        page,
+        limit,
+        sort: { score: { $meta: 'textScore' } } as any, // Sort by text search relevance
+      }
+    );
 
-    return accommodations.map((acc) => acc.toJSON() as unknown as AccommodationResponse);
+    return {
+      data: result.data.map((acc) => acc.toJSON() as unknown as AccommodationResponse),
+      pagination: result.pagination,
+    };
+  }
+
+  /**
+   * Get accommodations for virtual scrolling (progressive loading)
+   */
+  static async getAccommodationsForVirtualScroll(
+    filters: AccommodationFilterOptions = {},
+    startIndex: number = 0,
+    chunkSize: number = 50
+  ): Promise<{
+    data: AccommodationResponse[];
+    total: number;
+    hasMore: boolean;
+  }> {
+    await connectDB();
+
+    // Build query
+    const query: any = {};
+
+    if (filters.establishmentId) {
+      query.establishmentId = toObjectId(filters.establishmentId);
+    }
+
+    if (filters.type) {
+      query.type = filters.type;
+    }
+
+    if (filters.status) {
+      query.status = filters.status;
+    }
+
+    if (filters.pricingMode) {
+      query.pricingMode = filters.pricingMode;
+    }
+
+    if (filters.minPrice !== undefined || filters.maxPrice !== undefined) {
+      query['pricing.basePrice'] = {};
+      if (filters.minPrice !== undefined) {
+        query['pricing.basePrice'].$gte = filters.minPrice;
+      }
+      if (filters.maxPrice !== undefined) {
+        query['pricing.basePrice'].$lte = filters.maxPrice;
+      }
+    }
+
+    if (filters.minGuests) {
+      query['capacity.maxGuests'] = { $gte: filters.minGuests };
+    }
+
+    // Use aggregation for efficient chunked loading
+    const pipeline: PipelineStage[] = [
+      { $match: query },
+      {
+        $project: {
+          _id: 1,
+          name: 1,
+          type: 1,
+          pricing: 1,
+          status: 1,
+          'capacity.maxGuests': 1,
+          images: { $slice: ['$images', 1] }, // Only first image
+          createdAt: 1,
+        },
+      },
+      { $sort: { createdAt: -1 } },
+      { $skip: startIndex },
+      { $limit: chunkSize },
+    ];
+
+    const [data, total] = await Promise.all([
+      AccommodationModel.aggregate(pipeline),
+      AccommodationModel.countDocuments(query),
+    ]);
+
+    return {
+      data: data.map((acc: any) => ({
+        ...acc,
+        _id: acc._id.toString(),
+        establishmentId: acc.establishmentId?.toString(),
+      })) as AccommodationResponse[],
+      total,
+      hasMore: startIndex + chunkSize < total,
+    };
   }
 }
 

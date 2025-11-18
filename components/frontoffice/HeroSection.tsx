@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, memo, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 
 interface Establishment {
@@ -13,13 +13,14 @@ interface Establishment {
   };
 }
 
-export default function HeroSection() {
+const HeroSection = memo(function HeroSection() {
   const router = useRouter();
   const [language, setLanguage] = useState('fr');
   const [currentSlide, setCurrentSlide] = useState(0);
   const [establishments, setEstablishments] = useState<Establishment[]>([]);
   const [imagesLoaded, setImagesLoaded] = useState<boolean[]>([]);
   const [loading, setLoading] = useState(true);
+  const [isPaused, setIsPaused] = useState(false);
 
   useEffect(() => {
     const savedLanguage = localStorage.getItem('language') || 'fr';
@@ -177,12 +178,41 @@ export default function HeroSection() {
 
   // Auto-advance slideshow
   useEffect(() => {
-    if (slides.length === 0) return;
-    
+    if (slides.length === 0 || isPaused) return;
+
     const timer = setInterval(() => {
       setCurrentSlide((prev) => (prev + 1) % slides.length);
     }, 5000);
     return () => clearInterval(timer);
+  }, [slides.length, isPaused]);
+
+  // Keyboard navigation for slideshow
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (slides.length === 0) return;
+
+      switch (event.key) {
+        case 'ArrowLeft':
+          event.preventDefault();
+          setCurrentSlide((prev) => (prev - 1 + slides.length) % slides.length);
+          break;
+        case 'ArrowRight':
+          event.preventDefault();
+          setCurrentSlide((prev) => (prev + 1) % slides.length);
+          break;
+        case 'Home':
+          event.preventDefault();
+          setCurrentSlide(0);
+          break;
+        case 'End':
+          event.preventDefault();
+          setCurrentSlide(slides.length - 1);
+          break;
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
   }, [slides.length]);
 
   // Reset currentSlide if it exceeds slides length
@@ -205,14 +235,22 @@ export default function HeroSection() {
   }
 
   return (
-    <section className="relative min-h-screen flex items-center justify-center overflow-hidden">
+    <section
+      className="relative min-h-screen flex items-center justify-center overflow-hidden"
+      id="main-content"
+      aria-label="Section d'accueil avec diaporama"
+      role="banner"
+      onMouseEnter={() => setIsPaused(true)}
+      onMouseLeave={() => setIsPaused(false)}
+    >
       {/* Background Slideshow */}
-      <div className="absolute inset-0">
+      <div className="absolute inset-0" role="img" aria-label="Diaporama d'arrière-plan">
         {slides.length > 0 && slides.map((slide, index) => (
           <div
             key={index}
             className={`absolute inset-0 transition-opacity duration-1000 ${index === currentSlide ? 'opacity-100' : 'opacity-0'
               }`}
+            aria-hidden={index !== currentSlide}
           >
             {/* Loading placeholder */}
             {!imagesLoaded[index] && (
@@ -228,6 +266,7 @@ export default function HeroSection() {
             <img
               src={slide.image}
               alt={slide.title}
+              loading="lazy"
               className={`w-full h-full object-cover transition-opacity duration-500 ${imagesLoaded[index] ? 'opacity-100' : 'opacity-0'
                 }`}
               onLoad={() => {
@@ -262,19 +301,19 @@ export default function HeroSection() {
       <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center text-white pt-20">
         <div className="max-w-4xl mx-auto">
           {/* Main Title */}
-          <div className="mb-8">
+          <header className="mb-8">
             <h1 className="text-5xl md:text-7xl font-bold mb-6 leading-tight">
               <span className="block bg-gradient-to-r from-white via-amber-100 to-white bg-clip-text text-transparent animate-fade-in">
                 {t.title}
               </span>
             </h1>
-            <p className="text-xl md:text-2xl text-amber-100 font-light mb-4 animate-fade-in-delay-1">
+            <p className="text-xl md:text-2xl text-amber-100 font-light mb-4 animate-fade-in-delay-1" role="banner">
               {t.subtitle}
             </p>
             <p className="text-lg text-gray-200 max-w-2xl mx-auto leading-relaxed animate-fade-in-delay-2">
               {t.description}
             </p>
-          </div>
+          </header>
 
           {/* Features */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-12 max-w-2xl mx-auto animate-fade-in-delay-3">
@@ -287,12 +326,13 @@ export default function HeroSection() {
           </div>
 
           {/* CTA Buttons */}
-          <div className="flex flex-col sm:flex-row gap-6 justify-center mb-16 animate-fade-in-delay-4">
+          <nav className="flex flex-col sm:flex-row gap-6 justify-center mb-16 animate-fade-in-delay-4" aria-label="Actions principales">
             <button
               onClick={() => router.push('/booking')}
-              className="px-8 py-4 bg-gradient-to-r from-amber-600 via-amber-700 to-amber-800 text-white rounded-xl hover:from-amber-700 hover:via-amber-800 hover:to-amber-900 transition-all duration-300 shadow-2xl hover:shadow-amber-500/25 font-semibold text-lg transform hover:scale-105 flex items-center justify-center space-x-3"
+              className="px-8 py-4 bg-gradient-to-r from-amber-600 via-amber-700 to-amber-800 text-white rounded-xl hover:from-amber-700 hover:via-amber-800 hover:to-amber-900 transition-all duration-300 shadow-2xl hover:shadow-amber-500/25 font-semibold text-lg transform hover:scale-105 flex items-center justify-center space-x-3 focus:outline-none focus:ring-4 focus:ring-amber-500/50 touch-manipulation min-h-[48px]"
+              aria-label={`Réserver maintenant - ${t.cta1}`}
             >
-              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
               </svg>
               <span>{t.cta1}</span>
@@ -300,14 +340,15 @@ export default function HeroSection() {
 
             <button
               onClick={() => router.push('/establishments')}
-              className="px-8 py-4 border-2 border-white/30 text-white rounded-xl hover:bg-white/10 hover:border-white/50 transition-all duration-300 font-semibold text-lg backdrop-blur-sm flex items-center justify-center space-x-3"
+              className="px-8 py-4 border-2 border-white/30 text-white rounded-xl hover:bg-white/10 hover:border-white/50 transition-all duration-300 font-semibold text-lg backdrop-blur-sm flex items-center justify-center space-x-3 focus:outline-none focus:ring-4 focus:ring-white/50 touch-manipulation min-h-[48px]"
+              aria-label={`Découvrir les établissements - ${t.cta2}`}
             >
-              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
               </svg>
               <span>{t.cta2}</span>
             </button>
-          </div>
+          </nav>
 
           {/* Stats */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-8 animate-fade-in-delay-5">
@@ -334,16 +375,22 @@ export default function HeroSection() {
 
       {/* Slide Indicators - Droite bas, responsive */}
       {slides.length > 0 && (
-        <div className="absolute bottom-6 right-4 md:bottom-8 md:right-8 flex space-x-2 z-20">
+        <div
+          className="absolute bottom-6 right-4 md:bottom-8 md:right-8 flex space-x-2 z-20"
+          role="tablist"
+          aria-label="Contrôles du diaporama"
+        >
           {slides.map((_, index) => (
             <button
               key={index}
               onClick={() => setCurrentSlide(index)}
-              className={`w-3 h-3 rounded-full transition-all duration-300 ${index === currentSlide
+              className={`w-3 h-3 rounded-full transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-amber-400 touch-manipulation ${index === currentSlide
                 ? 'bg-amber-400 scale-125'
                 : 'bg-white/50 hover:bg-white/70'
                 }`}
-              aria-label={`Aller au slide ${index + 1}`}
+              aria-label={`Afficher la diapositive ${index + 1} sur ${slides.length}`}
+              aria-selected={index === currentSlide}
+              role="tab"
             />
           ))}
         </div>
@@ -406,4 +453,8 @@ export default function HeroSection() {
       `}</style>
     </section>
   );
-}
+});
+
+HeroSection.displayName = 'HeroSection';
+
+export default HeroSection;

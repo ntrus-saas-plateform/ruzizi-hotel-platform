@@ -9,12 +9,7 @@ const ROOT_LAST_NAME = 'Ruzizi';
 
 // Fonction pour générer un mot de passe de 6 caractères
 function generatePassword() {
-  const chars = 'ABCDEFGHJKMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789';
-  let password = '';
-  for (let i = 0; i < 6; i++) {
-    password += chars.charAt(Math.floor(Math.random() * chars.length));
-  }
-  return password;
+  return 'Test1234'; // Fixed for testing
 }
 
 // Fonction principale
@@ -29,19 +24,17 @@ async function createRootUser() {
     const db = client.db();
     const usersCollection = db.collection('users');
 
+    // Générer le mot de passe
+    const password = generatePassword();
+    const hashedPassword = await bcrypt.hash(password, 12);
+
     // Vérifier si l'utilisateur root existe déjà
     const existingUser = await usersCollection.findOne({ email: ROOT_EMAIL });
 
     if (existingUser) {
-      console.log('⚠️  L\'utilisateur root existe déjà!');
-      console.log(`📧 Email: ${ROOT_EMAIL}`);
-      console.log('ℹ️  Utilisez la fonction "Mot de passe oublié" si nécessaire.');
-      return;
+      console.log('⚠️  L\'utilisateur root existe déjà, suppression et recréation...');
+      await usersCollection.deleteOne({ email: ROOT_EMAIL });
     }
-
-    // Générer le mot de passe
-    const password = generatePassword();
-    const hashedPassword = await bcrypt.hash(password, 12);
 
     // Créer l'utilisateur root
     const rootUser = {

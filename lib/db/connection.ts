@@ -8,7 +8,7 @@ interface MongooseCache {
 
 // Extend the global object to include mongoose
 declare global {
-    // eslint-disable-next-line no-var
+     
     var mongoose: MongooseCache;
 }
 
@@ -46,10 +46,19 @@ async function connectDB(): Promise<typeof mongoose> {
     if (!cached.promise) {
         const opts = {
             bufferCommands: false,
-            maxPoolSize: 10,
-            minPoolSize: 2,
-            socketTimeoutMS: 45000,
-            serverSelectionTimeoutMS: 10000,
+            maxPoolSize: 50, // Increased for high concurrency performance
+            minPoolSize: 10, // Increased minimum connections for better availability
+            maxIdleTimeMS: 60000, // Close connections after 60 seconds of inactivity
+            socketTimeoutMS: 60000, // Increased socket timeout for stability
+            serverSelectionTimeoutMS: 15000, // Increased server selection timeout
+            connectTimeoutMS: 30000, // Added connection timeout
+            heartbeatFrequencyMS: 10000, // Check server health every 10 seconds
+            keepAlive: true, // Enable TCP keep-alive
+            keepAliveInitialDelay: 300000, // 5 minutes initial delay for keep-alive
+            bufferMaxEntries: 0, // Disable command buffering for immediate error feedback
+            family: 4, // Prefer IPv4 connections
+            retryWrites: true, // Enable retryable writes
+            retryReads: true, // Enable retryable reads
         };
 
         cached.promise = mongoose.connect(MONGODB_URI, opts).then((mongoose) => {

@@ -1,5 +1,5 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { withRole } from '@/lib/auth/middleware';
+import { NextRequest } from 'next/server';
+import { withRole, createErrorResponse, createSuccessResponse } from '@/lib/auth/middleware';
 import MaintenanceService from '@/services/Maintenance.service';
 
 export const POST = withRole(['manager', 'super_admin'], async (
@@ -14,18 +14,12 @@ export const POST = withRole(['manager', 'super_admin'], async (
 
     const { assignedTo } = await request.json();
     if (!assignedTo) {
-      return NextResponse.json(
-        { error: 'ID de l\'employé requis' },
-        { status: 400 }
-      );
+      return createErrorResponse('VALIDATION_ERROR', 'ID de l\'employé requis', 400);
     }
 
     const maintenance = await MaintenanceService.assign(id, assignedTo);
-    return NextResponse.json(maintenance);
+    return createSuccessResponse(maintenance, 'Maintenance assignée avec succès');
   } catch (error: any) {
-    return NextResponse.json(
-      { error: error.message || 'Erreur serveur' },
-      { status: 500 }
-    );
+    return createErrorResponse('DATABASE_ERROR', error.message || 'Erreur serveur', 500);
   }
 });

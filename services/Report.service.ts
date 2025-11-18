@@ -1,3 +1,4 @@
+import { PipelineStage } from 'mongoose';
 import { AnalyticsService } from './Analytics.service';
 import { BookingModel } from '@/models/Booking.model';
 import { InvoiceModel } from '@/models/Invoice.model';
@@ -223,7 +224,7 @@ export class ReportService {
       {
         $unwind: '$accommodation',
       },
-    ]);
+    ] as PipelineStage[]);
 
     return result.map((item) => ({
       accommodationId: item._id.toString(),
@@ -253,7 +254,7 @@ export class ReportService {
           revenue: { $sum: '$totalPrice' },
         },
       },
-    ]);
+    ] as PipelineStage[]);
 
     const stats: any = {};
     result.forEach((item) => {
@@ -292,7 +293,7 @@ export class ReportService {
           total: { $sum: '$netSalary' },
         },
       },
-    ]);
+    ] as PipelineStage[]);
 
     return result.length > 0 ? result[0].total : 0;
   }
@@ -331,7 +332,7 @@ export class ReportService {
       {
         $unwind: '$accommodation',
       },
-    ]);
+    ] as PipelineStage[]);
 
     return result.map((item) => ({
       accommodationId: item._id.toString(),
