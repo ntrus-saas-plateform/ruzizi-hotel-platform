@@ -1,15 +1,18 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
-import EstablishmentSelector from '@/components/booking/EstablishmentSelector';
-import MainClientForm from '@/components/booking/MainClientForm';
-import GuestForm from '@/components/booking/GuestForm';
-import BookingSummary from '@/components/booking/BookingSummary';
+import { useState, useEffect, Suspense, lazy } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
+
+// Lazy load components for better performance
+const EstablishmentSelector = lazy(() => import('@/components/booking/EstablishmentSelector'));
+const MainClientForm = lazy(() => import('@/components/booking/MainClientForm'));
+const GuestForm = lazy(() => import('@/components/booking/GuestForm'));
+const BookingSummary = lazy(() => import('@/components/booking/BookingSummary'));
+
 import type { AccommodationResponse } from '@/types/accommodation.types';
 import type { CompleteClientInfo, Gender, IDType, CustomerType } from '@/types/guest.types';
 
-type BookingStep = 'dates' | 'establishment' | 'guests' | 'confirmation';
+type BookingStep = 'dates' | 'establishment' | 'guests' | 'payment' | 'confirmation';
 
 interface GuestInfo {
   adults: number;
@@ -21,8 +24,9 @@ interface ClientInfo extends CompleteClientInfo {
   preferredLanguage: 'fr' | 'en';
 }
 
-export default function BookingPage() {
+function BookingPageContent() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [language, setLanguage] = useState('fr');
   const [currentStep, setCurrentStep] = useState<BookingStep>('dates');
   const [loading, setLoading] = useState(false);
@@ -39,6 +43,7 @@ export default function BookingPage() {
    const [establishmentName, setEstablishmentName] = useState('');
 
   // Step 3: Guest details
+  const [additionalGuests, setAdditionalGuests] = useState<any[]>([]);
   const [clientInfo, setClientInfo] = useState<ClientInfo>({
     firstName: '',
     lastName: '',
@@ -60,10 +65,50 @@ export default function BookingPage() {
   const [specialRequests, setSpecialRequests] = useState('');
   const [arrivalTime, setArrivalTime] = useState('');
 
+  // Step 4: Payment details
+  const [paymentMethod, setPaymentMethod] = useState('card');
+  const [cardNumber, setCardNumber] = useState('');
+  const [cardExpiry, setCardExpiry] = useState('');
+  const [cardCvv, setCardCvv] = useState('');
+  const [cardName, setCardName] = useState('');
+  const [billingAddress, setBillingAddress] = useState('');
+
   useEffect(() => {
     const savedLanguage = localStorage.getItem('language') || 'fr';
     setLanguage(savedLanguage);
   }, []);
+
+  // Handle URL parameters for pre-selection
+  useEffect(() => {
+    const establishmentId = searchParams.get('establishment');
+    const accommodationId = searchParams.get('accommodation');
+
+    if (establishmentId) {
+      setSelectedEstablishment(establishmentId);
+      // If we have establishment, move to establishment step
+      if (checkInDate && checkOutDate && calculateTotalGuests() > 0) {
+        setCurrentStep('establishment');
+      }
+    }
+
+    if (accommodationId) {
+      setSelectedAccommodation(accommodationId);
+      // Fetch accommodation data to get establishment ID
+      fetch(`/api/public/accommodations/${accommodationId}`)
+        .then(res => res.json())
+        .then(data => {
+          if (data.success) {
+            setSelectedAccommodationData(data.data);
+            setSelectedEstablishment(data.data.establishmentId);
+            // Move to establishment step
+            if (checkInDate && checkOutDate && calculateTotalGuests() > 0) {
+              setCurrentStep('establishment');
+            }
+          }
+        })
+        .catch(error => console.error('Error fetching accommodation:', error));
+    }
+  }, [searchParams, checkInDate, checkOutDate, guests]);
 
   useEffect(() => {
     if (selectedEstablishment) {
@@ -87,7 +132,8 @@ export default function BookingPage() {
       step1: "Dates et voyageurs",
       step2: "Sélection d'hébergement",
       step3: "Informations voyageurs",
-      step4: "Confirmation",
+      step4: "Paiement",
+      step5: "Confirmation",
       checkIn: "Date d'arrivée",
       checkOut: "Date de départ",
       adults: "Adultes",
@@ -114,7 +160,8 @@ export default function BookingPage() {
       step1: "Dates and travelers",
       step2: "Accommodation selection",
       step3: "Traveler information",
-      step4: "Confirmation",
+      step4: "Payment",
+      step5: "Confirmation",
       checkIn: "Check-in date",
       checkOut: "Check-out date",
       adults: "Adults",
@@ -143,7 +190,8 @@ export default function BookingPage() {
     { key: 'dates', label: t.step1 },
     { key: 'establishment', label: t.step2 },
     { key: 'guests', label: t.step3 },
-    { key: 'confirmation', label: t.step4 },
+    { key: 'payment', label: t.step4 },
+    { key: 'confirmation', label: t.step5 },
   ];
 
   const calculateNights = () => {
@@ -166,6 +214,8 @@ export default function BookingPage() {
         return selectedEstablishment && selectedAccommodation;
       case 'guests':
         return clientInfo.firstName && clientInfo.lastName && clientInfo.email && clientInfo.phone;
+      case 'payment':
+        return paymentMethod && (paymentMethod !== 'card' || (cardNumber && cardExpiry && cardCvv && cardName));
       case 'confirmation':
         return true;
       default:
@@ -176,7 +226,7 @@ export default function BookingPage() {
   const handleNext = () => {
     if (!canProceedToNextStep()) return;
 
-    const stepOrder: BookingStep[] = ['dates', 'establishment', 'guests', 'confirmation'];
+    const stepOrder: BookingStep[] = ['dates', 'establishment', 'guests', 'payment', 'confirmation'];
     const currentIndex = stepOrder.indexOf(currentStep);
     if (currentIndex < stepOrder.length - 1) {
       setCurrentStep(stepOrder[currentIndex + 1]);
@@ -184,7 +234,7 @@ export default function BookingPage() {
   };
 
   const handlePrevious = () => {
-    const stepOrder: BookingStep[] = ['dates', 'establishment', 'guests', 'confirmation'];
+    const stepOrder: BookingStep[] = ['dates', 'establishment', 'guests', 'payment', 'confirmation'];
     const currentIndex = stepOrder.indexOf(currentStep);
     if (currentIndex > 0) {
       setCurrentStep(stepOrder[currentIndex - 1]);
@@ -201,10 +251,17 @@ export default function BookingPage() {
         checkOutDate,
         numberOfNights: calculateNights(),
         mainClient: clientInfo,
-        guests: [], // Additional guests not implemented yet
+        guests: additionalGuests,
         numberOfGuests: calculateTotalGuests(),
         specialRequests,
         arrivalTime,
+        paymentMethod,
+        paymentDetails: paymentMethod === 'card' ? {
+          cardNumber: cardNumber.slice(-4), // Only last 4 digits for security
+          cardName,
+          cardExpiry,
+          billingAddress
+        } : undefined,
         totalAmount: selectedAccommodationData ? selectedAccommodationData.pricing.basePrice * calculateNights() : 0,
         pricingDetails: selectedAccommodationData ? {
           basePrice: selectedAccommodationData.pricing.basePrice,
@@ -243,16 +300,16 @@ export default function BookingPage() {
 
   const renderStepIndicator = () => (
     <div className="mb-8">
-      <div className="flex items-center justify-center space-x-4">
+      <div className="flex flex-col sm:flex-row items-center justify-center space-y-4 sm:space-y-0 sm:space-x-4">
         {steps.map((step, index) => {
-          const stepOrder: BookingStep[] = ['dates', 'establishment', 'guests', 'confirmation'];
+          const stepOrder: BookingStep[] = ['dates', 'establishment', 'guests', 'payment', 'confirmation'];
           const currentIndex = stepOrder.indexOf(currentStep);
           const stepIndex = stepOrder.indexOf(step.key as BookingStep);
           const isCompleted = stepIndex < currentIndex;
           const isCurrent = step.key === currentStep;
 
           return (
-            <div key={step.key} className="flex items-center">
+            <div key={step.key} className="flex flex-col sm:flex-row items-center">
               <div className={`flex items-center justify-center w-10 h-10 rounded-full border-2 transition-all ${
                 isCompleted
                   ? 'bg-green-600 border-green-600 text-white'
@@ -268,13 +325,13 @@ export default function BookingPage() {
                   <span className="text-sm font-semibold">{index + 1}</span>
                 )}
               </div>
-              <span className={`ml-3 text-sm font-medium ${
+              <span className={`mt-2 sm:mt-0 sm:ml-3 text-sm font-medium text-center sm:text-left ${
                 isCurrent ? 'text-amber-600' : isCompleted ? 'text-green-600' : 'text-gray-400'
               }`}>
                 {step.label}
               </span>
               {index < steps.length - 1 && (
-                <div className={`w-12 h-0.5 mx-4 ${
+                <div className={`w-0.5 h-8 sm:w-12 sm:h-0.5 mx-4 sm:mx-4 ${
                   isCompleted ? 'bg-green-600' : 'bg-gray-300'
                 }`} />
               )}
@@ -388,18 +445,20 @@ export default function BookingPage() {
 
   const renderEstablishmentStep = () => (
     <div className="max-w-7xl mx-auto">
-      <EstablishmentSelector
-        selectedEstablishment={selectedEstablishment}
-        selectedAccommodation={selectedAccommodation}
-        onEstablishmentChange={setSelectedEstablishment}
-        onAccommodationChange={(id, data) => {
-          setSelectedAccommodation(id);
-          setSelectedAccommodationData(data);
-        }}
-        checkInDate={checkInDate}
-        checkOutDate={checkOutDate}
-        numberOfGuests={calculateTotalGuests()}
-      />
+      <Suspense fallback={<div className="flex justify-center items-center py-20"><div className="animate-spin rounded-full h-12 w-12 border-b-2 border-amber-600"></div></div>}>
+        <EstablishmentSelector
+          selectedEstablishment={selectedEstablishment}
+          selectedAccommodation={selectedAccommodation}
+          onEstablishmentChange={setSelectedEstablishment}
+          onAccommodationChange={(id, data) => {
+            setSelectedAccommodation(id);
+            setSelectedAccommodationData(data);
+          }}
+          checkInDate={checkInDate}
+          checkOutDate={checkOutDate}
+          numberOfGuests={calculateTotalGuests()}
+        />
+      </Suspense>
     </div>
   );
 
@@ -409,10 +468,53 @@ export default function BookingPage() {
         <h3 className="text-2xl font-bold text-gray-900 mb-6 text-center">{t.step3}</h3>
 
         <div className="space-y-8">
-          <MainClientForm
-            client={clientInfo}
-            onChange={(client) => setClientInfo({ ...client, preferredLanguage: clientInfo.preferredLanguage })}
-          />
+          <Suspense fallback={<div className="flex justify-center items-center py-10"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-amber-600"></div></div>}>
+            <MainClientForm
+              client={clientInfo}
+              onChange={(client) => setClientInfo({ ...client, preferredLanguage: clientInfo.preferredLanguage })}
+            />
+          </Suspense>
+
+          {/* Additional Guests */}
+          <div className="space-y-4">
+            <div className="flex justify-between items-center">
+              <h4 className="text-lg font-semibold text-gray-900">Invités supplémentaires</h4>
+              <button
+                type="button"
+                onClick={() => setAdditionalGuests([...additionalGuests, {
+                  firstName: '',
+                  lastName: '',
+                  gender: 'M',
+                  dateOfBirth: new Date('1990-01-01'),
+                  nationality: '',
+                  idType: 'passport',
+                  idNumber: '',
+                  relationshipToMainClient: '',
+                  isMinor: false
+                }])}
+                className="px-4 py-2 bg-amber-600 text-white rounded-lg hover:bg-amber-700 transition-colors"
+              >
+                + Ajouter un invité
+              </button>
+            </div>
+
+            {additionalGuests.map((guest, index) => (
+              <Suspense key={index} fallback={<div className="animate-pulse h-32 bg-gray-200 rounded"></div>}>
+                <GuestForm
+                  guest={guest}
+                  index={index}
+                  onChange={(updatedGuest) => {
+                    const newGuests = [...additionalGuests];
+                    newGuests[index] = updatedGuest;
+                    setAdditionalGuests(newGuests);
+                  }}
+                  onRemove={() => {
+                    setAdditionalGuests(additionalGuests.filter((_, i) => i !== index));
+                  }}
+                />
+              </Suspense>
+            ))}
+          </div>
 
           <div className="space-y-4">
             <div className="space-y-2">
@@ -445,12 +547,165 @@ export default function BookingPage() {
     </div>
   );
 
+  const renderPaymentStep = () => (
+    <div className="max-w-4xl mx-auto">
+      <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-2xl border border-white/20 p-8">
+        <h3 className="text-2xl font-bold text-gray-900 mb-6 text-center">{t.step4}</h3>
+
+        <div className="space-y-6">
+          {/* Payment Method */}
+          <div className="space-y-4">
+            <label className="block text-sm font-semibold text-gray-700">
+              Méthode de paiement <span className="text-red-500">*</span>
+            </label>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <label className={`p-4 border-2 rounded-xl cursor-pointer transition-all ${paymentMethod === 'card' ? 'border-amber-500 bg-amber-50' : 'border-gray-300 hover:border-amber-300'}`}>
+                <input
+                  type="radio"
+                  value="card"
+                  checked={paymentMethod === 'card'}
+                  onChange={(e) => setPaymentMethod(e.target.value)}
+                  className="sr-only"
+                />
+                <div className="flex items-center space-x-3">
+                  <svg className="w-6 h-6 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
+                  </svg>
+                  <span className="font-medium">Carte de crédit</span>
+                </div>
+              </label>
+              <label className={`p-4 border-2 rounded-xl cursor-pointer transition-all ${paymentMethod === 'paypal' ? 'border-amber-500 bg-amber-50' : 'border-gray-300 hover:border-amber-300'}`}>
+                <input
+                  type="radio"
+                  value="paypal"
+                  checked={paymentMethod === 'paypal'}
+                  onChange={(e) => setPaymentMethod(e.target.value)}
+                  className="sr-only"
+                />
+                <div className="flex items-center space-x-3">
+                  <svg className="w-6 h-6 text-blue-600" fill="currentColor" viewBox="0 0 24 24">
+                    <path d="M7.076 21.337H2.47a.641.641 0 01-.633-.74L4.944.901C5.026.382 5.474 0 5.998 0h7.46c2.57 0 4.578.543 5.622 1.562 1.035.992 1.449 2.467 1.149 4.162a6.508 6.508 0 01-2.919 4.746c1.043.411 1.953.971 2.577 1.724 1.214 1.46 1.657 3.559.829 5.51C19.712 21.247 16.086 22 12.345 22H7.076c-.472 0-.924-.344-.948-.812l-.003-.001z"/>
+                  </svg>
+                  <span className="font-medium">PayPal</span>
+                </div>
+              </label>
+              <label className={`p-4 border-2 rounded-xl cursor-pointer transition-all ${paymentMethod === 'cash' ? 'border-amber-500 bg-amber-50' : 'border-gray-300 hover:border-amber-300'}`}>
+                <input
+                  type="radio"
+                  value="cash"
+                  checked={paymentMethod === 'cash'}
+                  onChange={(e) => setPaymentMethod(e.target.value)}
+                  className="sr-only"
+                />
+                <div className="flex items-center space-x-3">
+                  <svg className="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                  <span className="font-medium">Espèces à l'arrivée</span>
+                </div>
+              </label>
+            </div>
+          </div>
+
+          {/* Card Details */}
+          {paymentMethod === 'card' && (
+            <div className="space-y-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="space-y-2">
+                  <label className="block text-sm font-semibold text-gray-700">
+                    Numéro de carte <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    value={cardNumber}
+                    onChange={(e) => setCardNumber(e.target.value.replace(/\D/g, '').slice(0, 16))}
+                    placeholder="1234 5678 9012 3456"
+                    className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-amber-500 focus:border-amber-500 transition-all duration-200 bg-white shadow-sm"
+                    required
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <label className="block text-sm font-semibold text-gray-700">
+                    Nom sur la carte <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    value={cardName}
+                    onChange={(e) => setCardName(e.target.value)}
+                    placeholder="JOHN DOE"
+                    className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-amber-500 focus:border-amber-500 transition-all duration-200 bg-white shadow-sm"
+                    required
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <label className="block text-sm font-semibold text-gray-700">
+                    Date d'expiration <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    value={cardExpiry}
+                    onChange={(e) => setCardExpiry(e.target.value.replace(/\D/g, '').slice(0, 4).replace(/(\d{2})(\d{2})/, '$1/$2'))}
+                    placeholder="MM/YY"
+                    className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-amber-500 focus:border-amber-500 transition-all duration-200 bg-white shadow-sm"
+                    required
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <label className="block text-sm font-semibold text-gray-700">
+                    CVV <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    value={cardCvv}
+                    onChange={(e) => setCardCvv(e.target.value.replace(/\D/g, '').slice(0, 4))}
+                    placeholder="123"
+                    className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-amber-500 focus:border-amber-500 transition-all duration-200 bg-white shadow-sm"
+                    required
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <label className="block text-sm font-semibold text-gray-700">
+                  Adresse de facturation
+                </label>
+                <input
+                  type="text"
+                  value={billingAddress}
+                  onChange={(e) => setBillingAddress(e.target.value)}
+                  placeholder="Adresse complète"
+                  className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-amber-500 focus:border-amber-500 transition-all duration-200 bg-white shadow-sm"
+                />
+              </div>
+            </div>
+          )}
+
+          {/* Security Notice */}
+          <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-xl p-6">
+            <div className="flex items-start space-x-3">
+              <svg className="w-6 h-6 text-blue-600 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+              </svg>
+              <div>
+                <h4 className="text-sm font-semibold text-blue-900 mb-1">Paiement sécurisé</h4>
+                <p className="text-sm text-blue-800">Vos informations de paiement sont chiffrées et sécurisées. Nous n'enregistrons pas les détails de votre carte.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+
   const renderConfirmationStep = () => (
     <div className="max-w-6xl mx-auto">
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         <div className="lg:col-span-2">
           <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-2xl border border-white/20 p-8">
-            <h3 className="text-2xl font-bold text-gray-900 mb-6">{t.step4}</h3>
+            <h3 className="text-2xl font-bold text-gray-900 mb-6">{t.step5}</h3>
 
             <div className="space-y-6">
               {/* Booking Summary */}
@@ -482,6 +737,49 @@ export default function BookingPage() {
                 </div>
               </div>
 
+              {/* Payment Information */}
+              <div className="bg-gradient-to-r from-purple-50 to-pink-50 rounded-xl p-6 border border-purple-100">
+                <h4 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+                  <svg className="w-5 h-5 mr-2 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
+                  </svg>
+                  Informations de paiement
+                </h4>
+                <div className="space-y-3">
+                  <div className="flex justify-between">
+                    <span className="text-gray-600">Méthode:</span>
+                    <span className="font-medium">
+                      {paymentMethod === 'card' ? 'Carte de crédit' : paymentMethod === 'paypal' ? 'PayPal' : 'Espèces à l\'arrivée'}
+                    </span>
+                  </div>
+                  {paymentMethod === 'card' && (
+                    <>
+                      <div className="flex justify-between">
+                        <span className="text-gray-600">Carte:</span>
+                        <span className="font-medium">**** **** **** {cardNumber.slice(-4)}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-gray-600">Titulaire:</span>
+                        <span className="font-medium">{cardName}</span>
+                      </div>
+                    </>
+                  )}
+                </div>
+              </div>
+
+              {/* Special Requests */}
+              {specialRequests && (
+                <div className="bg-gradient-to-r from-green-50 to-emerald-50 rounded-xl p-6 border border-green-100">
+                  <h4 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+                    <svg className="w-5 h-5 mr-2 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z" />
+                    </svg>
+                    Demandes spéciales
+                  </h4>
+                  <p className="text-gray-700 whitespace-pre-wrap">{specialRequests}</p>
+                </div>
+              )}
+
               {/* Terms and Conditions */}
               <div className="bg-gray-50 rounded-xl p-6">
                 <h4 className="text-lg font-semibold text-gray-900 mb-4">Conditions de réservation</h4>
@@ -497,19 +795,21 @@ export default function BookingPage() {
         </div>
 
         <div className="lg:col-span-1">
-          <div className="sticky top-6">
+          <div className="lg:sticky lg:top-6">
             {selectedAccommodationData && (
-              <BookingSummary
-                accommodation={selectedAccommodationData}
-                checkInDate={checkInDate}
-                checkOutDate={checkOutDate}
-                numberOfNights={calculateNights()}
-                numberOfGuests={calculateTotalGuests()}
-                mainClient={clientInfo}
-                totalAmount={selectedAccommodationData.pricing.basePrice * calculateNights()}
-                specialRequests={specialRequests}
-                arrivalTime={arrivalTime}
-              />
+              <Suspense fallback={<div className="bg-white rounded-xl p-6 shadow-lg"><div className="animate-pulse space-y-4"><div className="h-4 bg-gray-200 rounded w-3/4"></div><div className="h-4 bg-gray-200 rounded w-1/2"></div><div className="h-4 bg-gray-200 rounded w-2/3"></div></div></div>}>
+                <BookingSummary
+                  accommodation={selectedAccommodationData}
+                  checkInDate={checkInDate}
+                  checkOutDate={checkOutDate}
+                  numberOfNights={calculateNights()}
+                  numberOfGuests={calculateTotalGuests()}
+                  mainClient={clientInfo}
+                  totalAmount={selectedAccommodationData.pricing.basePrice * calculateNights()}
+                  specialRequests={specialRequests}
+                  arrivalTime={arrivalTime}
+                />
+              </Suspense>
             )}
           </div>
         </div>
@@ -546,6 +846,7 @@ export default function BookingPage() {
           {currentStep === 'dates' && renderDatesStep()}
           {currentStep === 'establishment' && renderEstablishmentStep()}
           {currentStep === 'guests' && renderGuestsStep()}
+          {currentStep === 'payment' && renderPaymentStep()}
           {currentStep === 'confirmation' && renderConfirmationStep()}
         </div>
 
@@ -589,5 +890,29 @@ export default function BookingPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function BookingPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-amber-50 pt-32 pb-16">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex items-center justify-center py-20">
+            <div className="text-center">
+              <div className="relative">
+                <div className="w-16 h-16 border-4 border-amber-200 border-t-amber-600 rounded-full animate-spin mx-auto"></div>
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <div className="w-8 h-8 bg-amber-600 rounded-full animate-pulse"></div>
+                </div>
+              </div>
+              <p className="mt-4 text-gray-600">Chargement...</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    }>
+      <BookingPageContent />
+    </Suspense>
   );
 }

@@ -100,8 +100,8 @@ export default function InvoicePreview({ invoice, establishment }: InvoicePrevie
       </div>
 
       {/* Items Table */}
-      <div className="mb-8">
-        <table className="w-full">
+      <div className="mb-8 overflow-x-auto">
+        <table className="w-full min-w-[600px]">
           <thead>
             <tr className="border-b-2 border-gray-200">
               <th className="text-left py-3 text-sm font-semibold text-gray-700">DESCRIPTION</th>
@@ -169,7 +169,8 @@ export default function InvoicePreview({ invoice, establishment }: InvoicePrevie
       {invoice.payments.length > 0 && (
         <div className="mb-8">
           <h3 className="text-sm font-semibold text-gray-700 mb-3">PAIEMENTS</h3>
-          <table className="w-full">
+          <div className="overflow-x-auto">
+            <table className="w-full min-w-[400px]">
             <thead>
               <tr className="border-b border-gray-200">
                 <th className="text-left py-2 text-xs font-semibold text-gray-600">DATE</th>
@@ -195,6 +196,7 @@ export default function InvoicePreview({ invoice, establishment }: InvoicePrevie
               ))}
             </tbody>
           </table>
+          </div>
           <div className="flex justify-end mt-4">
             <div className="w-64">
               <div className="flex justify-between py-2">

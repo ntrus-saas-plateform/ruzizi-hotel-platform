@@ -1,4 +1,4 @@
-import jwt from 'jsonwebtoken';
+import jwt, { SignOptions } from 'jsonwebtoken';
 
 const JWT_SECRET = process.env.JWT_SECRET;
 const JWT_REFRESH_SECRET = process.env.JWT_REFRESH_SECRET;
@@ -8,7 +8,7 @@ if (!JWT_SECRET || !JWT_REFRESH_SECRET) {
 }
 
 // Durées de validité
-const ACCESS_TOKEN_EXPIRY = '15m'; // 15 minutes
+const ACCESS_TOKEN_EXPIRY = '120m'; // 120 minutes
 const REFRESH_TOKEN_EXPIRY = '7d'; // 7 jours
 
 export interface TokenPayload {
@@ -24,7 +24,7 @@ export interface TokenPayload {
 export function generateAccessToken(payload: TokenPayload): string {
   const token = jwt.sign(payload, JWT_SECRET!, {
     expiresIn: ACCESS_TOKEN_EXPIRY,
-  });
+  } as SignOptions);
   return token;
 }
 
@@ -34,7 +34,7 @@ export function generateAccessToken(payload: TokenPayload): string {
 export function generateRefreshToken(payload: TokenPayload): string {
   return jwt.sign(payload, JWT_REFRESH_SECRET!, {
     expiresIn: REFRESH_TOKEN_EXPIRY,
-  });
+  } as SignOptions);
 }
 
 /**

@@ -18,7 +18,6 @@ export const metadata: Metadata = {
   description: 'Plateforme de gestion complète pour la chaîne hôtelière Ruzizi Hôtel au Burundi. Réservations, gestion des établissements et services hôteliers.',
   keywords: ['hôtel', 'Burundi', 'Ruzizi', 'réservation', 'gestion hôtelière', 'hébergement', "appartement"],
   authors: [{ name: 'Ruzizi Hôtel' }],
-  viewport: 'width=device-width, initial-scale=1',
   icons: {
     icon: '/favicon.ico',
   },
@@ -33,6 +32,11 @@ export const metadata: Metadata = {
     title: 'Ruzizi Hôtel',
     description: 'Gestion hôtelière au Burundi',
   },
+};
+
+export const viewport = {
+  width: 'device-width',
+  initialScale: 1,
 };
 
 export default function RootLayout({

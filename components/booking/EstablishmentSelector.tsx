@@ -1,6 +1,8 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import Image from 'next/image';
+import useSWR from 'swr';
 import type { EstablishmentResponse } from '@/types/establishment.types';
 import type { AccommodationResponse, AccommodationType, AccommodationPricingMode } from '@/types/accommodation.types';
 
@@ -26,10 +28,6 @@ export default function EstablishmentSelector({
   checkOutDate,
   numberOfGuests = 1
 }: EstablishmentSelectorProps) {
-  const [establishments, setEstablishments] = useState<EstablishmentResponse[]>([]);
-  const [accommodations, setAccommodations] = useState<AccommodationResponse[]>([]);
-  const [loading, setLoading] = useState(false);
-  const [accommodationsLoading, setAccommodationsLoading] = useState(false);
   const [language, setLanguage] = useState('fr');
   const [viewMode, setViewMode] = useState<ViewMode>('grid');
   const [sortBy, setSortBy] = useState<SortOption>('price-asc');
@@ -47,17 +45,61 @@ export default function EstablishmentSelector({
   useEffect(() => {
     const savedLanguage = localStorage.getItem('language') || 'fr';
     setLanguage(savedLanguage);
-    fetchEstablishments();
   }, []);
 
+  // SWR fetcher function
+  const fetcher = (url: string) => fetch(url).then(res => res.json());
+
+  // Use SWR for establishments data
+  const { data: establishmentsData, error: establishmentsError, isLoading: establishmentsLoading } = useSWR(
+    '/api/public/establishments',
+    fetcher,
+    {
+      revalidateOnFocus: false,
+      revalidateOnReconnect: true,
+      dedupingInterval: 300000, // 5 minutes
+    }
+  );
+
+  // Use SWR for accommodations data
+  const accommodationsUrl = selectedEstablishment ? (() => {
+    const params = new URLSearchParams({
+      establishmentId: selectedEstablishment,
+      status: 'available'
+    });
+
+    if (typeFilter) params.append('type', typeFilter);
+    if (pricingModeFilter) params.append('pricingMode', pricingModeFilter);
+    if (priceRange.min > 0) params.append('minPrice', priceRange.min.toString());
+    if (priceRange.max < 1000000) params.append('maxPrice', priceRange.max.toString());
+    if (numberOfGuests > 1) params.append('minGuests', numberOfGuests.toString());
+    if (searchTerm) params.append('search', searchTerm);
+    if (checkInDate) params.append('checkInDate', checkInDate);
+    if (checkOutDate) params.append('checkOutDate', checkOutDate);
+
+    return `/api/public/accommodations?${params.toString()}`;
+  })() : null;
+  const { data: accommodationsData, error: accommodationsError, isLoading: accommodationsLoadingData } = useSWR(
+    accommodationsUrl,
+    fetcher,
+    {
+      revalidateOnFocus: false,
+      revalidateOnReconnect: true,
+      dedupingInterval: 300000,
+    }
+  );
+
+  // Data from SWR
+  const establishments = establishmentsData?.data?.data || establishmentsData?.data || [];
+  const accommodations = accommodationsData?.data?.data || accommodationsData?.data || [];
+  const loading = establishmentsLoading;
+  const accommodationsLoading = accommodationsLoadingData;
+
   useEffect(() => {
-    if (selectedEstablishment) {
-      fetchAccommodations();
-    } else {
-      setAccommodations([]);
+    if (!selectedEstablishment) {
       onAccommodationChange(null, null);
     }
-  }, [selectedEstablishment, typeFilter, pricingModeFilter, priceRange, searchTerm, checkInDate, checkOutDate, numberOfGuests, minBedrooms, minBathrooms, selectedAmenities]);
+  }, [selectedEstablishment, onAccommodationChange]);
 
   const content = {
     fr: {
@@ -170,52 +212,6 @@ export default function EstablishmentSelector({
 
   const t = content[language as keyof typeof content];
 
-  const fetchEstablishments = async () => {
-    setLoading(true);
-    try {
-      const response = await fetch('/api/public/establishments');
-      const data = await response.json();
-      if (data.success) {
-        setEstablishments(data.data.data || []);
-      }
-    } catch (error) {
-      console.error('Error fetching establishments:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const fetchAccommodations = async () => {
-    if (!selectedEstablishment) return;
-    
-    setAccommodationsLoading(true);
-    try {
-      const params = new URLSearchParams({
-        establishmentId: selectedEstablishment,
-        status: 'available'
-      });
-
-      if (typeFilter) params.append('type', typeFilter);
-      if (pricingModeFilter) params.append('pricingMode', pricingModeFilter);
-      if (priceRange.min > 0) params.append('minPrice', priceRange.min.toString());
-      if (priceRange.max < 1000000) params.append('maxPrice', priceRange.max.toString());
-      if (numberOfGuests > 1) params.append('minGuests', numberOfGuests.toString());
-      if (searchTerm) params.append('search', searchTerm);
-      if (checkInDate) params.append('checkInDate', checkInDate);
-      if (checkOutDate) params.append('checkOutDate', checkOutDate);
-
-      const response = await fetch(`/api/public/accommodations?${params.toString()}`);
-      const data = await response.json();
-      if (data.success) {
-        const accomData = data.data?.data || data.data || [];
-        setAccommodations(Array.isArray(accomData) ? accomData : []);
-      }
-    } catch (error) {
-      console.error('Error fetching accommodations:', error);
-    } finally {
-      setAccommodationsLoading(false);
-    }
-  };
 
   const getTypeLabel = (type: AccommodationType) => {
     const labels = {
@@ -329,15 +325,28 @@ export default function EstablishmentSelector({
         </div>
 
         {loading ? (
-          <div className="text-center py-4">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
-            <p className="mt-2 text-gray-600">{t.loading}</p>
+          <div className="space-y-4">
+            {[...Array(3)].map((_, i) => (
+              <div key={i} className="p-4 rounded-lg border border-gray-200 animate-pulse">
+                <div className="h-4 bg-gray-200 rounded w-3/4 mb-2"></div>
+                <div className="h-3 bg-gray-200 rounded w-1/2 mb-2"></div>
+                <div className="h-3 bg-gray-200 rounded w-1/4"></div>
+              </div>
+            ))}
+          </div>
+        ) : establishmentsError ? (
+          <div className="text-center py-8">
+            <svg className="w-16 h-16 text-red-400 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z" />
+            </svg>
+            <p className="text-red-600 font-medium mb-2">Erreur de chargement</p>
+            <p className="text-gray-600 text-sm">Impossible de charger les établissements. Veuillez réessayer.</p>
           </div>
         ) : establishments.length === 0 ? (
           <p className="text-gray-600 text-center py-4">{t.noEstablishments}</p>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {establishments.map((establishment) => (
+            {establishments.map((establishment: EstablishmentResponse) => (
               <div
                 key={establishment.id}
                 onClick={() => onEstablishmentChange(establishment.id)}
@@ -583,9 +592,29 @@ export default function EstablishmentSelector({
 
           {/* Liste des hébergements */}
           {accommodationsLoading ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {[...Array(6)].map((_, i) => (
+                <div key={i} className="bg-white rounded-lg border border-gray-200 overflow-hidden animate-pulse">
+                  <div className="h-48 bg-gray-200"></div>
+                  <div className="p-5 space-y-3">
+                    <div className="h-4 bg-gray-200 rounded w-3/4"></div>
+                    <div className="h-3 bg-gray-200 rounded w-1/2"></div>
+                    <div className="flex space-x-2">
+                      <div className="h-6 bg-gray-200 rounded w-16"></div>
+                      <div className="h-6 bg-gray-200 rounded w-20"></div>
+                    </div>
+                    <div className="h-8 bg-gray-200 rounded w-full"></div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : accommodationsError ? (
             <div className="text-center py-8">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-amber-600 mx-auto"></div>
-              <p className="mt-2 text-gray-600">{t.loading}</p>
+              <svg className="w-16 h-16 text-red-400 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z" />
+              </svg>
+              <p className="text-red-600 font-medium mb-2">Erreur de chargement</p>
+              <p className="text-gray-600 text-sm">Impossible de charger les hébergements. Veuillez réessayer.</p>
             </div>
           ) : filteredAccommodations.length === 0 ? (
             <div className="text-center py-8">
@@ -608,19 +637,31 @@ export default function EstablishmentSelector({
                 >
                   {/* Image */}
                   <div className="h-48 bg-gray-200 relative overflow-hidden">
-                    {accommodation.images[0] ? (
-                      <img
+                    {accommodation.images && accommodation.images[0] ? (
+                      <Image
                         src={accommodation.images[0]}
                         alt={accommodation.name}
-                        className="w-full h-full object-cover"
+                        fill
+                        className="object-cover"
+                        sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                        placeholder="blur"
+                        blurDataURL="data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAYEBQYFBAYGBQYHBwYIChAKCgkJChQODwwQFxQYGBcUFhYaHSUfGhsjHBYWICwgIyYnKSopGR8tMC0oMCUoKSj/2wBDAQcHBwoIChMKChMoGhYaKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCj/wAARCAAIAAoDASIAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAv/xAAhEAACAQMDBQAAAAAAAAAAAAABAgMABAUGIWGRkqGx0f/EABUBAQEAAAAAAAAAAAAAAAAAAAMF/8QAGhEAAgIDAAAAAAAAAAAAAAAAAAECEgMRkf/aAAwDAQACEQMRAD8AltJagyeH0AthI5xdrLcNM91BF5pX2HaH9bcfaSXWGaRmknyJckliyjqTzSlT54b6bk+h0R+IRjWjBqO6O2mhP//Z"
+                        onError={(e) => {
+                          const target = e.target as HTMLImageElement;
+                          target.style.display = 'none';
+                          const parent = target.parentElement;
+                          if (parent) {
+                            const fallback = parent.querySelector('.image-fallback') as HTMLElement;
+                            if (fallback) fallback.style.display = 'flex';
+                          }
+                        }}
                       />
-                    ) : (
-                      <div className="w-full h-full flex items-center justify-center">
-                        <svg className="w-16 h-16 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2H5a2 2 0 00-2-2z" />
-                        </svg>
-                      </div>
-                    )}
+                    ) : null}
+                    <div className={`w-full h-full flex items-center justify-center image-fallback ${accommodation.images && accommodation.images[0] ? 'hidden' : 'flex'}`}>
+                      <svg className="w-16 h-16 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2H5a2 2 0 00-2-2z" />
+                      </svg>
+                    </div>
                     <div className="absolute top-2 right-2">
                       <span className="px-2 py-1 bg-green-500 text-white text-xs rounded-full">
                         {t.available}
@@ -688,7 +729,7 @@ export default function EstablishmentSelector({
                     {accommodation.amenities.length > 0 && (
                       <div className="mb-4">
                         <div className="flex flex-wrap gap-1.5">
-                          {accommodation.amenities.slice(0, 4).map((amenity, index) => (
+                          {accommodation.amenities.slice(0, 4).map((amenity: string, index: number) => (
                             <span key={index} className="px-2.5 py-1 bg-blue-50 text-blue-700 text-xs rounded-full font-medium">
                               {amenity}
                             </span>
@@ -743,19 +784,31 @@ export default function EstablishmentSelector({
                   <div className="flex flex-col md:flex-row">
                     {/* Image */}
                     <div className="md:w-64 h-48 md:h-auto bg-gray-200 relative overflow-hidden flex-shrink-0">
-                      {accommodation.images[0] ? (
-                        <img
+                      {accommodation.images && accommodation.images[0] ? (
+                        <Image
                           src={accommodation.images[0]}
                           alt={accommodation.name}
-                          className="w-full h-full object-cover"
+                          fill
+                          className="object-cover"
+                          sizes="(max-width: 768px) 100vw, 256px"
+                          placeholder="blur"
+                          blurDataURL="data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAYEBQYFBAYGBQYHBwYIChAKCgkJChQODwwQFxQYGBcUFhYaHSUfGhsjHBYWICwgIyYnKSopGR8tMC0oMCUoKSj/2wBDAQcHBwoIChMKChMoGhYaKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCj/wAARCAAIAAoDASIAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAv/xAAhEAACAQMDBQAAAAAAAAAAAAABAgMABAUGIWGRkqGx0f/EABUBAQEAAAAAAAAAAAAAAAAAAAMF/8QAGhEAAgIDAAAAAAAAAAAAAAAAAAECEgMRkf/aAAwDAQACEQMRAD8AltJagyeH0AthI5xdrLcNM91BF5pX2HaH9bcfaSXWGaRmknyJckliyjqTzSlT54b6bk+h0R+IRjWjBqO6O2mhP//Z"
+                          onError={(e) => {
+                            const target = e.target as HTMLImageElement;
+                            target.style.display = 'none';
+                            const parent = target.parentElement;
+                            if (parent) {
+                              const fallback = parent.querySelector('.image-fallback') as HTMLElement;
+                              if (fallback) fallback.style.display = 'flex';
+                            }
+                          }}
                         />
-                      ) : (
-                        <div className="w-full h-full flex items-center justify-center">
-                          <svg className="w-16 h-16 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2H5a2 2 0 00-2-2z" />
-                          </svg>
-                        </div>
-                      )}
+                      ) : null}
+                      <div className={`w-full h-full flex items-center justify-center image-fallback ${accommodation.images && accommodation.images[0] ? 'hidden' : 'flex'}`}>
+                        <svg className="w-16 h-16 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2H5a2 2 0 00-2-2z" />
+                        </svg>
+                      </div>
                       <div className="absolute top-3 right-3">
                         <span className="px-3 py-1 bg-green-500 text-white text-xs rounded-full font-medium shadow-lg">
                           {t.available}
@@ -832,7 +885,7 @@ export default function EstablishmentSelector({
                       {accommodation.amenities.length > 0 && (
                         <div className="mb-4">
                           <div className="flex flex-wrap gap-2">
-                            {accommodation.amenities.map((amenity, index) => (
+                            {accommodation.amenities.map((amenity: string, index: number) => (
                               <span key={index} className="px-3 py-1 bg-gray-100 text-gray-700 text-xs rounded-full font-medium">
                                 {amenity}
                               </span>

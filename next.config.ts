@@ -74,12 +74,33 @@ const nextConfig: NextConfig = {
     return config;
   },
 
-  // Images optimization
+  // Images optimization - Configuration Next.js native
   images: {
+    // Formats modernes pour réduction de taille
     formats: ['image/webp', 'image/avif'],
+
+    // Tailles d'écran optimisées pour mobile-first
     deviceSizes: [640, 750, 828, 1080, 1200, 1920, 2048, 3840],
+
+    // Tailles d'images pour composants UI
     imageSizes: [16, 32, 48, 64, 96, 128, 256, 384],
-    minimumCacheTTL: 60,
+
+    // Cache optimisé (1 heure)
+    minimumCacheTTL: 3600,
+
+    // Domaines autorisés pour images externes
+    remotePatterns: [
+      {
+        protocol: 'https',
+        hostname: 'images.unsplash.com',
+        port: '',
+        pathname: '/**',
+      },
+    ],
+
+    // Sécurité supplémentaire
+    dangerouslyAllowSVG: false,
+    contentSecurityPolicy: "default-src 'self'; script-src 'none'; sandbox;",
   },
 
   // Security headers

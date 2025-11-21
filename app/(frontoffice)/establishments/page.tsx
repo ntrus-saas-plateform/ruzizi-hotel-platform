@@ -117,7 +117,7 @@ export default function EstablishmentsPage() {
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
           {/* Filters Sidebar */}
           <div className="lg:col-span-1">
-            <div className="bg-white rounded-2xl shadow-lg border border-gray-200 p-6 sticky top-24">
+            <div className="bg-white rounded-2xl shadow-lg border border-gray-200 p-6 lg:sticky lg:top-24">
               <div className="flex items-center justify-between mb-6">
                 <h2 className="text-xl font-bold text-gray-900 flex items-center">
                   <svg className="w-5 h-5 mr-2 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">

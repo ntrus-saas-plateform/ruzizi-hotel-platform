@@ -339,7 +339,83 @@ export default function BookingsPage() {
             <p className="text-gray-600 text-lg font-medium">Aucune réservation trouvée</p>
             <p className="text-gray-500 text-sm mt-2">Essayez de modifier vos filtres</p>
           </div>
-        ) : viewMode === 'cards' ? (
+        ) : viewMode === 'table' ? (
+          <>
+            {/* Table View - Desktop only */}
+            <div className="hidden md:block">
+              <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+                <div className="overflow-x-auto">
+                  <table className="min-w-full divide-y divide-gray-200">
+                    <thead className="bg-gray-50">
+                      <tr>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Code</th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Client</th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Dates</th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Montant</th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Statut</th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Paiement</th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody className="bg-white divide-y divide-gray-200">
+                      {bookings.map((booking: BookingResponse) => (
+                        <tr key={booking.bookingCode} className="hover:bg-gray-50">
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <div className="text-sm font-medium text-gray-900">{booking.bookingCode}</div>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <div className="text-sm text-gray-900">{booking.clientInfo.firstName} {booking.clientInfo.lastName}</div>
+                            <div className="text-sm text-gray-500">{booking.clientInfo.email}</div>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <div className="text-sm text-gray-900">{new Date(booking.checkIn).toLocaleDateString('fr-FR')}</div>
+                            <div className="text-sm text-gray-500">au {new Date(booking.checkOut).toLocaleDateString('fr-FR')}</div>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <div className="text-sm font-medium text-gray-900">{booking.pricingDetails.total.toLocaleString()} BIF</div>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <span className={`px-2 py-1 text-xs font-medium rounded-full border ${getStatusColor(booking.status)}`}>
+                              {getStatusLabel(booking.status)}
+                            </span>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <span className={`px-2 py-1 text-xs font-medium rounded-full border ${getPaymentStatusColor(booking.paymentStatus)}`}>
+                              {getPaymentStatusLabel(booking.paymentStatus)}
+                            </span>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm">
+                            <button
+                              onClick={() => booking.id && router.push(`/admin/bookings/${booking.id}`)}
+                              className="text-blue-600 hover:text-blue-900 font-medium"
+                              disabled={!booking.id}
+                            >
+                              Détails
+                            </button>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+            {/* Mobile-friendly message for table view */}
+            <div className="md:hidden bg-blue-50 border border-blue-200 rounded-lg p-4 text-center">
+              <svg className="w-8 h-8 text-blue-600 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+              </svg>
+              <p className="text-blue-800 font-medium">Vue tableau non disponible</p>
+              <p className="text-blue-600 text-sm mt-1">Utilisez un écran plus large ou passez en vue cartes</p>
+              <button
+                onClick={() => setViewMode('cards')}
+                className="mt-3 px-4 py-2 bg-blue-600 text-white text-sm rounded-lg hover:bg-blue-700 transition"
+              >
+                Passer en vue cartes
+              </button>
+            </div>
+          </>
+        ) : (
           /* Cards View */
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {bookings.map((booking: BookingResponse) => (
@@ -406,64 +482,6 @@ export default function BookingsPage() {
                 </div>
               </div>
             ))}
-          </div>
-        ) : (
-          /* Table View - Hidden on mobile */
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-            <div className="overflow-x-auto">
-              <table className="min-w-full divide-y divide-gray-200">
-                <thead className="bg-gray-50">
-                  <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Code</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Client</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Dates</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Montant</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Statut</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Paiement</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
-                  </tr>
-                </thead>
-                <tbody className="bg-white divide-y divide-gray-200">
-                  {bookings.map((booking: BookingResponse) => (
-                    <tr key={booking.bookingCode} className="hover:bg-gray-50">
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm font-medium text-gray-900">{booking.bookingCode}</div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm text-gray-900">{booking.clientInfo.firstName} {booking.clientInfo.lastName}</div>
-                        <div className="text-sm text-gray-500">{booking.clientInfo.email}</div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm text-gray-900">{new Date(booking.checkIn).toLocaleDateString('fr-FR')}</div>
-                        <div className="text-sm text-gray-500">au {new Date(booking.checkOut).toLocaleDateString('fr-FR')}</div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm font-medium text-gray-900">{booking.pricingDetails.total.toLocaleString()} BIF</div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <span className={`px-2 py-1 text-xs font-medium rounded-full border ${getStatusColor(booking.status)}`}>
-                          {getStatusLabel(booking.status)}
-                        </span>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <span className={`px-2 py-1 text-xs font-medium rounded-full border ${getPaymentStatusColor(booking.paymentStatus)}`}>
-                          {getPaymentStatusLabel(booking.paymentStatus)}
-                        </span>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm">
-                        <button
-                          onClick={() => booking.id && router.push(`/admin/bookings/${booking.id}`)}
-                          className="text-blue-600 hover:text-blue-900 font-medium"
-                          disabled={!booking.id}
-                        >
-                          Détails
-                        </button>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
           </div>
         )}
 
