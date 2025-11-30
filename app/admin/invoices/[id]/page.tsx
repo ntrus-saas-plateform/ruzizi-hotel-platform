@@ -94,8 +94,8 @@ export default function InvoiceDetailPage() {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
-          <p className="mt-4 text-gray-600">Chargement...</p>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-luxury-gold mx-auto"></div>
+          <p className="mt-4 text-luxury-text">Chargement...</p>
         </div>
       </div>
     );
@@ -108,7 +108,7 @@ export default function InvoiceDetailPage() {
           <p className="text-red-600">{error}</p>
           <button
             onClick={() => router.push('/invoices')}
-            className="mt-4 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
+            className="mt-4 px-4 py-2 bg-luxury-gold text-luxury-cream rounded-md "
           >
             Retour aux factures
           </button>
@@ -128,24 +128,24 @@ export default function InvoiceDetailPage() {
         <div className="mb-6 print:hidden">
           <button
             onClick={() => router.push('/invoices')}
-            className="text-blue-600 hover:text-blue-800 mb-2"
+            className="text-luxury-gold  mb-2"
           >
             ← Retour aux factures
           </button>
           <div className="flex justify-between items-center">
-            <h1 className="text-3xl font-bold text-gray-900">Facture {invoice.invoiceNumber}</h1>
+            <h1 className="text-3xl font-bold text-luxury-dark">Facture {invoice.invoiceNumber}</h1>
             <div className="flex gap-3">
               {invoice.balance > 0 && (
                 <button
                   onClick={() => setShowPaymentForm(!showPaymentForm)}
-                  className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700"
+                  className="px-4 py-2 bg-green-600 text-luxury-cream rounded-md hover:bg-green-700"
                 >
                   Ajouter un paiement
                 </button>
               )}
               <button
                 onClick={handlePrint}
-                className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
+                className="px-4 py-2 bg-luxury-gold text-luxury-cream rounded-md "
               >
                 Imprimer
               </button>
@@ -169,7 +169,7 @@ export default function InvoiceDetailPage() {
         {/* Payment Form */}
         {showPaymentForm && (
           <div className="bg-white rounded-lg shadow p-6 mb-6 print:hidden">
-            <h2 className="text-lg font-semibold text-gray-900 mb-4">Ajouter un paiement</h2>
+            <h2 className="text-lg font-semibold text-luxury-dark mb-4">Ajouter un paiement</h2>
             <form onSubmit={handleAddPayment} className="space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div>
@@ -232,7 +232,7 @@ export default function InvoiceDetailPage() {
                 <button
                   type="submit"
                   disabled={actionLoading}
-                  className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 disabled:opacity-50"
+                  className="px-4 py-2 bg-green-600 text-luxury-cream rounded-md hover:bg-green-700 disabled:opacity-50"
                 >
                   {actionLoading ? 'Ajout en cours...' : 'Ajouter le paiement'}
                 </button>

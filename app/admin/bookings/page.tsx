@@ -96,21 +96,21 @@ export default function BookingsPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
         {/* Header */}
         <div className="mb-6">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-4 sm:space-y-0">
             <div>
-              <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Réservations</h1>
-              <p className="text-gray-600 mt-1 text-sm sm:text-base">
+              <h1 className="text-2xl sm:text-3xl font-bold text-luxury-dark">Réservations</h1>
+              <p className="text-luxury-text mt-1 text-sm sm:text-base">
                 Gérer toutes les réservations
               </p>
             </div>
             <div className="flex flex-col sm:flex-row gap-2 sm:gap-3">
               <button
                 onClick={() => router.push('/admin/bookings/walkin')}
-                className="px-4 py-2.5 bg-gradient-to-r from-purple-600 to-purple-700 text-white rounded-lg hover:from-purple-700 hover:to-purple-800 transition-all shadow-md hover:shadow-lg font-medium flex items-center justify-center"
+                className="px-4 py-2.5  text-luxury-gold rounded-lg border border-luxury-gold transition-all shadow-md hover:shadow-lg font-medium flex items-center justify-center"
               >
                 <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
@@ -119,7 +119,7 @@ export default function BookingsPage() {
               </button>
               <button
                 onClick={() => router.push('/admin/bookings/create')}
-                className="px-4 py-2.5 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-lg hover:from-blue-700 hover:to-blue-800 transition-all shadow-md hover:shadow-lg font-medium flex items-center justify-center"
+                className="px-4 py-2.5 bg-luxury-gold text-luxury-cream rounded-lg hover:from-blue-700 hover:to-blue-800 transition-all shadow-md hover:shadow-lg font-medium flex items-center justify-center"
               >
                 <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
@@ -134,15 +134,15 @@ export default function BookingsPage() {
         <section className="bg-white rounded-xl shadow-sm border border-gray-200 mb-6" aria-labelledby="filters-heading">
           <div className="p-4 sm:p-6">
             <div className="flex items-center justify-between mb-4">
-              <h2 id="filters-heading" className="text-base sm:text-lg font-semibold text-gray-900 flex items-center">
-                <svg className="w-5 h-5 mr-2 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+              <h2 id="filters-heading" className="text-base sm:text-lg font-semibold text-luxury-dark flex items-center">
+                <svg className="w-5 h-5 mr-2 text-luxury-gold" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
                 </svg>
                 Filtres
               </h2>
               <button
                 onClick={() => setShowFilters(!showFilters)}
-                className="lg:hidden px-3 py-2 text-sm text-blue-600 hover:bg-blue-50 rounded-lg transition focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="lg:hidden px-3 py-2 text-sm text-luxury-gold hover:bg-blue-50 rounded-lg transition focus:outline-none focus:ring-2 focus:ring-blue-500"
                 aria-expanded={showFilters}
                 aria-controls="filters-content"
               >
@@ -280,8 +280,8 @@ export default function BookingsPage() {
         {/* View Toggle & Stats */}
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-6 space-y-4 sm:space-y-0">
           <div className="flex items-center space-x-4">
-            <div className="text-sm text-gray-600">
-              <span className="font-semibold text-gray-900">{bookings.length}</span> réservation(s)
+            <div className="text-sm text-luxury-text">
+              <span className="font-semibold text-luxury-dark">{bookings.length}</span> réservation(s)
             </div>
           </div>
           
@@ -290,8 +290,8 @@ export default function BookingsPage() {
               onClick={() => setViewMode('cards')}
               className={`px-3 py-2 rounded transition-all ${
                 viewMode === 'cards' 
-                  ? 'bg-blue-600 text-white' 
-                  : 'text-gray-600 hover:text-blue-600'
+                  ? 'bg-luxury-gold text-luxury-cream' 
+                  : 'text-luxury-text hover:text-luxury-gold'
               }`}
             >
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -302,8 +302,8 @@ export default function BookingsPage() {
               onClick={() => setViewMode('table')}
               className={`px-3 py-2 rounded transition-all ${
                 viewMode === 'table' 
-                  ? 'bg-blue-600 text-white' 
-                  : 'text-gray-600 hover:text-blue-600'
+                  ? 'bg-luxury-gold text-luxury-cream' 
+                  : 'text-luxury-text hover:text-luxury-gold'
               }`}
             >
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -328,15 +328,15 @@ export default function BookingsPage() {
         {/* Loading */}
         {loading ? (
           <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-12 text-center">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
-            <p className="mt-4 text-gray-600">Chargement...</p>
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-luxury-gold mx-auto"></div>
+            <p className="mt-4 text-luxury-text">Chargement...</p>
           </div>
         ) : bookings.length === 0 ? (
           <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-12 text-center">
             <svg className="w-16 h-16 text-gray-400 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
             </svg>
-            <p className="text-gray-600 text-lg font-medium">Aucune réservation trouvée</p>
+            <p className="text-luxury-text text-lg font-medium">Aucune réservation trouvée</p>
             <p className="text-gray-500 text-sm mt-2">Essayez de modifier vos filtres</p>
           </div>
         ) : viewMode === 'table' ? (
@@ -361,18 +361,18 @@ export default function BookingsPage() {
                       {bookings.map((booking: BookingResponse) => (
                         <tr key={booking.bookingCode} className="hover:bg-gray-50">
                           <td className="px-6 py-4 whitespace-nowrap">
-                            <div className="text-sm font-medium text-gray-900">{booking.bookingCode}</div>
+                            <div className="text-sm font-medium text-luxury-dark">{booking.bookingCode}</div>
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap">
-                            <div className="text-sm text-gray-900">{booking.clientInfo.firstName} {booking.clientInfo.lastName}</div>
+                            <div className="text-sm text-luxury-dark">{booking.clientInfo.firstName} {booking.clientInfo.lastName}</div>
                             <div className="text-sm text-gray-500">{booking.clientInfo.email}</div>
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap">
-                            <div className="text-sm text-gray-900">{new Date(booking.checkIn).toLocaleDateString('fr-FR')}</div>
+                            <div className="text-sm text-luxury-dark">{new Date(booking.checkIn).toLocaleDateString('fr-FR')}</div>
                             <div className="text-sm text-gray-500">au {new Date(booking.checkOut).toLocaleDateString('fr-FR')}</div>
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap">
-                            <div className="text-sm font-medium text-gray-900">{booking.pricingDetails.total.toLocaleString()} BIF</div>
+                            <div className="text-sm font-medium text-luxury-dark">{booking.pricingDetails.total.toLocaleString()} BIF</div>
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap">
                             <span className={`px-2 py-1 text-xs font-medium rounded-full border ${getStatusColor(booking.status)}`}>
@@ -387,7 +387,7 @@ export default function BookingsPage() {
                           <td className="px-6 py-4 whitespace-nowrap text-sm">
                             <button
                               onClick={() => booking.id && router.push(`/admin/bookings/${booking.id}`)}
-                              className="text-blue-600 hover:text-blue-900 font-medium"
+                              className="text-luxury-gold hover:text-blue-900 font-medium"
                               disabled={!booking.id}
                             >
                               Détails
@@ -402,14 +402,14 @@ export default function BookingsPage() {
             </div>
             {/* Mobile-friendly message for table view */}
             <div className="md:hidden bg-blue-50 border border-blue-200 rounded-lg p-4 text-center">
-              <svg className="w-8 h-8 text-blue-600 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg className="w-8 h-8 text-luxury-gold mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
               </svg>
               <p className="text-blue-800 font-medium">Vue tableau non disponible</p>
-              <p className="text-blue-600 text-sm mt-1">Utilisez un écran plus large ou passez en vue cartes</p>
+              <p className="text-luxury-gold text-sm mt-1">Utilisez un écran plus large ou passez en vue cartes</p>
               <button
                 onClick={() => setViewMode('cards')}
-                className="mt-3 px-4 py-2 bg-blue-600 text-white text-sm rounded-lg hover:bg-blue-700 transition"
+                className="mt-3 px-4 py-2 bg-luxury-gold text-luxury-cream text-sm rounded-lg  transition"
               >
                 Passer en vue cartes
               </button>
@@ -427,7 +427,7 @@ export default function BookingsPage() {
                   <div className="flex items-start justify-between mb-4">
                     <div>
                       <p className="text-xs text-gray-500 mb-1">Code</p>
-                      <p className="text-lg font-bold text-gray-900">{booking.bookingCode}</p>
+                      <p className="text-lg font-bold text-luxury-dark">{booking.bookingCode}</p>
                     </div>
                     <div className="flex flex-col items-end space-y-2">
                       <span className={`px-3 py-1 text-xs font-medium rounded-full border ${getStatusColor(booking.status)}`}>
@@ -444,19 +444,19 @@ export default function BookingsPage() {
                       <svg className="w-4 h-4 text-gray-400 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                       </svg>
-                      <span className="text-gray-900 font-medium">
+                      <span className="text-luxury-dark font-medium">
                         {booking.clientInfo.firstName} {booking.clientInfo.lastName}
                       </span>
                     </div>
                     
-                    <div className="flex items-center text-sm text-gray-600">
+                    <div className="flex items-center text-sm text-luxury-text">
                       <svg className="w-4 h-4 text-gray-400 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
                       </svg>
                       {booking.clientInfo.email}
                     </div>
 
-                    <div className="flex items-center text-sm text-gray-600">
+                    <div className="flex items-center text-sm text-luxury-text">
                       <svg className="w-4 h-4 text-gray-400 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                       </svg>
@@ -467,13 +467,13 @@ export default function BookingsPage() {
                   <div className="flex items-center justify-between pt-4 border-t border-gray-200">
                     <div>
                       <p className="text-xs text-gray-500">Montant total</p>
-                      <p className="text-xl font-bold text-blue-600">
+                      <p className="text-xl font-bold text-luxury-gold">
                         {booking.pricingDetails.total.toLocaleString()} <span className="text-sm">BIF</span>
                       </p>
                     </div>
                     <button
                       onClick={() => booking.id && router.push(`/admin/bookings/${booking.id}`)}
-                      className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition font-medium text-sm"
+                      className="px-4 py-2 bg-luxury-gold text-luxury-cream rounded-lg  transition font-medium text-sm"
                       disabled={!booking.id}
                     >
                       Détails

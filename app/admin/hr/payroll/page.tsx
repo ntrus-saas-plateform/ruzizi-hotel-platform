@@ -138,12 +138,12 @@ export default function PayrollPage() {
       <div className="max-w-7xl mx-auto">
         <div className="mb-6 flex justify-between items-center">
           <div>
-            <h1 className="text-3xl font-bold text-gray-900">Gestion de la Paie</h1>
-            <p className="text-gray-600 mt-2">Gérer les salaires des employés</p>
+            <h1 className="text-3xl font-bold text-luxury-dark">Gestion de la Paie</h1>
+            <p className="text-luxury-text mt-2">Gérer les salaires des employés</p>
           </div>
           <button
             onClick={handleGenerate}
-            className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
+            className="px-4 py-2 bg-luxury-gold text-luxury-cream rounded-md "
           >
             Générer la paie
           </button>
@@ -152,21 +152,21 @@ export default function PayrollPage() {
         {summary && (
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
             <div className="bg-white rounded-lg shadow p-4">
-              <p className="text-sm text-gray-600">Employés</p>
-              <p className="text-2xl font-bold text-gray-900">{summary.totalEmployees}</p>
+              <p className="text-sm text-luxury-text">Employés</p>
+              <p className="text-2xl font-bold text-luxury-dark">{summary.totalEmployees}</p>
             </div>
             <div className="bg-white rounded-lg shadow p-4">
-              <p className="text-sm text-gray-600">Salaire brut total</p>
-              <p className="text-2xl font-bold text-gray-900">${summary.totalGross.toFixed(2)}</p>
+              <p className="text-sm text-luxury-text">Salaire brut total</p>
+              <p className="text-2xl font-bold text-luxury-dark">${summary.totalGross.toFixed(2)}</p>
             </div>
             <div className="bg-white rounded-lg shadow p-4">
-              <p className="text-sm text-gray-600">Déductions totales</p>
-              <p className="text-2xl font-bold text-gray-900">
+              <p className="text-sm text-luxury-text">Déductions totales</p>
+              <p className="text-2xl font-bold text-luxury-dark">
                 ${summary.totalDeductions.toFixed(2)}
               </p>
             </div>
             <div className="bg-white rounded-lg shadow p-4">
-              <p className="text-sm text-gray-600">Salaire net total</p>
+              <p className="text-sm text-luxury-text">Salaire net total</p>
               <p className="text-2xl font-bold text-green-600">${summary.totalNet.toFixed(2)}</p>
             </div>
           </div>
@@ -225,7 +225,7 @@ export default function PayrollPage() {
         <div className="bg-white rounded-lg shadow overflow-hidden">
           {loading ? (
             <div className="p-8 text-center">
-              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-luxury-gold mx-auto"></div>
             </div>
           ) : payrolls.length === 0 ? (
             <div className="p-8 text-center text-gray-500">Aucun enregistrement trouvé</div>
@@ -262,7 +262,7 @@ export default function PayrollPage() {
                   {payrolls.map((payroll) => (
                     <tr key={payroll.id} className="hover:bg-gray-50">
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm font-medium text-gray-900">
+                        <div className="text-sm font-medium text-luxury-dark">
                           {(payroll as any).employeeId?.personalInfo?.firstName}{' '}
                           {(payroll as any).employeeId?.personalInfo?.lastName}
                         </div>
@@ -295,7 +295,7 @@ export default function PayrollPage() {
                         {payroll.status === 'draft' && (
                           <button
                             onClick={() => handleApprove(payroll.id)}
-                            className="text-blue-600 hover:text-blue-900 mr-2"
+                            className="text-luxury-gold hover:text-blue-900 mr-2"
                           >
                             Approuver
                           </button>

@@ -85,7 +85,7 @@ export default function BookingContent() {
                 {/* Header Amélioré */}
                 <div className="text-center mb-10">
                     <div className="inline-flex items-center justify-center w-24 h-24 bg-gray-900 rounded-3xl mb-6 shadow-sm transform hover:scale-105 transition-transform duration-300">
-                        <svg className="w-12 h-12 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <svg className="w-12 h-12 text-luxury-cream" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                         </svg>
                     </div>
@@ -113,9 +113,9 @@ export default function BookingContent() {
                             {stepTitles.map((title, index) => (
                                 <div key={index} className="flex flex-col items-center relative z-10">
                                     <div className={`w-12 h-12 rounded-full flex items-center justify-center text-base font-semibold transition-all duration-300 ${index + 1 < currentStep
-                                            ? 'bg-gray-900 text-white shadow-lg scale-110'
+                                            ? 'bg-gray-900 text-luxury-cream shadow-lg scale-110'
                                             : index + 1 === currentStep
-                                            ? 'bg-gradient-to-br from-amber-500 to-orange-600 text-white shadow-sm scale-125 ring-2 ring-gray-300'
+                                            ? 'bg-gradient-to-br from-amber-500 to-orange-600 text-luxury-cream shadow-sm scale-125 ring-2 ring-gray-300'
                                             : 'bg-white border-3 border-slate-300 text-slate-400'
                                         }`}>
                                         {index + 1 < currentStep ? (
@@ -126,7 +126,7 @@ export default function BookingContent() {
                                             index + 1
                                         )}
                                     </div>
-                                    <span className={`mt-3 text-sm font-medium transition-all duration-300 text-center max-w-[100px] ${index + 1 === currentStep ? 'text-gray-900 scale-110' : index + 1 < currentStep ? 'text-gray-700' : 'text-slate-500'
+                                    <span className={`mt-3 text-sm font-medium transition-all duration-300 text-center max-w-[100px] ${index + 1 === currentStep ? 'text-luxury-dark scale-110' : index + 1 < currentStep ? 'text-gray-700' : 'text-slate-500'
                                         }`}>
                                         {title}
                                     </span>
@@ -179,7 +179,7 @@ export default function BookingContent() {
                                 <div className="bg-white rounded-md p-8 border border-gray-200 shadow-sm hover:shadow-md transition-shadow duration-300">
                                     <div className="flex items-center mb-8">
                                         <div className="w-16 h-16 bg-gradient-to-br from-amber-500 to-orange-600 rounded-md flex items-center justify-center mr-5 shadow-lg">
-                                            <svg className="w-9 h-9 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <svg className="w-9 h-9 text-luxury-cream" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                                             </svg>
                                         </div>
@@ -193,7 +193,7 @@ export default function BookingContent() {
                                         {/* Date d'arrivée */}
                                         <div className="group">
                                             <label className="flex items-center text-sm font-medium text-slate-800 mb-3 tracking-wide">
-                                                <svg className="w-4 h-4 mr-2 text-gray-900" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <svg className="w-4 h-4 mr-2 text-luxury-dark" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1" />
                                                 </svg>
                                                 Date d'arrivée <span className="text-red-600 ml-1">*</span>
@@ -211,7 +211,7 @@ export default function BookingContent() {
                                         {/* Date de départ */}
                                         <div className="group">
                                             <label className="flex items-center text-sm font-medium text-slate-800 mb-3 tracking-wide">
-                                                <svg className="w-4 h-4 mr-2 text-gray-900" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <svg className="w-4 h-4 mr-2 text-luxury-dark" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
                                                 </svg>
                                                 Date de départ <span className="text-red-600 ml-1">*</span>
@@ -229,15 +229,15 @@ export default function BookingContent() {
                                         {/* Nombre de nuits */}
                                         <div>
                                             <label className="flex items-center text-sm font-medium text-slate-800 mb-3 tracking-wide">
-                                                <svg className="w-4 h-4 mr-2 text-gray-900" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <svg className="w-4 h-4 mr-2 text-luxury-dark" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
                                                 </svg>
                                                 Durée du séjour
                                             </label>
                                             <div className="w-full px-3 py-2 border border-gray-300 rounded-xl bg-gray-100 shadow-lg hover:shadow-sm transition-shadow duration-200">
                                                 <div className="text-center">
-                                                    <div className="text-5xl font-semibold text-gray-900 mb-1">{numberOfNights}</div>
-                                                    <div className="text-xs font-medium text-gray-900 tracking-widest">
+                                                    <div className="text-5xl font-semibold text-luxury-dark mb-1">{numberOfNights}</div>
+                                                    <div className="text-xs font-medium text-luxury-dark tracking-widest">
                                                         {numberOfNights === 1 ? 'Nuit' : 'Nuits'}
                                                     </div>
                                                 </div>
@@ -247,7 +247,7 @@ export default function BookingContent() {
                                         {/* Heure d'arrivée */}
                                         <div className="group">
                                             <label className="flex items-center text-sm font-medium text-slate-800 mb-3 tracking-wide">
-                                                <svg className="w-4 h-4 mr-2 text-gray-900" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <svg className="w-4 h-4 mr-2 text-luxury-dark" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                                                 </svg>
                                                 Heure d'arrivée
@@ -284,7 +284,7 @@ export default function BookingContent() {
                                 <div className="bg-white rounded-md p-8 border border-gray-200 shadow-sm hover:shadow-md transition-shadow duration-300">
                                     <div className="flex items-center mb-8">
                                         <div className="w-16 h-16 bg-gray-800 rounded-md flex items-center justify-center mr-5 shadow-lg">
-                                            <svg className="w-9 h-9 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <svg className="w-9 h-9 text-luxury-cream" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
                                             </svg>
                                         </div>
@@ -327,7 +327,7 @@ export default function BookingContent() {
                                 <div className="bg-white rounded-md p-8 border border-gray-200 shadow-sm hover:shadow-md transition-shadow duration-300">
                                     <div className="flex items-center mb-8">
                                         <div className="w-16 h-16 bg-gray-800 rounded-md flex items-center justify-center mr-5 shadow-lg">
-                                            <svg className="w-9 h-9 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <svg className="w-9 h-9 text-luxury-cream" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                                             </svg>
                                         </div>
@@ -416,7 +416,7 @@ export default function BookingContent() {
                                 <div className="bg-white rounded-md p-8 border border-gray-200 shadow-sm hover:shadow-md transition-shadow duration-300">
                                     <div className="flex items-center mb-8">
                                         <div className="w-16 h-16 bg-gray-900 rounded-md flex items-center justify-center mr-5 shadow-lg">
-                                            <svg className="w-9 h-9 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <svg className="w-9 h-9 text-luxury-cream" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z" />
                                             </svg>
                                         </div>
@@ -457,7 +457,7 @@ export default function BookingContent() {
                                 <div className="bg-white rounded-md p-8 border border-gray-200 shadow-sm hover:shadow-md transition-shadow duration-300">
                                     <div className="flex items-center mb-8">
                                         <div className="w-16 h-16 bg-gray-900 rounded-md flex items-center justify-center mr-5 shadow-lg">
-                                            <svg className="w-9 h-9 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <svg className="w-9 h-9 text-luxury-cream" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                                             </svg>
                                         </div>
@@ -470,7 +470,7 @@ export default function BookingContent() {
                                     {/* Détails du séjour */}
                                     <div className="mb-6">
                                         <h3 className="text-lg font-semibold text-slate-800 mb-4 flex items-center">
-                                            <svg className="w-5 h-5 mr-2 text-gray-900" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <svg className="w-5 h-5 mr-2 text-luxury-dark" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                                             </svg>
                                             Détails du séjour
@@ -478,20 +478,20 @@ export default function BookingContent() {
                                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                             <div className="p-5 bg-gradient-to-br from-amber-50 to-orange-50 rounded-xl border border-gray-200 hover:shadow-lg transition-shadow">
                                                 <div className="flex items-center mb-2">
-                                                    <svg className="w-5 h-5 mr-2 text-gray-900" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <svg className="w-5 h-5 mr-2 text-luxury-dark" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1" />
                                                     </svg>
-                                                    <p className="text-xs font-medium text-gray-900 tracking-wider">Date d'arrivée</p>
+                                                    <p className="text-xs font-medium text-luxury-dark tracking-wider">Date d'arrivée</p>
                                                 </div>
                                                 <p className="text-2xl font-semibold text-slate-900">{checkInDate || 'Non défini'}</p>
                                                 {arrivalTime && <p className="text-sm font-semibold text-slate-600 mt-1">à {arrivalTime}</p>}
                                             </div>
                                             <div className="p-5 bg-gradient-to-br from-amber-50 to-orange-50 rounded-xl border border-gray-200 hover:shadow-lg transition-shadow">
                                                 <div className="flex items-center mb-2">
-                                                    <svg className="w-5 h-5 mr-2 text-gray-900" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <svg className="w-5 h-5 mr-2 text-luxury-dark" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
                                                     </svg>
-                                                    <p className="text-xs font-medium text-gray-900 tracking-wider">Date de départ</p>
+                                                    <p className="text-xs font-medium text-luxury-dark tracking-wider">Date de départ</p>
                                                 </div>
                                                 <p className="text-2xl font-semibold text-slate-900">{checkOutDate || 'Non défini'}</p>
                                             </div>
@@ -560,7 +560,7 @@ export default function BookingContent() {
                                     {/* Note importante */}
                                     <div className="mt-6 p-5 bg-gradient-to-r from-amber-50 to-orange-50 border-l-4 border-amber-500 rounded-lg">
                                         <div className="flex items-start">
-                                            <svg className="w-6 h-6 text-gray-900 mr-3 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <svg className="w-6 h-6 text-luxury-dark mr-3 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
                                             </svg>
                                             <div>
@@ -593,7 +593,7 @@ export default function BookingContent() {
                                     <button
                                         type="button"
                                         onClick={() => setCurrentStep(currentStep + 1)}
-                                        className="w-full sm:w-auto px-10 py-4 bg-gray-900 text-white rounded-xl hover:from-amber-600 hover:via-orange-600 hover:to-amber-700 transition-all duration-300 shadow-sm hover:shadow-md font-semibold text-lg flex items-center justify-center space-x-3 transform hover:scale-105"
+                                        className="w-full sm:w-auto px-10 py-4 bg-gray-900 text-luxury-cream rounded-xl hover:from-amber-600 hover:via-orange-600 hover:to-amber-700 transition-all duration-300 shadow-sm hover:shadow-md font-semibold text-lg flex items-center justify-center space-x-3 transform hover:scale-105"
                                     >
                                         <span>Continuer</span>
                                         <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -604,7 +604,7 @@ export default function BookingContent() {
                                     <button
                                         type="submit"
                                         disabled={loading}
-                                        className="w-full sm:w-auto px-10 py-4 bg-gradient-to-r from-green-600 via-emerald-600 to-green-700 text-white rounded-xl hover:from-green-700 hover:via-emerald-700 hover:to-green-800 disabled:from-gray-400 disabled:via-gray-500 disabled:to-gray-600 disabled:cursor-not-allowed transition-all duration-300 shadow-sm hover:shadow-md font-semibold text-lg flex items-center justify-center space-x-3 transform hover:scale-105 disabled:transform-none disabled:opacity-60"
+                                        className="w-full sm:w-auto px-10 py-4 bg-gradient-to-r from-green-600 via-emerald-600 to-green-700 text-luxury-cream rounded-xl hover:from-green-700 hover:via-emerald-700 hover:to-green-800 disabled:from-gray-400 disabled:via-gray-500 disabled:to-gray-600 disabled:cursor-not-allowed transition-all duration-300 shadow-sm hover:shadow-md font-semibold text-lg flex items-center justify-center space-x-3 transform hover:scale-105 disabled:transform-none disabled:opacity-60"
                                     >
                                         {loading ? (
                                             <>

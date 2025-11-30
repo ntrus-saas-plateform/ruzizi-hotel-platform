@@ -36,7 +36,7 @@ export default function GuestForm({ guest, index, onChange, onRemove }: GuestFor
   return (
     <div className="bg-gray-50 p-6 rounded-lg border-2 border-gray-200">
       <div className="flex justify-between items-center mb-4">
-        <h3 className="text-lg font-semibold text-gray-900">
+        <h3 className="text-lg font-semibold text-luxury-dark">
           Invité {index + 1} {guest.isMinor && <span className="text-sm text-orange-600">(Mineur)</span>}
         </h3>
         {onRemove && (

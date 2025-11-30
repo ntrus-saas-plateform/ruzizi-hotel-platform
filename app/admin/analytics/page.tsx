@@ -57,21 +57,21 @@ export default function AnalyticsPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-gray-100 to-purple-50 p-4 md:p-6 lg:p-8">
+    <div className="min-h-screen p-4 md:p-6">
       <div className="max-w-7xl mx-auto">
         {/* Header */}
         <div className="mb-8">
-          <h1 className="text-3xl md:text-4xl font-bold bg-gradient-to-r from-gray-900 via-purple-800 to-purple-900 bg-clip-text text-transparent mb-2">
+          <h1 className="text-3xl md:text-4xl font-bold text-luxury-dark mb-2">
             Analytics Financiers
           </h1>
-          <p className="text-gray-600">Analyse détaillée des performances financières</p>
+          <p className="text-luxury-text">Analyse détaillée des performances financières</p>
         </div>
 
         {/* Filters */}
         <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg border border-white/20 p-6 mb-8">
           <div className="flex items-center justify-between mb-6">
-            <h2 className="text-xl font-bold text-gray-900 flex items-center">
-              <svg className="w-6 h-6 mr-3 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <h2 className="text-xl font-bold text-luxury-dark flex items-center">
+              <svg className="w-6 h-6 mr-3 text-luxury-gold" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4" />
               </svg>
               Filtres
@@ -123,13 +123,9 @@ export default function AnalyticsPage() {
         </div>
 
         {loading ? (
-          <div className="flex justify-center items-center py-20">
-            <div className="relative">
-              <div className="w-16 h-16 border-4 border-purple-200 border-t-purple-600 rounded-full animate-spin"></div>
-              <div className="absolute inset-0 flex items-center justify-center">
-                <div className="w-8 h-8 bg-purple-600 rounded-full animate-pulse"></div>
-              </div>
-            </div>
+          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-12 text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-luxury-gold mx-auto"></div>
+            <p className="mt-4 text-luxury-text">Chargement...</p>
           </div>
         ) : data ? (
           <>
@@ -138,37 +134,37 @@ export default function AnalyticsPage() {
               <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg border border-white/20 p-6 hover:shadow-xl transition-all duration-300 transform hover:scale-105">
                 <div className="flex items-center justify-between mb-4">
                   <div className="w-12 h-12 bg-gradient-to-br from-green-500 to-green-600 rounded-xl flex items-center justify-center">
-                    <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <svg className="w-6 h-6 text-luxury-cream" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                     </svg>
                   </div>
                 </div>
-                <p className="text-sm text-gray-600 mb-1">Revenu Total</p>
+                <p className="text-sm text-luxury-text mb-1">Revenu Total</p>
                 <p className="text-2xl font-bold text-green-600">{data.revenue.toLocaleString()} BIF</p>
               </div>
 
               <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg border border-white/20 p-6 hover:shadow-xl transition-all duration-300 transform hover:scale-105">
                 <div className="flex items-center justify-between mb-4">
                   <div className="w-12 h-12 bg-gradient-to-br from-red-500 to-red-600 rounded-xl flex items-center justify-center">
-                    <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <svg className="w-6 h-6 text-luxury-cream" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
                     </svg>
                   </div>
                 </div>
-                <p className="text-sm text-gray-600 mb-1">Dépenses Totales</p>
+                <p className="text-sm text-luxury-text mb-1">Dépenses Totales</p>
                 <p className="text-2xl font-bold text-red-600">{data.expenses.toLocaleString()} BIF</p>
               </div>
 
               <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg border border-white/20 p-6 hover:shadow-xl transition-all duration-300 transform hover:scale-105">
                 <div className="flex items-center justify-between mb-4">
                   <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl flex items-center justify-center">
-                    <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <svg className="w-6 h-6 text-luxury-cream" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
                     </svg>
                   </div>
                 </div>
-                <p className="text-sm text-gray-600 mb-1">Profit Net</p>
-                <p className={`text-2xl font-bold ${data.netProfit >= 0 ? 'text-blue-600' : 'text-red-600'}`}>
+                <p className="text-sm text-luxury-text mb-1">Profit Net</p>
+                <p className={`text-2xl font-bold ${data.netProfit >= 0 ? 'text-luxury-gold' : 'text-red-600'}`}>
                   {data.netProfit.toLocaleString()} BIF
                 </p>
               </div>
@@ -176,12 +172,12 @@ export default function AnalyticsPage() {
               <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg border border-white/20 p-6 hover:shadow-xl transition-all duration-300 transform hover:scale-105">
                 <div className="flex items-center justify-between mb-4">
                   <div className="w-12 h-12 bg-gradient-to-br from-purple-500 to-purple-600 rounded-xl flex items-center justify-center">
-                    <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <svg className="w-6 h-6 text-luxury-cream" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
                     </svg>
                   </div>
                 </div>
-                <p className="text-sm text-gray-600 mb-1">Marge Bénéficiaire</p>
+                <p className="text-sm text-luxury-text mb-1">Marge Bénéficiaire</p>
                 <p className={`text-2xl font-bold ${data.profitMargin >= 0 ? 'text-purple-600' : 'text-red-600'}`}>
                   {data.profitMargin}%
                 </p>
@@ -194,16 +190,16 @@ export default function AnalyticsPage() {
               <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg border border-white/20 p-6">
                 <div className="flex items-center mb-6">
                   <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg flex items-center justify-center mr-4">
-                    <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <svg className="w-5 h-5 text-luxury-cream" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                     </svg>
                   </div>
-                  <h2 className="text-xl font-bold text-gray-900">Statistiques Réservations</h2>
+                  <h2 className="text-xl font-bold text-luxury-dark">Statistiques Réservations</h2>
                 </div>
                 <div className="space-y-4">
                   <div className="flex items-center justify-between p-4 bg-gradient-to-r from-gray-50 to-blue-50 rounded-xl">
                     <span className="text-gray-700 font-medium">Total</span>
-                    <span className="text-xl font-bold text-gray-900">{data.bookings.total}</span>
+                    <span className="text-xl font-bold text-luxury-dark">{data.bookings.total}</span>
                   </div>
                   <div className="flex items-center justify-between p-4 bg-gradient-to-r from-green-50 to-emerald-50 rounded-xl">
                     <span className="text-gray-700 font-medium">Confirmées</span>
@@ -215,7 +211,7 @@ export default function AnalyticsPage() {
                   </div>
                   <div className="flex items-center justify-between p-4 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl">
                     <span className="text-gray-700 font-medium">Terminées</span>
-                    <span className="text-xl font-bold text-blue-600">{data.bookings.completed}</span>
+                    <span className="text-xl font-bold text-luxury-gold">{data.bookings.completed}</span>
                   </div>
                 </div>
               </div>
@@ -224,11 +220,11 @@ export default function AnalyticsPage() {
               <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg border border-white/20 p-6">
                 <div className="flex items-center mb-6">
                   <div className="w-10 h-10 bg-gradient-to-br from-purple-500 to-purple-600 rounded-lg flex items-center justify-center mr-4">
-                    <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <svg className="w-5 h-5 text-luxury-cream" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
                     </svg>
                   </div>
-                  <h2 className="text-xl font-bold text-gray-900">Taux d'Occupation</h2>
+                  <h2 className="text-xl font-bold text-luxury-dark">Taux d'Occupation</h2>
                 </div>
                 <div className="text-center py-8">
                   <div className="relative inline-flex items-center justify-center">
@@ -258,7 +254,7 @@ export default function AnalyticsPage() {
                     <div className="absolute inset-0 flex items-center justify-center">
                       <div className="text-center">
                         <p className="text-5xl font-bold text-purple-600">{data.occupancy}%</p>
-                        <p className="text-sm text-gray-600 mt-2">Occupation</p>
+                        <p className="text-sm text-luxury-text mt-2">Occupation</p>
                       </div>
                     </div>
                   </div>
@@ -273,8 +269,8 @@ export default function AnalyticsPage() {
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
               </svg>
             </div>
-            <h3 className="text-xl font-bold text-gray-900 mb-2">Aucune donnée disponible</h3>
-            <p className="text-gray-600">Sélectionnez un établissement et une période pour voir les analytics</p>
+            <h3 className="text-xl font-bold text-luxury-dark mb-2">Aucune donnée disponible</h3>
+            <p className="text-luxury-text">Sélectionnez un établissement et une période pour voir les analytics</p>
           </div>
         )}
       </div>

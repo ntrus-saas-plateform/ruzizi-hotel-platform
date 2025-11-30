@@ -202,7 +202,7 @@ export function CreateEstablishmentForm({ onSuccess }: { onSuccess?: () => void 
       <button
         type="submit"
         disabled={isLoading}
-        className="w-full bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+        className="w-full bg-luxury-gold text-luxury-cream py-2 px-4 rounded-md  disabled:opacity-50 disabled:cursor-not-allowed"
       >
         {isLoading ? 'Création en cours...' : 'Créer l\'établissement'}
       </button>

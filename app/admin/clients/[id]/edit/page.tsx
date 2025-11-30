@@ -111,8 +111,8 @@ export default function EditClientPage() {
     return (
       <div className="p-6 flex items-center justify-center min-h-screen">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
-          <p className="mt-4 text-gray-600">Chargement...</p>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-luxury-gold mx-auto"></div>
+          <p className="mt-4 text-luxury-text">Chargement...</p>
         </div>
       </div>
     );
@@ -123,12 +123,12 @@ export default function EditClientPage() {
       <div className="mb-6">
         <button
           onClick={() => router.back()}
-          className="text-gray-600 hover:text-gray-900 flex items-center gap-2 mb-4"
+          className="text-luxury-text hover:text-luxury-dark flex items-center gap-2 mb-4"
         >
           ← Retour
         </button>
-        <h1 className="text-3xl font-bold text-gray-900">Modifier le Client</h1>
-        <p className="text-gray-600 mt-2">Mettre à jour les informations du client</p>
+        <h1 className="text-3xl font-bold text-luxury-dark">Modifier le Client</h1>
+        <p className="text-luxury-text mt-2">Mettre à jour les informations du client</p>
       </div>
 
       {error && (
@@ -139,7 +139,7 @@ export default function EditClientPage() {
 
       <form onSubmit={handleSubmit} className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 space-y-6">
         <div>
-          <h2 className="text-lg font-semibold text-gray-900 mb-4">Informations personnelles</h2>
+          <h2 className="text-lg font-semibold text-luxury-dark mb-4">Informations personnelles</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
               <label className="block text-sm font-semibold text-gray-700 mb-2">
@@ -232,7 +232,7 @@ export default function EditClientPage() {
         </div>
 
         <div>
-          <h2 className="text-lg font-semibold text-gray-900 mb-4">Identification</h2>
+          <h2 className="text-lg font-semibold text-luxury-dark mb-4">Identification</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
               <label className="block text-sm font-semibold text-gray-700 mb-2">
@@ -290,7 +290,7 @@ export default function EditClientPage() {
           <button
             type="submit"
             disabled={saving}
-            className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50"
+            className="px-6 py-2 bg-luxury-gold text-luxury-cream rounded-lg  disabled:opacity-50"
           >
             {saving ? 'Enregistrement...' : 'Enregistrer les modifications'}
           </button>

@@ -1,12 +1,15 @@
 'use client';
 
+import Link from 'next/link';
 import { useState, useEffect } from 'react';
+import { MapPin, Phone, Mail, Home, Utensils, Calendar, Heart, Facebook, Instagram, Twitter, HeartHandshake } from 'lucide-react';
 
 export default function Footer() {
   const [language, setLanguage] = useState('fr');
+  const [email, setEmail] = useState('');
 
   useEffect(() => {
-    const savedLanguage = localStorage.getItem('language') || 'fr';
+    const savedLanguage = typeof window !== 'undefined' ? (localStorage.getItem('language') || 'fr') : 'fr';
     setLanguage(savedLanguage);
   }, []);
 
@@ -61,53 +64,61 @@ export default function Footer() {
 
   const t = content[language as keyof typeof content];
 
-  return (
-    <footer className="bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 text-white">
-      {/* Main Footer Content */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+  const handleSubscribe = () => {
+    if (email) {
+      console.log('Subscribed:', email);
+      setEmail('');
+    }
+  };
 
-          {/* Brand & Contact */}
-          <div className="lg:col-span-1">
-            <div className="flex items-center space-x-3 mb-6">
-              <div className="w-12 h-12 bg-white rounded-lg flex items-center justify-center shadow-lg p-2">
-                <img
-                  src="/ruzizi_black.png"
-                  alt="Ruzizi Hôtel"
-                  className="w-full h-full object-contain"
-                />
-              </div>
-              <div>
-                <h3 className="text-2xl font-bold bg-gradient-to-r from-amber-400 to-amber-600 bg-clip-text text-transparent">
-                  Ruzizi Hôtel
-                </h3>
-                <p className="text-gray-400 text-sm">Excellence & Confort</p>
+  return (
+    <footer className="bg-luxury-dark text-luxury-cream relative overflow-hidden">
+      {/* Main Footer Content */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 md:py-16 relative z-10">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 gap-8 lg:gap-12">
+
+          {/* Brand & Contact - Larger column */}
+          <div className="lg:col-span-4">
+            <div className="mb-8">
+              <div className="flex items-center space-x-3 mb-4">
+                <div className="w-14 h-14 bg-luxury-cream rounded-xl flex items-center justify-center shadow-luxury transform hover:scale-105 transition-transform duration-300 p-2.5">
+                  <img
+                    src="/ruzizi_black.png"
+                    alt="Ruzizi Hôtel"
+                    className="w-full h-full object-contain"
+                  />
+                </div>
+                <div>
+                  <h3 className="text-2xl md:text-3xl font-bold bg-gradient-luxury bg-clip-text text-transparent">
+                    Ruzizi Hôtel
+                  </h3>
+                  <p className="text-luxury-cream text-xs tracking-wide">Excellence & Confort</p>
+                </div>
               </div>
             </div>
 
             <div className="space-y-4">
-              <div className="flex items-start space-x-3">
-                <svg className="w-5 h-5 text-amber-500 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-                </svg>
-                <p className="text-gray-300 text-sm leading-relaxed">{t.address}</p>
+              <div className="flex items-start space-x-3 group">
+                <div className="w-10 h-10 bg-[hsl(var(--color-luxury-text))]/20 rounded-lg flex items-center justify-center flex-shrink-0 group-hover:bg-[hsl(var(--color-luxury-gold))] transition-colors duration-300">
+                  <MapPin className="w-5 h-5 text-[hsl(var(--color-luxury-gold))] group-hover:text-[#1a1a1a]" />
+                </div>
+                <p className="text-[hsl(var(--color-luxury-cream))] text-sm leading-relaxed pt-2">{t.address}</p>
               </div>
 
-              <div className="flex items-center space-x-3">
-                <svg className="w-5 h-5 text-amber-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
-                </svg>
-                <a href="tel:+25769657554" className="text-gray-300 hover:text-amber-400 transition text-sm">
+              <div className="flex items-center space-x-3 group">
+                <div className="w-10 h-10 bg-[hsl(var(--color-luxury-text))]/20 rounded-lg flex items-center justify-center flex-shrink-0 group-hover:bg-[hsl(var(--color-luxury-gold))] transition-colors duration-300">
+                  <Phone className="w-5 h-5 text-[hsl(var(--color-luxury-gold))] group-hover:text-[#1a1a1a]" />
+                </div>
+                <a href="tel:+25769657554" className="text-[hsl(var(--color-luxury-cream))] hover:text-[hsl(var(--color-luxury-gold))] transition-colors text-sm pt-2 font-medium">
                   +257 69 65 75 54
                 </a>
               </div>
 
-              <div className="flex items-center space-x-3">
-                <svg className="w-5 h-5 text-amber-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-                </svg>
-                <a href="mailto:contact@ruzizihotel.com" className="text-gray-300 hover:text-amber-400 transition text-sm">
+              <div className="flex items-center space-x-3 group">
+                <div className="w-10 h-10 bg-[hsl(var(--color-luxury-text))]/20 rounded-lg flex items-center justify-center flex-shrink-0 group-hover:bg-[hsl(var(--color-luxury-gold))] transition-colors duration-300">
+                  <Mail className="w-5 h-5 text-[hsl(var(--color-luxury-gold))] group-hover:text-[#1a1a1a]" />
+                </div>
+                <a href="mailto:contact@ruzizihotel.com" className="text-[hsl(var(--color-luxury-cream))] hover:text-[hsl(var(--color-luxury-gold))] transition-colors text-sm pt-2 font-medium">
                   contact@ruzizihotel.com
                 </a>
               </div>
@@ -115,8 +126,10 @@ export default function Footer() {
           </div>
 
           {/* Quick Links */}
-          <div>
-            <h4 className="text-lg font-semibold mb-6 text-white">{t.quickLinks}</h4>
+          <div className="lg:col-span-2">
+            <h4 className="text-lg font-bold mb-6 text-[hsl(var(--color-luxury-cream))] relative inline-block">
+              {t.quickLinks}
+            </h4>
             <ul className="space-y-3">
               {[
                 { name: t.home, href: '/' },
@@ -127,68 +140,79 @@ export default function Footer() {
                 { name: t.support, href: '/support' }
               ].map((link) => (
                 <li key={link.name}>
-                  <a
+                  <Link
                     href={link.href}
-                    className="text-gray-300 hover:text-amber-400 transition text-sm flex items-center group"
+                    className="text-[hsl(var(--color-luxury-cream))] hover:text-[hsl(var(--color-luxury-gold))] transition-all text-sm flex items-center group"
                   >
-                    <span className="w-0 group-hover:w-2 h-0.5 bg-amber-400 transition-all duration-300 mr-0 group-hover:mr-2"></span>
-                    {link.name}
-                  </a>
+                    {/* <span className="w-0 group-hover:w-2 h-px bg-[hsl(var(--color-luxury-gold))] transition-all duration-300 mr-0 group-hover:mr-2"></span> */}
+                    <span className="group-hover:translate-x-1 transition-transform duration-300">{link.name}</span>
+                  </Link>
                 </li>
               ))}
             </ul>
           </div>
 
           {/* Services */}
-          <div>
-            <h4 className="text-lg font-semibold mb-6 text-white">{t.services}</h4>
+          <div className="lg:col-span-3">
+            <h4 className="text-lg font-bold mb-6 text-[hsl(var(--color-luxury-cream))] relative inline-block">
+              {t.services}
+            </h4>
             <ul className="space-y-3">
               {[
-                { name: t.accommodation, icon: '🏨' },
-                { name: t.restaurant, icon: '🍽️' },
-                { name: t.events, icon: '🎉' },
-                { name: t.spa, icon: '💆‍♀️' }
+                { name: t.accommodation, Icon: Home },
+                { name: t.restaurant, Icon: Utensils },
+                { name: t.events, Icon: Calendar },
+                { name: t.spa, Icon: HeartHandshake }
               ].map((service) => (
-                <li key={service.name} className="flex items-center space-x-3">
-                  <span className="text-lg">{service.icon}</span>
-                  <span className="text-gray-300 text-sm">{service.name}</span>
+                <li key={service.name} className="flex items-center space-x-3 group">
+                  <div className="w-8 h-8 bg-[hsl(var(--color-luxury-text))]/20 rounded-lg flex items-center justify-center flex-shrink-0 group-hover:bg-[hsl(var(--color-luxury-gold))] transition-colors duration-300">
+                    <service.Icon className="w-4 h-4 text-[hsl(var(--color-luxury-gold))] group-hover:text-[#1a1a1a]" />
+                  </div>
+                  <span className="text-[hsl(var(--color-luxury-cream))] text-sm group-hover:text-[hsl(var(--color-luxury-gold))] transition-colors">{service.name}</span>
                 </li>
               ))}
             </ul>
           </div>
 
           {/* Newsletter & Social */}
-          <div>
-            <h4 className="text-lg font-semibold mb-6 text-white">{t.newsletter}</h4>
-            <p className="text-gray-300 text-sm mb-4">{t.newsletterText}</p>
+          <div className="lg:col-span-3">
+            <h4 className="text-lg font-bold mb-6 text-[hsl(var(--color-luxury-cream))] relative inline-block">
+              {t.newsletter}
+            </h4>
+            <p className="text-[hsl(var(--color-luxury-cream))] text-sm mb-4 leading-relaxed">{t.newsletterText}</p>
 
-            <div className="flex mb-6">
-              <input
-                type="email"
-                placeholder="Email"
-                className="flex-1 px-4 py-2 bg-gray-800 border border-gray-700 rounded-l-lg focus:outline-none focus:border-amber-500 text-white text-sm"
-              />
-              <button className="px-4 py-2 bg-gradient-to-r from-amber-600 to-amber-700 text-white rounded-r-lg hover:from-amber-700 hover:to-amber-800 transition text-sm font-medium">
-                {t.subscribe}
-              </button>
+            <div className="mb-8">
+              <div className="flex flex-col sm:flex-row gap-2">
+                <input
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder="votre@email.com"
+                  className="flex-1 px-4 py-3 bg-[hsl(var(--color-luxury-text))]/20 border border-[#3d3d3d] rounded-lg focus:outline-none focus:border-[hsl(var(--color-luxury-gold))] text-[hsl(var(--color-luxury-cream))] text-sm placeholder-[hsl(var(--color-luxury-cream))]/70 transition-colors"
+                />
+                <button 
+                  onClick={handleSubscribe}
+                  className="px-6 py-3 bg-gradient-luxury text-luxury-cream rounded-lg shadow-luxury transition-all duration-300 text-sm font-semibold whitespace-nowrap transform hover:scale-105">
+                  {t.subscribe}
+                </button>
+              </div>
             </div>
 
             <div>
-              <h5 className="text-sm font-semibold mb-4 text-white">{t.followUs}</h5>
+              <h5 className="text-sm font-semibold mb-4 text-hsl(var(--color-luxury-cream))">{t.followUs}</h5>
               <div className="flex space-x-3">
                 {[
-                  { name: 'Facebook', icon: 'M18.77 7.46H15.5v-1.9c0-.9.6-1.1 1-1.1h2.2V2.5h-3c-2.8 0-4.7 2.1-4.7 5.1v1.9h-2v2h2v8h3v-8h2.5l.27-2z' },
-                  { name: 'Instagram', icon: 'M12 2.2c3.2 0 3.6 0 4.9.1 1.2.1 1.8.2 2.2.4.6.2 1 .5 1.4.9.4.4.7.8.9 1.4.2.4.3 1 .4 2.2.1 1.3.1 1.7.1 4.9s0 3.6-.1 4.9c-.1 1.2-.2 1.8-.4 2.2-.2.6-.5 1-.9 1.4-.4.4-.8.7-1.4.9-.4.2-1 .3-2.2.4-1.3.1-1.7.1-4.9.1s-3.6 0-4.9-.1c-1.2-.1-1.8-.2-2.2-.4-.6-.2-1-.5-1.4-.9-.4-.4-.7-.8-.9-1.4-.2-.4-.3-1-.4-2.2-.1-1.3-.1-1.7-.1-4.9s0-3.6.1-4.9c.1-1.2.2-1.8.4-2.2.2-.6.5-1 .9-1.4.4-.4.8-.7 1.4-.9.4-.2 1-.3 2.2-.4 1.3-.1 1.7-.1 4.9-.1zm0-2.2C8.7 0 8.3 0 7 .1 5.7.2 4.8.4 4.1.7c-.8.3-1.5.7-2.2 1.4C1.2 2.8.8 3.5.5 4.3.2 5 0 5.9 0 7.2v9.6c0 1.3.2 2.2.5 2.9.3.8.7 1.5 1.4 2.2.7.7 1.4 1.1 2.2 1.4.7.3 1.6.5 2.9.5h9.6c1.3 0 2.2-.2 2.9-.5.8-.3 1.5-.7 2.2-1.4.7-.7 1.1-1.4 1.4-2.2.3-.7.5-1.6.5-2.9V7.2c0-1.3-.2-2.2-.5-2.9-.3-.8-.7-1.5-1.4-2.2C20.1 1.4 19.4 1 18.6.7 17.9.4 17 .2 15.7.1 14.4 0 14 0 12 0z' },
-                  { name: 'Twitter', icon: 'M23 3a10.9 10.9 0 01-3.14 1.53 4.48 4.48 0 00-7.86 3v1A10.66 10.66 0 013 4s-4 9 5 13a11.64 11.64 0 01-7 2c9 5 20 0 20-11.5a4.5 4.5 0 00-.08-.83A7.72 7.72 0 0023 3z' }
+                  { name: 'Facebook', Icon: Facebook, link: '#' },
+                  { name: 'Instagram', Icon: Instagram, link: '#' },
+                  { name: 'Twitter', Icon: Twitter, link: '#' }
                 ].map((social) => (
                   <a
                     key={social.name}
-                    href="#"
-                    className="w-10 h-10 bg-gray-800 hover:bg-amber-600 rounded-lg flex items-center justify-center transition group"
+                    href={social.link}
+                    aria-label={social.name}
+                    className="w-11 h-11 bg-[hsl(var(--color-luxury-text))]/20 hover:bg-[hsl(var(--color-luxury-gold))]  rounded-xl flex items-center justify-center transition-all duration-300 group transform hover:scale-110 hover:shadow-lg hover:shadow-[hsl(var(--color-luxury-gold))]/30"
                   >
-                    <svg className="w-5 h-5 text-gray-400 group-hover:text-white transition" fill="currentColor" viewBox="0 0 24 24">
-                      <path d={social.icon} />
-                    </svg>
+                    <social.Icon className="w-5 h-5 text-[hsl(var(--color-luxury-cream))] group-hover:text-[hsl(var(--color-luxury-dark))] transition-colors" />
                   </a>
                 ))}
               </div>
@@ -198,19 +222,21 @@ export default function Footer() {
       </div>
 
       {/* Bottom Bar */}
-      <div className="border-t border-gray-800">
+      <div className="border-t border-[#2d2d2d] bg-[hsl(var(--color-luxury-text))]/20">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-          <div className="flex flex-col md:flex-row justify-between items-center space-y-4 md:space-y-0">
-            <p className="text-gray-400 text-sm">
-              © {new Date().getFullYear()} Ruzizi Hôtel. {t.rights}.
+          <div className="flex flex-col md:flex-row justify-between items-center space-y-4 md:space-y-0 text-center md:text-left">
+            <p className="text-[hsl(var(--color-luxury-cream))] text-sm">
+              © {new Date().getFullYear()} Ruzizi Hôtel. {t.rights}
             </p>
             <div className="flex space-x-6">
-              <a href="/privacy" className="text-gray-400 hover:text-amber-400 text-sm transition">
+              <Link href="/privacy" className="text-[hsl(var(--color-luxury-cream))] hover:text-[hsl(var(--color-luxury-gold))] text-sm transition-colors relative group">
                 {t.privacy}
-              </a>
-              <a href="/terms" className="text-gray-400 hover:text-amber-400 text-sm transition">
+                <span className="absolute bottom-0 left-0 w-0 h-px bg-[hsl(var(--color-luxury-gold))] group-hover:w-full transition-all duration-300"></span>
+              </Link>
+              <Link href="/terms" className="text-[hsl(var(--color-luxury-cream))] hover:text-[hsl(var(--color-luxury-gold))] text-sm transition-colors relative group">
                 {t.terms}
-              </a>
+                <span className="absolute bottom-0 left-0 w-0 h-px bg-[hsl(var(--color-luxury-gold))] group-hover:w-full transition-all duration-300"></span>
+              </Link>
             </div>
           </div>
         </div>

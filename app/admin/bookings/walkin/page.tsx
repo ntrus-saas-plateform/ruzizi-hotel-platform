@@ -226,19 +226,14 @@ export default function WalkInBookingPage() {
   const timeSlots = selectedAccommodation ? generateTimeSlots() : [];
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
         {/* Header */}
         <div className="mb-6">
           <div className="flex items-center space-x-3 mb-2">
-            <div className="w-12 h-12 bg-gradient-to-br from-purple-500 to-purple-700 rounded-xl flex items-center justify-center">
-              <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-              </svg>
-            </div>
             <div>
-              <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Client de Passage</h1>
-              <p className="text-gray-600 text-sm sm:text-base">Réservations horaires rapides</p>
+              <h1 className="text-2xl sm:text-3xl font-bold text-luxury-dark">Client de Passage</h1>
+              <p className="text-luxury-text text-sm sm:text-base">Réservations horaires rapides</p>
             </div>
           </div>
         </div>
@@ -270,8 +265,8 @@ export default function WalkInBookingPage() {
           {/* Left Column - Form */}
           <div className="lg:col-span-2">
             <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 sm:p-6">
-              <h2 className="text-lg sm:text-xl font-bold text-gray-900 mb-6 flex items-center">
-                <svg className="w-5 h-5 mr-2 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <h2 className="text-lg sm:text-xl font-bold text-luxury-dark mb-6 flex items-center">
+                <svg className="w-5 h-5 mr-2 text-luxury-gold" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
                 </svg>
                 Nouvelle Réservation
@@ -367,8 +362,8 @@ export default function WalkInBookingPage() {
 
                 {/* Client Information */}
                 <div className="border-t border-gray-200 pt-6">
-                  <h3 className="text-base sm:text-lg font-semibold text-gray-900 mb-4 flex items-center">
-                    <svg className="w-5 h-5 mr-2 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <h3 className="text-base sm:text-lg font-semibold text-luxury-dark mb-4 flex items-center">
+                    <svg className="w-5 h-5 mr-2 text-luxury-gold" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                     </svg>
                     Informations Client
@@ -478,11 +473,11 @@ export default function WalkInBookingPage() {
                 <button
                   type="submit"
                   disabled={submitting}
-                  className="w-full px-4 py-3 bg-gradient-to-r from-purple-600 to-purple-700 text-white font-semibold rounded-lg hover:from-purple-700 hover:to-purple-800 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-md hover:shadow-lg flex items-center justify-center"
+                  className="w-full px-4 py-3 bg-gradient-to-r from-purple-600 to-purple-700 text-luxury-cream font-semibold rounded-lg hover:from-purple-700 hover:to-purple-800 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-md hover:shadow-lg flex items-center justify-center"
                 >
                   {submitting ? (
                     <>
-                      <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" fill="none" viewBox="0 0 24 24">
+                      <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-luxury-cream" fill="none" viewBox="0 0 24 24">
                         <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
                         <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
                       </svg>
@@ -504,7 +499,7 @@ export default function WalkInBookingPage() {
           {/* Right Column - Stats & Occupancy */}
           <div className="space-y-6">
             {/* Daily Revenue */}
-            <div className="bg-gradient-to-br from-purple-500 to-purple-700 rounded-xl shadow-lg p-6 text-white">
+            <div className="bg-luxury-gold rounded-xl shadow-lg p-6 text-luxury-cream">
               <div className="flex items-center justify-between mb-4">
                 <h3 className="text-lg font-semibold">Revenu Journalier</h3>
                 <svg className="w-8 h-8 opacity-80" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -523,8 +518,8 @@ export default function WalkInBookingPage() {
 
             {/* Hourly Occupancy */}
             <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-              <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
-                <svg className="w-5 h-5 mr-2 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <h3 className="text-lg font-semibold text-luxury-dark mb-4 flex items-center">
+                <svg className="w-5 h-5 mr-2 text-luxury-gold" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
                 Occupation Horaire
@@ -547,7 +542,7 @@ export default function WalkInBookingPage() {
                         }`}
                       >
                         <div className="flex justify-between items-center">
-                          <span className="font-semibold text-sm text-gray-900">
+                          <span className="font-semibold text-sm text-luxury-dark">
                             {slot.start} - {slot.end}
                           </span>
                           <span
@@ -561,7 +556,7 @@ export default function WalkInBookingPage() {
                           </span>
                         </div>
                         {slot.booking && (
-                          <p className="text-xs text-gray-600 mt-1 flex items-center">
+                          <p className="text-xs text-luxury-text mt-1 flex items-center">
                             <svg className="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                             </svg>

@@ -22,9 +22,9 @@ export default function LoadingSpinner({
 
   const colorClasses = {
     primary: 'text-amber-600',
-    secondary: 'text-blue-600',
-    white: 'text-white',
-    gray: 'text-gray-600'
+    secondary: 'text-luxury-gold',
+    white: 'text-luxury-cream',
+    gray: 'text-luxury-text'
   };
 
   return (
@@ -73,9 +73,9 @@ export function FullPageLoading({ text = 'Chargement...', subtext }: FullPageLoa
             <div className="w-8 h-8 bg-amber-600 rounded-full animate-pulse"></div>
           </div>
         </div>
-        <h3 className="text-xl font-semibold text-gray-900 mb-2">{text}</h3>
+        <h3 className="text-xl font-semibold text-luxury-dark mb-2">{text}</h3>
         {subtext && (
-          <p className="text-gray-600">{subtext}</p>
+          <p className="text-luxury-text">{subtext}</p>
         )}
       </div>
     </div>

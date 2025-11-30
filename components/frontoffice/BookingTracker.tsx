@@ -1,5 +1,6 @@
 'use client';
 
+import { ClipboardCheck } from 'lucide-react';
 import { useState, useEffect } from 'react';
 
 interface BookingTrackerProps {
@@ -37,7 +38,7 @@ export default function BookingTracker({ onSearch }: BookingTrackerProps) {
       subtitle: "Vérifiez le statut de votre réservation",
       description: "Entrez votre code de réservation pour consulter les détails et le statut de votre séjour.",
       codeLabel: "Code de réservation",
-      codePlaceholder: "Ex: RZ-2024-001234",
+      codePlaceholder: "RZ-2024-001234",
       searchButton: "Rechercher",
       searching: "Recherche en cours...",
       notFound: "Réservation non trouvée",
@@ -70,7 +71,7 @@ export default function BookingTracker({ onSearch }: BookingTrackerProps) {
       subtitle: "Check your reservation status",
       description: "Enter your booking code to view details and status of your stay.",
       codeLabel: "Booking code",
-      codePlaceholder: "Ex: RZ-2024-001234",
+      codePlaceholder: "RZ-2024-001234",
       searchButton: "Search",
       searching: "Searching...",
       notFound: "Booking not found",
@@ -166,23 +167,21 @@ export default function BookingTracker({ onSearch }: BookingTrackerProps) {
     <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
       {/* Header */}
       <div className="text-center mb-12">
-        <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-amber-500 to-amber-700 rounded-full mb-6 shadow-lg">
-          <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
-          </svg>
-        </div>
-        <h1 className="text-4xl font-bold bg-gradient-to-r from-gray-900 via-gray-800 to-amber-800 bg-clip-text text-transparent mb-4">
+        {/* <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-luxury text-luxury-cream rounded-full mb-6 shadow-lg">
+          <ClipboardCheck />
+        </div> */}
+        <h1 className="text-4xl font-bold bg-luxury-dark bg-clip-text text-transparent mb-4">
           {t.title}
         </h1>
-        <p className="text-xl text-gray-600 mb-2">{t.subtitle}</p>
-        <p className="text-gray-500">{t.description}</p>
+        <p className="text-xl text-luxury-text mb-2">{t.subtitle}</p>
+        <p className="text-luxury-text">{t.description}</p>
       </div>
 
       {/* Search Form */}
-      <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-2xl border border-white/20 p-8 mb-8">
+      <div className="bg-white/80 backdrop-blur-sm rounded-2xl border border-amber-100 shadow-luxury p-8 mb-8">
         <form onSubmit={handleSearch} className="space-y-6">
           <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-3">
+            <label className="block text-sm font-semibold text-luxury-text mb-3">
               {t.codeLabel} <span className="text-red-500">*</span>
             </label>
             <div className="relative">
@@ -191,19 +190,17 @@ export default function BookingTracker({ onSearch }: BookingTrackerProps) {
                 value={bookingCode}
                 onChange={(e) => setBookingCode(e.target.value.toUpperCase())}
                 placeholder={t.codePlaceholder}
-                className="w-full px-4 py-3 pl-12 border border-gray-300 rounded-xl focus:ring-2 focus:ring-amber-500 focus:border-amber-500 transition-all duration-200 bg-white shadow-sm text-lg font-mono"
+                className="w-full px-4 py-3 pl-12 border border-gray-300 rounded-xl focus:ring-2 focus:ring-[hsl(var(--color-luxury-gold))]/90 focus:border-[hsl(var(--color-luxury-gold))]/90 transition-all duration-200 bg-white shadow-sm text-lg font-mono"
                 required
               />
-              <svg className="absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
-              </svg>
+              <ClipboardCheck className="absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400"/>
             </div>
           </div>
 
           <button
             type="submit"
             disabled={loading}
-            className="w-full px-6 py-3 bg-gradient-to-r from-amber-600 via-amber-700 to-amber-800 text-white rounded-xl hover:from-amber-700 hover:via-amber-800 hover:to-amber-900 disabled:from-gray-400 disabled:via-gray-500 disabled:to-gray-600 disabled:cursor-not-allowed transition-all duration-300 shadow-lg hover:shadow-xl font-semibold flex items-center justify-center space-x-3 transform hover:scale-105 disabled:transform-none"
+            className="w-full px-6 py-3 bg-gradient-luxury text-luxury-cream rounded-2xl  disabled:from-gray-400 disabled:via-gray-500 disabled:to-gray-600 disabled:cursor-not-allowed transition-all duration-300 shadow-lg hover:shadow-xl font-semibold flex items-center justify-center space-x-3 transform hover:scale-105 disabled:transform-none"
           >
             {loading ? (
               <>
@@ -241,9 +238,9 @@ export default function BookingTracker({ onSearch }: BookingTrackerProps) {
 
       {/* Booking Details */}
       {booking && (
-        <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-2xl border border-white/20 p-8">
+        <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-card-luxury border border-luxury-gold-light p-8">
           <div className="flex items-center justify-between mb-8">
-            <h2 className="text-2xl font-bold text-gray-900">{t.bookingDetails}</h2>
+            <h2 className="text-2xl font-bold text-luxury-dark">{t.bookingDetails}</h2>
             <span className={`px-4 py-2 rounded-full text-sm font-semibold ${t.statusColors[booking.status]}`}>
               {t.statuses[booking.status]}
             </span>
@@ -253,31 +250,31 @@ export default function BookingTracker({ onSearch }: BookingTrackerProps) {
             {/* Left Column */}
             <div className="space-y-6">
               <div>
-                <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-2">
+                <h3 className="text-sm font-semibold text-luxury-text uppercase tracking-wide mb-2">
                   Code de réservation
                 </h3>
-                <p className="text-2xl font-mono font-bold text-amber-600">{booking.code}</p>
+                <p className="text-2xl font-mono font-bold text-luxury-gold">{booking.code}</p>
               </div>
 
               <div>
-                <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-2">
+                <h3 className="text-sm font-semibold text-luxury-text uppercase tracking-wide mb-2">
                   {t.establishment}
                 </h3>
-                <p className="text-lg font-semibold text-gray-900">{booking.establishmentName}</p>
+                <p className="text-lg font-semibold text-luxury-dark">{booking.establishmentName}</p>
               </div>
 
               <div>
-                <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-2">
+                <h3 className="text-sm font-semibold text-luxury-text uppercase tracking-wide mb-2">
                   Client principal
                 </h3>
-                <p className="text-lg font-semibold text-gray-900">{booking.guestName}</p>
+                <p className="text-lg font-semibold text-luxury-dark">{booking.guestName}</p>
               </div>
 
               <div>
-                <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-2">
+                <h3 className="text-sm font-semibold text-luxury-text uppercase tracking-wide mb-2">
                   {t.guests}
                 </h3>
-                <p className="text-lg font-semibold text-gray-900">
+                <p className="text-lg font-semibold text-luxury-dark">
                   {booking.numberOfGuests} {booking.numberOfGuests === 1 ? 'personne' : 'personnes'}
                 </p>
               </div>
@@ -286,18 +283,18 @@ export default function BookingTracker({ onSearch }: BookingTrackerProps) {
             {/* Right Column */}
             <div className="space-y-6">
               <div>
-                <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-2">
+                <h3 className="text-sm font-semibold text-luxury-text uppercase tracking-wide mb-2">
                   {t.dates}
                 </h3>
                 <div className="space-y-2">
-                  <div className="flex items-center text-gray-900">
-                    <svg className="w-4 h-4 mr-2 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <div className="flex items-center text-luxury-dark">
+                    <svg className="w-4 h-4 mr-2 text-green-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1" />
                     </svg>
                     <span className="font-medium">Arrivée: {formatDate(booking.checkInDate)}</span>
                   </div>
-                  <div className="flex items-center text-gray-900">
-                    <svg className="w-4 h-4 mr-2 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <div className="flex items-center text-luxury-dark">
+                    <svg className="w-4 h-4 mr-2 text-red-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
                     </svg>
                     <span className="font-medium">Départ: {formatDate(booking.checkOutDate)}</span>
@@ -307,19 +304,19 @@ export default function BookingTracker({ onSearch }: BookingTrackerProps) {
 
               {booking.totalAmount && (
                 <div>
-                  <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-2">
+                  <h3 className="text-sm font-semibold text-luxury-text uppercase tracking-wide mb-2">
                     {t.totalAmount}
                   </h3>
-                  <p className="text-2xl font-bold text-green-600">{formatAmount(booking.totalAmount)}</p>
+                  <p className="text-2xl font-bold text-luxury-gold">{formatAmount(booking.totalAmount)}</p>
                 </div>
               )}
 
               {booking.specialRequests && (
                 <div>
-                  <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-2">
+                  <h3 className="text-sm font-semibold text-luxury-text uppercase tracking-wide mb-2">
                     {t.specialRequests}
                   </h3>
-                  <p className="text-gray-900 bg-gray-50 p-3 rounded-lg">{booking.specialRequests}</p>
+                  <p className="text-luxury-text bg-luxury-cream p-3 rounded-xl">{booking.specialRequests}</p>
                 </div>
               )}
             </div>
@@ -329,12 +326,12 @@ export default function BookingTracker({ onSearch }: BookingTrackerProps) {
           <div className="mt-8 pt-8 border-t border-gray-200">
             <div className="flex flex-col sm:flex-row items-center justify-between space-y-4 sm:space-y-0">
               <div>
-                <p className="text-gray-600">Besoin d'aide avec votre réservation ?</p>
+                <p className="text-luxury-text">Besoin d'aide avec votre réservation ?</p>
               </div>
               <div className="flex space-x-4">
                 <a
                   href="tel:+25769657554"
-                  className="px-6 py-3 bg-green-600 text-white rounded-xl hover:bg-green-700 transition-colors font-medium flex items-center space-x-2"
+                  className="px-6 py-3 bg-luxury-gold text-luxury-cream rounded-2xl transition-colors font-medium flex items-center space-x-2"
                 >
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
@@ -343,7 +340,7 @@ export default function BookingTracker({ onSearch }: BookingTrackerProps) {
                 </a>
                 <a
                   href="mailto:contact@ruzizihotel.com"
-                  className="px-6 py-3 border-2 border-gray-300 text-gray-700 rounded-xl hover:border-amber-500 hover:text-amber-600 transition-colors font-medium flex items-center space-x-2"
+                  className="px-6 py-3 border-2 border-luxury-gold text-luxury-gold rounded-xl transition-colors font-medium flex items-center space-x-2"
                 >
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />

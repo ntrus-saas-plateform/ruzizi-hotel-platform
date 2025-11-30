@@ -69,8 +69,8 @@ export default function AccommodationDetailsPage() {
     return (
       <div className="p-6 flex items-center justify-center min-h-screen">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
-          <p className="mt-4 text-gray-600">Chargement...</p>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-luxury-gold mx-auto"></div>
+          <p className="mt-4 text-luxury-text">Chargement...</p>
         </div>
       </div>
     );
@@ -91,21 +91,21 @@ export default function AccommodationDetailsPage() {
       <div className="mb-6">
         <button
           onClick={() => router.back()}
-          className="text-gray-600 hover:text-gray-900 flex items-center gap-2 mb-4"
+          className="text-luxury-text hover:text-luxury-dark flex items-center gap-2 mb-4"
         >
           ← Retour
         </button>
         <div className="flex items-start justify-between">
           <div>
-            <h1 className="text-3xl font-bold text-gray-900">{accommodation.name}</h1>
-            <p className="text-gray-600 mt-2 capitalize">
+            <h1 className="text-3xl font-bold text-luxury-dark">{accommodation.name}</h1>
+            <p className="text-luxury-text mt-2 capitalize">
               {accommodation.type} - {accommodation.establishmentId?.name || 'N/A'}
             </p>
           </div>
           <div className="flex gap-3">
             <button
               onClick={() => router.push(`/admin/accommodations/${id}/edit`)}
-              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 flex items-center gap-2"
+              className="px-4 py-2 bg-luxury-gold text-luxury-cream rounded-lg  flex items-center gap-2"
             >
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
@@ -114,7 +114,7 @@ export default function AccommodationDetailsPage() {
             </button>
             <button
               onClick={handleDelete}
-              className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 flex items-center gap-2"
+              className="px-4 py-2 bg-red-600 text-luxury-cream rounded-lg hover:bg-red-700 flex items-center gap-2"
             >
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
@@ -129,13 +129,13 @@ export default function AccommodationDetailsPage() {
         {/* Main Info */}
         <div className="lg:col-span-2 space-y-6">
           <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-            <h2 className="text-xl font-bold text-gray-900 mb-4">Informations générales</h2>
+            <h2 className="text-xl font-bold text-luxury-dark mb-4">Informations générales</h2>
             
             <div className="space-y-4">
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="text-sm font-medium text-gray-500">Type</label>
-                  <p className="text-gray-900 capitalize">{accommodation.type}</p>
+                  <p className="text-luxury-dark capitalize">{accommodation.type}</p>
                 </div>
                 <div>
                   <label className="text-sm font-medium text-gray-500">Statut</label>
@@ -145,17 +145,17 @@ export default function AccommodationDetailsPage() {
 
               <div>
                 <label className="text-sm font-medium text-gray-500">Description</label>
-                <p className="text-gray-900">{accommodation.description || 'Aucune description'}</p>
+                <p className="text-luxury-dark">{accommodation.description || 'Aucune description'}</p>
               </div>
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="text-sm font-medium text-gray-500">Capacité max</label>
-                  <p className="text-gray-900">{accommodation.capacity?.maxGuests || 'N/A'} personne(s)</p>
+                  <p className="text-luxury-dark">{accommodation.capacity?.maxGuests || 'N/A'} personne(s)</p>
                 </div>
                 <div>
                   <label className="text-sm font-medium text-gray-500">Prix de base</label>
-                  <p className="text-gray-900 font-semibold">{accommodation.pricing?.basePrice?.toLocaleString() || 'N/A'} BIF</p>
+                  <p className="text-luxury-dark font-semibold">{accommodation.pricing?.basePrice?.toLocaleString() || 'N/A'} BIF</p>
                 </div>
               </div>
             </div>
@@ -163,7 +163,7 @@ export default function AccommodationDetailsPage() {
 
           {accommodation.amenities && accommodation.amenities.length > 0 && (
             <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-              <h2 className="text-xl font-bold text-gray-900 mb-4">Équipements</h2>
+              <h2 className="text-xl font-bold text-luxury-dark mb-4">Équipements</h2>
               <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
                 {accommodation.amenities.map((amenity: string) => (
                   <div key={amenity} className="flex items-center space-x-2 text-gray-700">
@@ -181,30 +181,30 @@ export default function AccommodationDetailsPage() {
         {/* Sidebar */}
         <div className="space-y-6">
           <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-            <h2 className="text-xl font-bold text-gray-900 mb-4">Statistiques</h2>
+            <h2 className="text-xl font-bold text-luxury-dark mb-4">Statistiques</h2>
             
             <div className="space-y-4">
               <div className="p-4 bg-blue-50 rounded-lg">
-                <div className="text-2xl font-bold text-blue-600">{accommodation.capacity?.maxGuests || 'N/A'}</div>
-                <div className="text-sm text-gray-600">Capacité max</div>
+                <div className="text-2xl font-bold text-luxury-gold">{accommodation.capacity?.maxGuests || 'N/A'}</div>
+                <div className="text-sm text-luxury-text">Capacité max</div>
               </div>
 
               <div className="p-4 bg-green-50 rounded-lg">
                 <div className="text-2xl font-bold text-green-600">
                   {accommodation.pricing?.basePrice?.toLocaleString() || 'N/A'} BIF
                 </div>
-                <div className="text-sm text-gray-600">Prix de base</div>
+                <div className="text-sm text-luxury-text">Prix de base</div>
               </div>
 
               <div className="p-4 bg-purple-50 rounded-lg">
                 <div className="text-2xl font-bold text-purple-600 capitalize">
                   {accommodation.type}
                 </div>
-                <div className="text-sm text-gray-600">Type</div>
+                <div className="text-sm text-luxury-text">Type</div>
               </div>
 
               <div className="p-4 bg-amber-50 rounded-lg">
-                <div className="text-sm text-gray-600 space-y-1">
+                <div className="text-sm text-luxury-text space-y-1">
                   <div>🛏️ {accommodation.capacity?.bedrooms || 0} chambre(s)</div>
                   <div>🚿 {accommodation.capacity?.bathrooms || 0} salle(s) de bain</div>
                   <div>🛁 {accommodation.capacity?.showers || 0} douche(s)</div>
@@ -214,7 +214,7 @@ export default function AccommodationDetailsPage() {
           </div>
 
           <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-            <h2 className="text-xl font-bold text-gray-900 mb-4">Actions rapides</h2>
+            <h2 className="text-xl font-bold text-luxury-dark mb-4">Actions rapides</h2>
             
             <div className="space-y-3">
               <button
@@ -229,7 +229,7 @@ export default function AccommodationDetailsPage() {
 
               <button
                 onClick={() => router.push(`/admin/bookings/create?accommodation=${id}`)}
-                className="w-full px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 text-left flex items-center"
+                className="w-full px-4 py-2 bg-luxury-gold text-luxury-cream rounded-lg  text-left flex items-center"
               >
                 <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />

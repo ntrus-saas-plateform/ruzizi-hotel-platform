@@ -39,8 +39,8 @@ export default function HRAnalyticsPage() {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
-          <p className="mt-4 text-gray-600 dark:text-gray-400">Chargement...</p>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-luxury-gold mx-auto"></div>
+          <p className="mt-4 text-luxury-text ">Chargement...</p>
         </div>
       </div>
     );
@@ -49,40 +49,40 @@ export default function HRAnalyticsPage() {
   return (
     <div className="p-6">
       <div className="mb-6">
-        <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
+        <h1 className="text-3xl font-bold text-luxury-dark ">
           Analytics RH
         </h1>
-        <p className="text-gray-600 dark:text-gray-400 mt-1">
+        <p className="text-luxury-text  mt-1">
           Tableau de bord des indicateurs de performance RH
         </p>
       </div>
 
       {/* KPIs Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
-        <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
+        <div className="bg-white  rounded-lg shadow p-6">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-gray-600 dark:text-gray-400">Effectif Total</p>
-              <p className="text-3xl font-bold text-gray-900 dark:text-white mt-2">
+              <p className="text-sm text-luxury-text ">Effectif Total</p>
+              <p className="text-3xl font-bold text-luxury-dark  mt-2">
                 {kpis?.totalEmployees || 0}
               </p>
               <p className="text-sm text-green-600 mt-1">
                 {kpis?.activeEmployees || 0} actifs
               </p>
             </div>
-            <div className="bg-blue-100 dark:bg-blue-900 p-3 rounded-full">
-              <svg className="w-8 h-8 text-blue-600 dark:text-blue-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <div className="bg-blue-100  p-3 rounded-full">
+              <svg className="w-8 h-8 text-luxury-gold dark:text-blue-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
               </svg>
             </div>
           </div>
         </div>
 
-        <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
+        <div className="bg-white  rounded-lg shadow p-6">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-gray-600 dark:text-gray-400">Taux de Présence</p>
-              <p className="text-3xl font-bold text-gray-900 dark:text-white mt-2">
+              <p className="text-sm text-luxury-text ">Taux de Présence</p>
+              <p className="text-3xl font-bold text-luxury-dark  mt-2">
                 {kpis?.attendanceRate || 0}%
               </p>
               <p className="text-sm text-gray-500 mt-1">Ce mois</p>
@@ -95,11 +95,11 @@ export default function HRAnalyticsPage() {
           </div>
         </div>
 
-        <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
+        <div className="bg-white  rounded-lg shadow p-6">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-gray-600 dark:text-gray-400">Coût Salarial</p>
-              <p className="text-3xl font-bold text-gray-900 dark:text-white mt-2">
+              <p className="text-sm text-luxury-text ">Coût Salarial</p>
+              <p className="text-3xl font-bold text-luxury-dark  mt-2">
                 {(kpis?.totalPayrollCost || 0).toLocaleString()} BIF
               </p>
               <p className="text-sm text-gray-500 mt-1">Ce mois</p>
@@ -112,11 +112,11 @@ export default function HRAnalyticsPage() {
           </div>
         </div>
 
-        <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
+        <div className="bg-white  rounded-lg shadow p-6">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-gray-600 dark:text-gray-400">Performance Moyenne</p>
-              <p className="text-3xl font-bold text-gray-900 dark:text-white mt-2">
+              <p className="text-sm text-luxury-text ">Performance Moyenne</p>
+              <p className="text-3xl font-bold text-luxury-dark  mt-2">
                 {kpis?.averagePerformance || 0}/5
               </p>
               <p className="text-sm text-gray-500 mt-1">
@@ -134,38 +134,38 @@ export default function HRAnalyticsPage() {
 
       {/* Charts Section */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
-          <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-4">
+        <div className="bg-white  rounded-lg shadow p-6">
+          <h2 className="text-xl font-bold text-luxury-dark  mb-4">
             Évolution des Coûts Salariaux
           </h2>
-          <div className="h-64 flex items-center justify-center text-gray-500 dark:text-gray-400">
+          <div className="h-64 flex items-center justify-center text-gray-500 ">
             Graphique à implémenter avec une bibliothèque de charts
           </div>
         </div>
 
-        <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
-          <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-4">
+        <div className="bg-white  rounded-lg shadow p-6">
+          <h2 className="text-xl font-bold text-luxury-dark  mb-4">
             Taux de Turnover
           </h2>
-          <div className="h-64 flex items-center justify-center text-gray-500 dark:text-gray-400">
+          <div className="h-64 flex items-center justify-center text-gray-500 ">
             Graphique à implémenter avec une bibliothèque de charts
           </div>
         </div>
 
-        <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
-          <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-4">
+        <div className="bg-white  rounded-lg shadow p-6">
+          <h2 className="text-xl font-bold text-luxury-dark  mb-4">
             Distribution des Performances
           </h2>
-          <div className="h-64 flex items-center justify-center text-gray-500 dark:text-gray-400">
+          <div className="h-64 flex items-center justify-center text-gray-500 ">
             Graphique à implémenter avec une bibliothèque de charts
           </div>
         </div>
 
-        <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
-          <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-4">
+        <div className="bg-white  rounded-lg shadow p-6">
+          <h2 className="text-xl font-bold text-luxury-dark  mb-4">
             Analyse des Absences
           </h2>
-          <div className="h-64 flex items-center justify-center text-gray-500 dark:text-gray-400">
+          <div className="h-64 flex items-center justify-center text-gray-500 ">
             Graphique à implémenter avec une bibliothèque de charts
           </div>
         </div>
@@ -176,7 +176,7 @@ export default function HRAnalyticsPage() {
         <button className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition">
           Exporter en PDF
         </button>
-        <button className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition">
+        <button className="px-4 py-2 bg-luxury-gold text-luxury-cream rounded-lg  transition">
           Générer Rapport Complet
         </button>
       </div>

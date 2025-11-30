@@ -78,12 +78,12 @@ export default function CreateExpensePage() {
       <div className="mb-6">
         <button
           onClick={() => router.back()}
-          className="text-gray-600 hover:text-gray-900 flex items-center gap-2 mb-4"
+          className="text-luxury-text hover:text-luxury-dark flex items-center gap-2 mb-4"
         >
           ← Retour
         </button>
-        <h1 className="text-3xl font-bold text-gray-900">Nouvelle Dépense</h1>
-        <p className="text-gray-600 mt-2">Enregistrer une nouvelle dépense</p>
+        <h1 className="text-3xl font-bold text-luxury-dark">Nouvelle Dépense</h1>
+        <p className="text-luxury-text mt-2">Enregistrer une nouvelle dépense</p>
       </div>
 
       {error && (
@@ -217,7 +217,7 @@ export default function CreateExpensePage() {
           <button
             type="submit"
             disabled={loading}
-            className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50"
+            className="px-6 py-2 bg-luxury-gold text-luxury-cream rounded-lg  disabled:opacity-50"
           >
             {loading ? 'Enregistrement...' : 'Enregistrer la dépense'}
           </button>

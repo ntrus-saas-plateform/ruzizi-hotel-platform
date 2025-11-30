@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import type { AccommodationResponse } from '@/types/accommodation.types';
 import type { CompleteClientInfo } from '@/types/guest.types';
+import { Users } from 'lucide-react';
 
 interface BookingSummaryProps {
   accommodation: AccommodationResponse;
@@ -112,12 +113,12 @@ export default function BookingSummary({
   };
 
   return (
-    <div className="bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden">
+    <div className="bg-white rounded-2xl shadow-luxury border border-[hsl(var(--color-luxury-gold))]/10 overflow-hidden">
       {/* Header */}
-      <div className="bg-gradient-to-r from-amber-600 via-amber-700 to-amber-800 text-white p-6">
+      <div className="bg-gradient-luxury text-luxury-cream p-6">
         <div className="flex items-center">
           <div className="w-12 h-12 bg-white/20 backdrop-blur-sm rounded-lg flex items-center justify-center mr-4">
-            <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg className="w-6 h-6 text-luxury-cream" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
             </svg>
           </div>
@@ -128,13 +129,10 @@ export default function BookingSummary({
       <div className="p-6 space-y-6">
         {/* Hébergement */}
         <div className="border-b border-gray-200 pb-6">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
-            <svg className="w-5 h-5 text-amber-600 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2H5a2 2 0 00-2-2z" />
-            </svg>
+          <h3 className="text-lg font-semibold text-luxury-dark mb-4 flex items-center">
             {t.accommodation}
           </h3>
-          <div className="bg-gray-50 rounded-lg p-4">
+          <div className="bg-luxury-cream rounded-lg p-4">
             <div className="flex items-start space-x-4">
               {accommodation.images[0] && (
                 <img
@@ -144,16 +142,16 @@ export default function BookingSummary({
                 />
               )}
               <div className="flex-1">
-                <h4 className="font-bold text-gray-900">{accommodation.name}</h4>
-                <p className="text-sm text-gray-600 mb-2">{getTypeLabel(accommodation.type)}</p>
+                <h4 className="font-bold text-luxury-dark">{accommodation.name}</h4>
+                <p className="text-sm text-luxury-text mb-2">{getTypeLabel(accommodation.type)}</p>
                 <div className="flex flex-wrap gap-1">
                   {accommodation.amenities.slice(0, 3).map((amenity, index) => (
-                    <span key={index} className="px-2 py-1 bg-amber-100 text-amber-800 text-xs rounded">
+                    <span key={index} className="px-2 py-1 bg-[hsl(var(--color-luxury-gold-light))]/10 text-luxury-text text-xs rounded">
                       {amenity}
                     </span>
                   ))}
                   {accommodation.amenities.length > 3 && (
-                    <span className="px-2 py-1 bg-gray-100 text-gray-700 text-xs rounded">
+                    <span className="px-2 py-1 bg-luxury-text text-luxury-cream text-xs rounded">
                       +{accommodation.amenities.length - 3}
                     </span>
                   )}
@@ -165,10 +163,7 @@ export default function BookingSummary({
 
         {/* Dates */}
         <div className="border-b border-gray-200 pb-6">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
-            <svg className="w-5 h-5 text-amber-600 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-            </svg>
+          <h3 className="text-lg font-semibold text-luxury-dark mb-4 flex items-center">
             {t.dates}
           </h3>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -179,9 +174,9 @@ export default function BookingSummary({
                 </svg>
                 <span className="text-sm font-medium">{t.arrival}</span>
               </div>
-              <p className="font-semibold text-gray-900">{formatDate(checkInDate)}</p>
+              <p className="font-semibold text-luxury-dark">{formatDate(checkInDate)}</p>
               {arrivalTime && (
-                <p className="text-sm text-gray-600 mt-1">{t.arrivalTime}: {arrivalTime}</p>
+                <p className="text-sm text-luxury-text mt-1">{t.arrivalTime}: {arrivalTime}</p>
               )}
             </div>
             <div className="bg-red-50 rounded-lg p-4">
@@ -191,7 +186,7 @@ export default function BookingSummary({
                 </svg>
                 <span className="text-sm font-medium">{t.departure}</span>
               </div>
-              <p className="font-semibold text-gray-900">{formatDate(checkOutDate)}</p>
+              <p className="font-semibold text-luxury-dark">{formatDate(checkOutDate)}</p>
             </div>
           </div>
           <div className="mt-4 text-center">
@@ -205,62 +200,57 @@ export default function BookingSummary({
         </div>
 
         {/* Invités */}
-        <div className="border-b border-gray-200 pb-6">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
-            <svg className="w-5 h-5 text-amber-600 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
-            </svg>
+        {/* <div className="border-b border-gray-200 pb-6">
+          <h3 className="text-lg font-semibold text-luxury-dark mb-4 flex items-center">
+            <Users className="size-5 text-luxury-gold"/>
             {t.guests}
           </h3>
-          <div className="bg-gray-50 rounded-lg p-4">
+          <div className="bg-luxury-cream rounded-lg p-4">
             <div className="flex items-center justify-between mb-3">
-              <span className="text-sm text-gray-600">Nombre total:</span>
-              <span className="font-semibold text-gray-900">{numberOfGuests} {numberOfGuests === 1 ? 'personne' : 'personnes'}</span>
+              <span className="text-sm text-luxury-text">Nombre total:</span>
+              <span className="font-semibold text-luxury-dark">{numberOfGuests} {numberOfGuests === 1 ? 'personne' : 'personnes'}</span>
             </div>
             <div className="border-t border-gray-200 pt-3">
-              <span className="text-sm text-gray-600">{t.mainGuest}:</span>
-              <p className="font-medium text-gray-900">{mainClient.firstName} {mainClient.lastName}</p>
-              <p className="text-sm text-gray-600">{mainClient.email}</p>
+              <span className="text-sm text-luxury-text">{t.mainGuest}:</span>
+              <p className="font-medium text-luxury-dark">{mainClient.firstName} {mainClient.lastName}</p>
+              <p className="text-sm text-luxury-text">{mainClient.email}</p>
             </div>
           </div>
-        </div>
+        </div> */}
 
         {/* Demandes spéciales */}
-        {specialRequests && (
+        {/* {specialRequests && (
           <div className="border-b border-gray-200 pb-6">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
-              <svg className="w-5 h-5 text-amber-600 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <h3 className="text-lg font-semibold text-luxury-dark mb-4 flex items-center">
+              <svg className="w-5 h-5 text-luxury-gold mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z" />
               </svg>
               {t.specialRequests}
             </h3>
             <div className="bg-yellow-50 rounded-lg p-4 border border-yellow-200">
-              <p className="text-gray-700">{specialRequests}</p>
+              <p className="text-luxury-text">{specialRequests}</p>
             </div>
           </div>
-        )}
+        )} */}
 
         {/* Tarification */}
         <div>
-          <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
-            <svg className="w-5 h-5 text-amber-600 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1" />
-            </svg>
+          <h3 className="text-lg font-semibold text-luxury-dark mb-4 flex items-center">
             {t.pricing}
           </h3>
           <div className="bg-gradient-to-r from-green-50 to-emerald-50 rounded-lg p-6 border border-green-200">
             <div className="space-y-3">
               <div className="flex justify-between items-center">
-                <span className="text-gray-600">{t.basePrice} {getPricingModeText()}:</span>
+                <span className="text-luxury-text">{t.basePrice} {getPricingModeText()}:</span>
                 <span className="font-medium">{accommodation.pricing.basePrice.toLocaleString()} {t.currency}</span>
               </div>
               <div className="flex justify-between items-center">
-                <span className="text-gray-600">{t.duration}:</span>
+                <span className="text-luxury-text">{t.duration}:</span>
                 <span className="font-medium">{numberOfNights} {numberOfNights === 1 ? t.night : t.nights}</span>
               </div>
               <div className="border-t border-green-200 pt-3">
                 <div className="flex justify-between items-center">
-                  <span className="text-lg font-semibold text-gray-900">{t.totalPrice}:</span>
+                  <span className="text-lg font-semibold text-luxury-dark">{t.totalPrice}:</span>
                   <span className="text-2xl font-bold text-green-600">{totalAmount.toLocaleString()} {t.currency}</span>
                 </div>
                 <p className="text-xs text-gray-500 mt-1">{t.taxes}</p>

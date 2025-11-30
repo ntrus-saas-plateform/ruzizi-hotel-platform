@@ -52,8 +52,8 @@ export default function SuccessNotification({
             </div>
           </div>
           <div className="ml-4 flex-1">
-            <h3 className="text-lg font-semibold text-gray-900 mb-1">{title}</h3>
-            <p className="text-gray-600 text-sm leading-relaxed">{message}</p>
+            <h3 className="text-lg font-semibold text-luxury-dark mb-1">{title}</h3>
+            <p className="text-luxury-text text-sm leading-relaxed">{message}</p>
           </div>
           {onClose && (
             <button

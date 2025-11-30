@@ -119,8 +119,8 @@ export default function ClientDetailPage() {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
-          <p className="mt-4 text-gray-600">Chargement...</p>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-luxury-gold mx-auto"></div>
+          <p className="mt-4 text-luxury-text">Chargement...</p>
         </div>
       </div>
     );
@@ -133,7 +133,7 @@ export default function ClientDetailPage() {
           <p className="text-red-600">{error}</p>
           <button
             onClick={() => router.push('/clients')}
-            className="mt-4 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
+            className="mt-4 px-4 py-2 bg-luxury-gold text-luxury-cream rounded-md "
           >
             Retour aux clients
           </button>
@@ -153,16 +153,16 @@ export default function ClientDetailPage() {
         <div className="mb-6">
           <button
             onClick={() => router.push('/clients')}
-            className="text-blue-600 hover:text-blue-800 mb-2"
+            className="text-luxury-gold  mb-2"
           >
             ← Retour aux clients
           </button>
           <div className="flex justify-between items-start">
             <div>
-              <h1 className="text-3xl font-bold text-gray-900">
+              <h1 className="text-3xl font-bold text-luxury-dark">
                 {client.personalInfo.firstName} {client.personalInfo.lastName}
               </h1>
-              <p className="text-gray-600 mt-2">Profil client</p>
+              <p className="text-luxury-text mt-2">Profil client</p>
             </div>
             <span
               className={`px-3 py-1 text-sm font-medium rounded-full ${getClassificationColor(client.classification)}`}
@@ -177,21 +177,21 @@ export default function ClientDetailPage() {
           <div className="lg:col-span-1 space-y-6">
             {/* Personal Info */}
             <div className="bg-white rounded-lg shadow p-6">
-              <h2 className="text-lg font-semibold text-gray-900 mb-4">
+              <h2 className="text-lg font-semibold text-luxury-dark mb-4">
                 Informations personnelles
               </h2>
               <div className="space-y-3">
                 <div>
-                  <span className="text-sm text-gray-600">Email</span>
+                  <span className="text-sm text-luxury-text">Email</span>
                   <p className="font-medium">{client.personalInfo.email}</p>
                 </div>
                 <div>
-                  <span className="text-sm text-gray-600">Téléphone</span>
+                  <span className="text-sm text-luxury-text">Téléphone</span>
                   <p className="font-medium">{client.personalInfo.phone}</p>
                 </div>
                 {client.personalInfo.idNumber && (
                   <div>
-                    <span className="text-sm text-gray-600">Numéro d'identité</span>
+                    <span className="text-sm text-luxury-text">Numéro d'identité</span>
                     <p className="font-medium">{client.personalInfo.idNumber}</p>
                   </div>
                 )}
@@ -200,21 +200,21 @@ export default function ClientDetailPage() {
 
             {/* Statistics */}
             <div className="bg-white rounded-lg shadow p-6">
-              <h2 className="text-lg font-semibold text-gray-900 mb-4">Statistiques</h2>
+              <h2 className="text-lg font-semibold text-luxury-dark mb-4">Statistiques</h2>
               <div className="space-y-4">
                 <div className="bg-blue-50 rounded-lg p-4">
-                  <p className="text-sm text-gray-600">Total séjours</p>
-                  <p className="text-2xl font-bold text-blue-600">{client.totalStays}</p>
+                  <p className="text-sm text-luxury-text">Total séjours</p>
+                  <p className="text-2xl font-bold text-luxury-gold">{client.totalStays}</p>
                 </div>
                 <div className="bg-green-50 rounded-lg p-4">
-                  <p className="text-sm text-gray-600">Total dépensé</p>
+                  <p className="text-sm text-luxury-text">Total dépensé</p>
                   <p className="text-2xl font-bold text-green-600">
                     {client.totalSpent.toLocaleString()} BIF
                   </p>
                 </div>
                 {client.debt > 0 && (
                   <div className="bg-red-50 rounded-lg p-4">
-                    <p className="text-sm text-gray-600">Dette</p>
+                    <p className="text-sm text-luxury-text">Dette</p>
                     <p className="text-2xl font-bold text-red-600">
                       {client.debt.toLocaleString()} BIF
                     </p>
@@ -222,7 +222,7 @@ export default function ClientDetailPage() {
                 )}
                 {client.discounts && client.discounts.length > 0 && (
                   <div className="bg-purple-50 rounded-lg p-4">
-                    <p className="text-sm text-gray-600">Remises actives</p>
+                    <p className="text-sm text-luxury-text">Remises actives</p>
                     <p className="text-2xl font-bold text-purple-600">{client.discounts.length}</p>
                   </div>
                 )}
@@ -233,7 +233,7 @@ export default function ClientDetailPage() {
           {/* Booking History */}
           <div className="lg:col-span-2">
             <div className="bg-white rounded-lg shadow p-6">
-              <h2 className="text-lg font-semibold text-gray-900 mb-4">Historique des réservations</h2>
+              <h2 className="text-lg font-semibold text-luxury-dark mb-4">Historique des réservations</h2>
               {bookings.length === 0 ? (
                 <p className="text-gray-500 text-center py-8">Aucune réservation trouvée</p>
               ) : (
@@ -246,8 +246,8 @@ export default function ClientDetailPage() {
                     >
                       <div className="flex justify-between items-start mb-2">
                         <div>
-                          <p className="font-semibold text-gray-900">{booking.bookingCode}</p>
-                          <p className="text-sm text-gray-600">
+                          <p className="font-semibold text-luxury-dark">{booking.bookingCode}</p>
+                          <p className="text-sm text-luxury-text">
                             {new Date(booking.checkIn).toLocaleDateString('fr-FR')} -{' '}
                             {new Date(booking.checkOut).toLocaleDateString('fr-FR')}
                           </p>
@@ -259,14 +259,14 @@ export default function ClientDetailPage() {
                         </span>
                       </div>
                       <div className="flex justify-between items-center">
-                        <span className="text-sm text-gray-600">
+                        <span className="text-sm text-luxury-text">
                           {booking.bookingType === 'online'
                             ? 'En ligne'
                             : booking.bookingType === 'onsite'
                               ? 'Sur place'
                               : 'Passage'}
                         </span>
-                        <span className="font-semibold text-gray-900">
+                        <span className="font-semibold text-luxury-dark">
                           {booking.pricingDetails.total.toLocaleString()} BIF
                         </span>
                       </div>

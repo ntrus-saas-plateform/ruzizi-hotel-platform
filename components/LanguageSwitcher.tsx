@@ -47,7 +47,7 @@ export default function LanguageSwitcher() {
       </button>
 
       {isOpen && (
-        <div className="absolute right-0 mt-2 w-48 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 py-1 z-50">
+        <div className="absolute right-0 mt-2 w-48 bg-white  rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 py-1 z-50">
           {locales.map((loc) => (
             <button
               key={loc}
@@ -60,7 +60,7 @@ export default function LanguageSwitcher() {
               <span className="text-gray-700 dark:text-gray-300">{localeNames[loc]}</span>
               {locale === loc && (
                 <svg
-                  className="w-4 h-4 text-blue-600 ml-auto"
+                  className="w-4 h-4 text-luxury-gold ml-auto"
                   fill="currentColor"
                   viewBox="0 0 20 20"
                 >

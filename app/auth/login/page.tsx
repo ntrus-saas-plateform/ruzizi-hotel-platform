@@ -29,18 +29,30 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen bg-gradient-subtle flex items-center justify-center px-4">
       <div className="max-w-md w-full space-y-8">
-        <div>
-          <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
-            Ruzizi Hôtel
-          </h2>
-          <p className="mt-2 text-center text-sm text-gray-600">
-            Connectez-vous à votre compte
-          </p>
+        {/* Logo */}
+        <div className="flex items-center justify-center space-x-3 group rounded-lg p-1">
+          <div className="relative">
+            <div className="w-14 h-14 bg-luxury-cream rounded-xl flex items-center justify-center transition-all duration-300 group-hover:scale-105 p-2 border border-amber-100">
+              <img
+                src="/ruzizi_black.png"
+                alt="Logo Ruzizi Hôtel"
+                className="w-full h-full object-contain"
+              />
+            </div>
+          </div>
+          <div className="flex flex-col">
+            <span className="text-2xl font-bold bg-gradient-luxury bg-clip-text text-transparent">
+              Ruzizi Hôtel
+            </span>
+            <span className={`text-xs text-center -mt-1 font-light text-luxury-text`}>
+              Excellence & Confort
+            </span>
+          </div>
         </div>
 
-        <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
+        <form className="bg-white rounded-2xl shadow-luxury p-8" onSubmit={handleSubmit}>
           {error && (
             <div className="rounded-md bg-red-50 p-4">
               <div className="flex">
@@ -51,38 +63,35 @@ export default function LoginPage() {
             </div>
           )}
 
-          <div className="rounded-md shadow-sm -space-y-px">
+          <div className="space-y-4">
             <div>
-              <label htmlFor="email" className="sr-only">
+              <label htmlFor="email" className="block text-sm font-semibold text-luxury-dark mb-2">
                 Adresse email
               </label>
               <input
                 id="email"
-                name="email"
                 type="email"
-                autoComplete="email"
-                required
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-t-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm"
-                placeholder="Adresse email"
+                className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                placeholder="votre.email@ruzizihotel.com"
+                required
                 disabled={isLoading}
               />
             </div>
+
             <div>
-              <label htmlFor="password" className="sr-only">
+              <label htmlFor="password" className="block text-sm font-semibold text-luxury-dark mb-2">
                 Mot de passe
               </label>
               <input
                 id="password"
-                name="password"
                 type="password"
-                autoComplete="current-password"
-                required
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-b-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm"
-                placeholder="Mot de passe"
+                className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                placeholder="••••••••"
+                required
                 disabled={isLoading}
               />
             </div>
@@ -92,9 +101,9 @@ export default function LoginPage() {
             <button
               type="submit"
               disabled={isLoading}
-              className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="w-full px-4 py-3 bg-gradient-luxury text-luxury-cream font-semibold rounded-xl disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-luxury"
             >
-              {isLoading ? 'Connexion...' : 'Se connecter'}
+              {isLoading ? 'Connexion en cours...' : 'Se connecter'}
             </button>
           </div>
         </form>

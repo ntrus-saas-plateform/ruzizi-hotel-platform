@@ -9,11 +9,11 @@ export default function BookingConfirmationPage({ params }: { params: { id: stri
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [language, setLanguage] = useState('fr');
+  const savedLanguage = localStorage.getItem('language') || 'fr';
 
   useEffect(() => {
-    const savedLanguage = localStorage.getItem('language') || 'fr';
     setLanguage(savedLanguage);
-  }, []);
+  }, [savedLanguage]);
 
   useEffect(() => {
     fetchBooking();
@@ -117,7 +117,7 @@ export default function BookingConfirmationPage({ params }: { params: { id: stri
               <div className="w-8 h-8 bg-amber-600 rounded-full animate-pulse"></div>
             </div>
           </div>
-          <p className="mt-6 text-lg text-gray-600 font-medium">{t.loading}</p>
+          <p className="mt-6 text-lg text-luxury-text font-medium">{t.loading}</p>
         </div>
       </div>
     );
@@ -132,11 +132,11 @@ export default function BookingConfirmationPage({ params }: { params: { id: stri
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg>
           </div>
-          <h1 className="text-2xl font-bold text-gray-900 mb-4">{t.notFound}</h1>
+          <h1 className="text-2xl font-bold text-luxury-dark mb-4">{t.notFound}</h1>
           <p className="text-red-600 mb-6">{error || t.notFound}</p>
           <button
             onClick={() => router.push('/')}
-            className="px-6 py-3 bg-gradient-to-r from-amber-600 to-amber-700 text-white rounded-xl hover:from-amber-700 hover:to-amber-800 transition-all duration-300 shadow-lg hover:shadow-xl font-medium"
+            className="px-6 py-3 bg-gradient-to-r from-amber-600 to-amber-700 text-luxury-cream rounded-xl hover:from-amber-700 hover:to-amber-800 transition-all duration-300 shadow-lg hover:shadow-xl font-medium"
           >
             {t.backHome}
           </button>
@@ -152,7 +152,7 @@ export default function BookingConfirmationPage({ params }: { params: { id: stri
         <div className="text-center mb-12">
           <div className="relative inline-block">
             <div className="w-24 h-24 bg-gradient-to-br from-green-500 to-green-600 rounded-full flex items-center justify-center mx-auto mb-6 shadow-2xl animate-bounce">
-              <svg className="w-12 h-12 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg className="w-12 h-12 text-luxury-cream" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
               </svg>
             </div>
@@ -162,27 +162,27 @@ export default function BookingConfirmationPage({ params }: { params: { id: stri
           <h1 className="text-5xl font-bold bg-gradient-to-r from-green-600 via-green-700 to-green-800 bg-clip-text text-transparent mb-4">
             {t.confirmed}
           </h1>
-          <p className="text-xl text-gray-600 max-w-2xl mx-auto">
+          <p className="text-xl text-luxury-text max-w-2xl mx-auto">
             {t.confirmationDesc}
           </p>
         </div>
 
         <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-2xl border border-white/20 overflow-hidden">
           {/* Confirmation Header */}
-          <div className="bg-gradient-to-r from-green-600 via-green-700 to-green-800 text-white p-8 relative overflow-hidden">
+          <div className="bg-gradient-to-r from-green-600 via-green-700 to-green-800 text-luxury-cream p-8 relative overflow-hidden">
             <div className="absolute inset-0 bg-black/10"></div>
             <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full -mr-16 -mt-16"></div>
             <div className="absolute bottom-0 left-0 w-24 h-24 bg-white/5 rounded-full -ml-12 -mb-12"></div>
             
             <div className="relative z-10 text-center">
               <div className="inline-flex items-center justify-center w-16 h-16 bg-white/20 backdrop-blur-sm rounded-full mb-4">
-                <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg className="w-8 h-8 text-luxury-cream" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
               </div>
               <div className="mb-6 pb-6 border-b border-white/20">
                 <h2 className="text-sm font-medium text-green-100 mb-2">{t.bookingNumber}</h2>
-                <p className="text-3xl font-bold text-white font-mono tracking-wider">{booking.bookingNumber}</p>
+                <p className="text-3xl font-bold text-luxury-cream font-mono tracking-wider">{booking.bookingNumber}</p>
               </div>
             </div>
           </div>
@@ -196,16 +196,16 @@ export default function BookingConfirmationPage({ params }: { params: { id: stri
                 <div className="bg-gradient-to-r from-amber-50 to-orange-50 rounded-xl p-6 border border-amber-100">
                   <div className="flex items-center mb-4">
                     <div className="w-10 h-10 bg-gradient-to-br from-amber-500 to-amber-600 rounded-lg flex items-center justify-center mr-4">
-                      <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <svg className="w-5 h-5 text-luxury-cream" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                       </svg>
                     </div>
-                    <h3 className="text-xl font-bold text-gray-900">{t.stayDates}</h3>
+                    <h3 className="text-xl font-bold text-luxury-dark">{t.stayDates}</h3>
                   </div>
                   <div className="grid grid-cols-2 gap-4">
                     <div>
                       <p className="text-sm font-semibold text-amber-700 mb-1">{t.arrival}</p>
-                      <p className="font-medium text-gray-900">
+                      <p className="font-medium text-luxury-dark">
                         {new Date(booking.checkInDate).toLocaleDateString(language === 'fr' ? 'fr-FR' : 'en-US', {
                           weekday: 'long',
                           year: 'numeric',
@@ -216,7 +216,7 @@ export default function BookingConfirmationPage({ params }: { params: { id: stri
                     </div>
                     <div>
                       <p className="text-sm font-semibold text-amber-700 mb-1">{t.departure}</p>
-                      <p className="font-medium text-gray-900">
+                      <p className="font-medium text-luxury-dark">
                         {new Date(booking.checkOutDate).toLocaleDateString(language === 'fr' ? 'fr-FR' : 'en-US', {
                           weekday: 'long',
                           year: 'numeric',
@@ -237,11 +237,11 @@ export default function BookingConfirmationPage({ params }: { params: { id: stri
                 <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl p-6 border border-blue-100">
                   <div className="flex items-center mb-4">
                     <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg flex items-center justify-center mr-4">
-                      <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <svg className="w-5 h-5 text-luxury-cream" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
                       </svg>
                     </div>
-                    <h3 className="text-xl font-bold text-gray-900">{t.guests}</h3>
+                    <h3 className="text-xl font-bold text-luxury-dark">{t.guests}</h3>
                   </div>
                   <p className="text-gray-700 text-lg font-medium mb-3">
                     {booking.guests?.adults || booking.numberOfGuests || 1} {(booking.guests?.adults || booking.numberOfGuests || 1) === 1 ? t.adult : t.adults}
@@ -250,7 +250,7 @@ export default function BookingConfirmationPage({ params }: { params: { id: stri
                   </p>
                   <div className="pt-3 border-t border-blue-200">
                     <p className="text-sm font-semibold text-blue-700 mb-1">{t.mainGuest}</p>
-                    <p className="text-gray-900 font-medium">
+                    <p className="text-luxury-dark font-medium">
                       {booking.mainGuest?.firstName || booking.guestName} {booking.mainGuest?.lastName || ''}
                     </p>
                   </div>
@@ -263,11 +263,11 @@ export default function BookingConfirmationPage({ params }: { params: { id: stri
                 <div className="bg-gradient-to-r from-green-50 to-emerald-50 rounded-xl p-6 border border-green-100">
                   <div className="flex items-center mb-4">
                     <div className="w-10 h-10 bg-gradient-to-br from-green-500 to-green-600 rounded-lg flex items-center justify-center mr-4">
-                      <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <svg className="w-5 h-5 text-luxury-cream" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1" />
                       </svg>
                     </div>
-                    <h3 className="text-xl font-bold text-gray-900">{t.totalPrice}</h3>
+                    <h3 className="text-xl font-bold text-luxury-dark">{t.totalPrice}</h3>
                   </div>
                   <p className="text-4xl font-bold text-green-600 mb-3">
                     {(booking.pricing?.totalPrice || booking.totalAmount || 0).toLocaleString()} {booking.pricing?.currency || 'BIF'}
@@ -288,11 +288,11 @@ export default function BookingConfirmationPage({ params }: { params: { id: stri
                 <div className="bg-gradient-to-r from-purple-50 to-pink-50 rounded-xl p-6 border border-purple-100">
                   <div className="flex items-center mb-4">
                     <div className="w-10 h-10 bg-gradient-to-br from-purple-500 to-purple-600 rounded-lg flex items-center justify-center mr-4">
-                      <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <svg className="w-5 h-5 text-luxury-cream" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                       </svg>
                     </div>
-                    <h3 className="text-xl font-bold text-gray-900">{t.importantInfo}</h3>
+                    <h3 className="text-xl font-bold text-luxury-dark">{t.importantInfo}</h3>
                   </div>
                   <ul className="space-y-3">
                     {t.infoItems.map((item, index) => (
@@ -326,7 +326,7 @@ export default function BookingConfirmationPage({ params }: { params: { id: stri
                 </button>
                 <button
                   onClick={() => router.push('/track-booking')}
-                  className="flex-1 px-6 py-3 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-xl hover:from-blue-700 hover:to-blue-800 transition-all duration-300 shadow-lg hover:shadow-xl font-medium flex items-center justify-center space-x-2 transform hover:scale-105"
+                  className="flex-1 px-6 py-3 bg-luxury-gold text-luxury-cream rounded-xl hover:from-blue-700 hover:to-blue-800 transition-all duration-300 shadow-lg hover:shadow-xl font-medium flex items-center justify-center space-x-2 transform hover:scale-105"
                 >
                   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
@@ -335,7 +335,7 @@ export default function BookingConfirmationPage({ params }: { params: { id: stri
                 </button>
                 <button
                   onClick={() => router.push('/')}
-                  className="flex-1 px-6 py-3 bg-gradient-to-r from-amber-600 to-amber-700 text-white rounded-xl hover:from-amber-700 hover:to-amber-800 transition-all duration-300 shadow-lg hover:shadow-xl font-medium flex items-center justify-center space-x-2 transform hover:scale-105"
+                  className="flex-1 px-6 py-3 bg-gradient-to-r from-amber-600 to-amber-700 text-luxury-cream rounded-xl hover:from-amber-700 hover:to-amber-800 transition-all duration-300 shadow-lg hover:shadow-xl font-medium flex items-center justify-center space-x-2 transform hover:scale-105"
                 >
                   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
@@ -350,12 +350,12 @@ export default function BookingConfirmationPage({ params }: { params: { id: stri
         {/* Contact Section */}
         <div className="mt-12 text-center">
           <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-xl border border-white/20 p-8">
-            <h3 className="text-2xl font-bold text-gray-900 mb-4">{t.questions}</h3>
-            <p className="text-gray-600 mb-6">Notre équipe est disponible 24h/24 pour vous assister</p>
+            <h3 className="text-2xl font-bold text-luxury-dark mb-4">{t.questions}</h3>
+            <p className="text-luxury-text mb-6">Notre équipe est disponible 24h/24 pour vous assister</p>
             <div className="flex flex-col sm:flex-row justify-center items-center space-y-4 sm:space-y-0 sm:space-x-8">
               <a
                 href="tel:+25769657554"
-                className="flex items-center px-6 py-3 bg-green-600 text-white rounded-xl hover:bg-green-700 transition-colors font-medium shadow-lg hover:shadow-xl transform hover:scale-105"
+                className="flex items-center px-6 py-3 bg-green-600 text-luxury-cream rounded-xl hover:bg-green-700 transition-colors font-medium shadow-lg hover:shadow-xl transform hover:scale-105"
               >
                 <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
@@ -364,7 +364,7 @@ export default function BookingConfirmationPage({ params }: { params: { id: stri
               </a>
               <a
                 href="mailto:contact@ruzizihotel.com"
-                className="flex items-center px-6 py-3 border-2 border-blue-600 text-blue-600 rounded-xl hover:bg-blue-600 hover:text-white transition-colors font-medium shadow-lg hover:shadow-xl transform hover:scale-105"
+                className="flex items-center px-6 py-3 border-2 border-luxury-gold text-luxury-gold rounded-xl hover:bg-luxury-gold hover:text-luxury-cream transition-colors font-medium shadow-lg hover:shadow-xl transform hover:scale-105"
               >
                 <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />

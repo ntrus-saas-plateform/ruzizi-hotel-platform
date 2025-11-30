@@ -159,12 +159,12 @@ export default function CreateEstablishmentPage() {
       <div className="mb-6">
         <button
           onClick={() => router.back()}
-          className="text-gray-600 hover:text-gray-900 flex items-center gap-2 mb-4"
+          className="text-luxury-text hover:text-luxury-dark flex items-center gap-2 mb-4"
         >
           ← Retour
         </button>
-        <h1 className="text-3xl font-bold text-gray-900">Nouvel Établissement</h1>
-        <p className="text-gray-600 mt-2">Créer un nouvel établissement hôtelier</p>
+        <h1 className="text-3xl font-bold text-luxury-dark">Nouvel Établissement</h1>
+        <p className="text-luxury-text mt-2">Créer un nouvel établissement hôtelier</p>
       </div>
 
       {error && (
@@ -185,8 +185,8 @@ export default function CreateEstablishmentPage() {
                   onClick={() => setActiveTab(tab.id)}
                   className={`px-3 sm:px-6 py-4 text-xs sm:text-sm font-medium whitespace-nowrap border-b-2 transition-colors min-w-0 flex-shrink-0 ${
                     activeTab === tab.id
-                      ? 'border-blue-600 text-blue-600'
-                      : 'border-transparent text-gray-600 hover:text-gray-900'
+                      ? 'border-luxury-gold text-luxury-gold'
+                      : 'border-transparent text-luxury-text hover:text-luxury-dark'
                   }`}
                 >
                   <span className="mr-1 sm:mr-2 text-sm">{tab.icon}</span>
@@ -446,7 +446,7 @@ export default function CreateEstablishmentPage() {
                           type="checkbox"
                           checked={formData.services.includes(service)}
                           onChange={() => toggleService(service)}
-                          className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                          className="w-4 h-4 text-luxury-gold border-gray-300 rounded focus:ring-blue-500"
                         />
                         <span className="text-sm text-gray-700">{service}</span>
                       </label>
@@ -465,7 +465,7 @@ export default function CreateEstablishmentPage() {
                           type="checkbox"
                           checked={formData.amenities.includes(amenity)}
                           onChange={() => toggleAmenity(amenity)}
-                          className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                          className="w-4 h-4 text-luxury-gold border-gray-300 rounded focus:ring-blue-500"
                         />
                         <span className="text-sm text-gray-700">{amenity}</span>
                       </label>
@@ -503,7 +503,7 @@ export default function CreateEstablishmentPage() {
                 id="isActive"
                 checked={formData.isActive}
                 onChange={(e) => setFormData({ ...formData, isActive: e.target.checked })}
-                className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                className="w-4 h-4 text-luxury-gold border-gray-300 rounded focus:ring-blue-500"
               />
               <label htmlFor="isActive" className="text-sm font-medium text-gray-700">
                 Établissement actif
@@ -522,7 +522,7 @@ export default function CreateEstablishmentPage() {
               <button
                 type="submit"
                 disabled={loading}
-                className="px-4 sm:px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 flex items-center justify-center gap-2 transition order-1 sm:order-2 min-h-[44px] touch-manipulation"
+                className="px-4 sm:px-6 py-2 bg-luxury-gold text-luxury-cream rounded-lg  disabled:opacity-50 flex items-center justify-center gap-2 transition order-1 sm:order-2 min-h-[44px] touch-manipulation"
               >
                 {loading ? (
                   <>

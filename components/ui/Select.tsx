@@ -48,7 +48,7 @@ const Select = memo(forwardRef<HTMLSelectElement, SelectProps>(
       transition-all
       duration-200
       font-medium
-      text-gray-900
+      text-luxury-dark
       focus:outline-none
       focus:ring-4
       focus:ring-amber-500/20

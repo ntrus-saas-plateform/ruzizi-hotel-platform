@@ -46,7 +46,7 @@ const Textarea = memo(forwardRef<HTMLTextAreaElement, TextareaProps>(
       transition-all
       duration-200
       font-medium
-      text-gray-900
+      text-luxury-dark
       placeholder:text-gray-400
       placeholder:font-normal
       focus:outline-none

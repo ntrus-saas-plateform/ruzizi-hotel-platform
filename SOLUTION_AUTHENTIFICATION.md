@@ -120,7 +120,7 @@ function MonComposant() {
       console.error('❌ Erreur:', error);
     }
   };
-
+****
   return (
     <div>
       <p>Bonjour {user?.firstName}</p>

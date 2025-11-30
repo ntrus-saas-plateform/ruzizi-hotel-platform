@@ -146,12 +146,12 @@ export default function LeavePage() {
       <div className="max-w-7xl mx-auto">
         <div className="mb-6 flex justify-between items-center">
           <div>
-            <h1 className="text-3xl font-bold text-gray-900">Gestion des Congés</h1>
-            <p className="text-gray-600 mt-2">Gérer les demandes de congés</p>
+            <h1 className="text-3xl font-bold text-luxury-dark">Gestion des Congés</h1>
+            <p className="text-luxury-text mt-2">Gérer les demandes de congés</p>
           </div>
           <button
             onClick={() => setShowForm(!showForm)}
-            className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
+            className="px-4 py-2 bg-luxury-gold text-luxury-cream rounded-md "
           >
             {showForm ? 'Annuler' : 'Nouvelle demande'}
           </button>
@@ -232,7 +232,7 @@ export default function LeavePage() {
               <div className="md:col-span-2">
                 <button
                   type="submit"
-                  className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
+                  className="px-4 py-2 bg-luxury-gold text-luxury-cream rounded-md "
                 >
                   Soumettre la demande
                 </button>
@@ -285,7 +285,7 @@ export default function LeavePage() {
         <div className="bg-white rounded-lg shadow overflow-hidden">
           {loading ? (
             <div className="p-8 text-center">
-              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-luxury-gold mx-auto"></div>
             </div>
           ) : leaves.length === 0 ? (
             <div className="p-8 text-center text-gray-500">Aucune demande trouvée</div>
@@ -319,7 +319,7 @@ export default function LeavePage() {
                   {leaves.map((leave) => (
                     <tr key={leave.id} className="hover:bg-gray-50">
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm font-medium text-gray-900">
+                        <div className="text-sm font-medium text-luxury-dark">
                           {(leave as any).employeeId?.personalInfo?.firstName}{' '}
                           {(leave as any).employeeId?.personalInfo?.lastName}
                         </div>

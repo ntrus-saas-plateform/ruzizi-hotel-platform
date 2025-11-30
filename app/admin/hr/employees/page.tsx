@@ -64,15 +64,23 @@ export default function EmployeesPage() {
       <div className="max-w-7xl mx-auto">
         <div className="mb-6 flex justify-between items-center">
           <div>
-            <h1 className="text-3xl font-bold text-gray-900">Gestion des Employés</h1>
-            <p className="text-gray-600 mt-2">Gérer tous les employés de la plateforme</p>
+            <h1 className="text-3xl font-bold text-luxury-dark">Gestion des Employés</h1>
+            <p className="text-luxury-text mt-2">Gérer tous les employés de la plateforme</p>
           </div>
-          <button
-            onClick={() => router.push('/hr/employees/create')}
-            className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
+          {/* <button
+            onClick={() => router.push('/admin/hr/employees/create')}
+            className="px-4 py-2.5 bg-luxury-gold text-luxury-cream rounded-lg hover:from-blue-700 hover:to-blue-800 transition-all shadow-md hover:shadow-lg font-medium flex items-center justify-center"
           >
+            <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M12 4v16m8-8H4"
+              />
+            </svg>
             Nouvel Employé
-          </button>
+          </button> */}
         </div>
 
         <div className="bg-white rounded-lg shadow p-6 mb-6">
@@ -119,7 +127,7 @@ export default function EmployeesPage() {
         <div className="bg-white rounded-lg shadow overflow-hidden">
           {loading ? (
             <div className="p-8 text-center">
-              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-luxury-gold mx-auto"></div>
             </div>
           ) : employees.length === 0 ? (
             <div className="p-8 text-center text-gray-500">Aucun employé trouvé</div>
@@ -127,75 +135,75 @@ export default function EmployeesPage() {
             <>
               <div className="overflow-x-auto">
                 <table className="min-w-full divide-y divide-gray-200">
-                <thead className="bg-gray-50">
-                  <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                      Numéro
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                      Nom
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                      Poste
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                      Département
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                      Statut
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                      Actions
-                    </th>
-                  </tr>
-                </thead>
-                <tbody className="bg-white divide-y divide-gray-200">
-                  {employees.map((employee) => (
-                    <tr key={employee.id} className="hover:bg-gray-50">
-                      <td className="px-6 py-4 whitespace-nowrap text-sm">
-                        {employee.employmentInfo.employeeNumber}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm font-medium text-gray-900">
-                          {employee.personalInfo.firstName} {employee.personalInfo.lastName}
-                        </div>
-                        <div className="text-sm text-gray-500">{employee.personalInfo.email}</div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm">
-                        {employee.employmentInfo.position}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm">
-                        {employee.employmentInfo.department}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <span
-                          className={`px-2 py-1 text-xs font-medium rounded-full ${
-                            employee.employmentInfo.status === 'active'
-                              ? 'bg-green-100 text-green-800'
-                              : employee.employmentInfo.status === 'inactive'
-                                ? 'bg-yellow-100 text-yellow-800'
-                                : 'bg-red-100 text-red-800'
-                          }`}
-                        >
-                          {employee.employmentInfo.status === 'active'
-                            ? 'Actif'
-                            : employee.employmentInfo.status === 'inactive'
-                              ? 'Inactif'
-                              : 'Terminé'}
-                        </span>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm">
-                        <button
-                          onClick={() => router.push(`/hr/employees/${employee.id}`)}
-                          className="text-blue-600 hover:text-blue-900"
-                        >
-                          Détails
-                        </button>
-                      </td>
+                  <thead className="bg-gray-50">
+                    <tr>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                        Numéro
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                        Nom
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                        Poste
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                        Département
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                        Statut
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                        Actions
+                      </th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
+                  </thead>
+                  <tbody className="bg-white divide-y divide-gray-200">
+                    {employees.map((employee) => (
+                      <tr key={employee.id} className="hover:bg-gray-50">
+                        <td className="px-6 py-4 whitespace-nowrap text-sm">
+                          {employee.employmentInfo.employeeNumber}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <div className="text-sm font-medium text-luxury-dark">
+                            {employee.personalInfo.firstName} {employee.personalInfo.lastName}
+                          </div>
+                          <div className="text-sm text-gray-500">{employee.personalInfo.email}</div>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm">
+                          {employee.employmentInfo.position}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm">
+                          {employee.employmentInfo.department}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <span
+                            className={`px-2 py-1 text-xs font-medium rounded-full ${
+                              employee.employmentInfo.status === 'active'
+                                ? 'bg-green-100 text-green-800'
+                                : employee.employmentInfo.status === 'inactive'
+                                  ? 'bg-yellow-100 text-yellow-800'
+                                  : 'bg-red-100 text-red-800'
+                            }`}
+                          >
+                            {employee.employmentInfo.status === 'active'
+                              ? 'Actif'
+                              : employee.employmentInfo.status === 'inactive'
+                                ? 'Inactif'
+                                : 'Terminé'}
+                          </span>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm">
+                          <button
+                            onClick={() => router.push(`/hr/employees/${employee.id}`)}
+                            className="text-luxury-gold hover:text-blue-900"
+                          >
+                            Détails
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
               </div>
               {totalPages > 1 && (
                 <div className="bg-gray-50 px-6 py-4 flex justify-between border-t">

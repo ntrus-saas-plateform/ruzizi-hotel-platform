@@ -49,7 +49,7 @@ const Input = memo(forwardRef<HTMLInputElement, InputProps>(
       transition-all
       duration-200
       font-medium
-      text-gray-900
+      text-luxury-dark
       placeholder:text-gray-400
       placeholder:font-normal
       focus:outline-none

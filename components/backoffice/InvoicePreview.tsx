@@ -39,18 +39,18 @@ export default function InvoicePreview({ invoice, establishment }: InvoicePrevie
       {/* Header */}
       <div className="flex justify-between items-start mb-8 pb-6 border-b-2 border-gray-200">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">FACTURE</h1>
-          <p className="text-lg text-gray-600">{invoice.invoiceNumber}</p>
+          <h1 className="text-3xl font-bold text-luxury-dark mb-2">FACTURE</h1>
+          <p className="text-lg text-luxury-text">{invoice.invoiceNumber}</p>
         </div>
         {establishment && (
           <div className="text-right">
-            <h2 className="text-xl font-bold text-gray-900">{establishment.name}</h2>
-            <p className="text-sm text-gray-600">{establishment.location.address}</p>
-            <p className="text-sm text-gray-600">
+            <h2 className="text-xl font-bold text-luxury-dark">{establishment.name}</h2>
+            <p className="text-sm text-luxury-text">{establishment.location.address}</p>
+            <p className="text-sm text-luxury-text">
               {establishment.location.city}, {establishment.location.country}
             </p>
-            <p className="text-sm text-gray-600 mt-2">{establishment.contacts.phone}</p>
-            <p className="text-sm text-gray-600">{establishment.contacts.email}</p>
+            <p className="text-sm text-luxury-text mt-2">{establishment.contacts.phone}</p>
+            <p className="text-sm text-luxury-text">{establishment.contacts.email}</p>
           </div>
         )}
       </div>
@@ -59,27 +59,27 @@ export default function InvoicePreview({ invoice, establishment }: InvoicePrevie
       <div className="grid grid-cols-2 gap-8 mb-8">
         <div>
           <h3 className="text-sm font-semibold text-gray-700 mb-2">FACTURÉ À</h3>
-          <p className="font-medium text-gray-900">{invoice.clientInfo.name}</p>
-          <p className="text-sm text-gray-600">{invoice.clientInfo.email}</p>
-          <p className="text-sm text-gray-600">{invoice.clientInfo.phone}</p>
+          <p className="font-medium text-luxury-dark">{invoice.clientInfo.name}</p>
+          <p className="text-sm text-luxury-text">{invoice.clientInfo.email}</p>
+          <p className="text-sm text-luxury-text">{invoice.clientInfo.phone}</p>
         </div>
         <div className="text-right">
           <div className="mb-2">
-            <span className="text-sm text-gray-600">Date d'émission: </span>
-            <span className="font-medium text-gray-900">
+            <span className="text-sm text-luxury-text">Date d'émission: </span>
+            <span className="font-medium text-luxury-dark">
               {new Date(invoice.issuedAt).toLocaleDateString('fr-FR')}
             </span>
           </div>
           {invoice.dueDate && (
             <div className="mb-2">
-              <span className="text-sm text-gray-600">Date d'échéance: </span>
-              <span className="font-medium text-gray-900">
+              <span className="text-sm text-luxury-text">Date d'échéance: </span>
+              <span className="font-medium text-luxury-dark">
                 {new Date(invoice.dueDate).toLocaleDateString('fr-FR')}
               </span>
             </div>
           )}
           <div>
-            <span className="text-sm text-gray-600">Statut: </span>
+            <span className="text-sm text-luxury-text">Statut: </span>
             <span
               className={`font-medium ${
                 invoice.status === 'paid'
@@ -115,12 +115,12 @@ export default function InvoicePreview({ invoice, establishment }: InvoicePrevie
           <tbody>
             {invoice.items.map((item, index) => (
               <tr key={index} className="border-b border-gray-100">
-                <td className="py-3 text-gray-900">{item.description}</td>
-                <td className="py-3 text-right text-gray-900">{item.quantity}</td>
-                <td className="py-3 text-right text-gray-900">
+                <td className="py-3 text-luxury-dark">{item.description}</td>
+                <td className="py-3 text-right text-luxury-dark">{item.quantity}</td>
+                <td className="py-3 text-right text-luxury-dark">
                   {item.unitPrice.toLocaleString()} BIF
                 </td>
-                <td className="py-3 text-right font-medium text-gray-900">
+                <td className="py-3 text-right font-medium text-luxury-dark">
                   {item.total.toLocaleString()} BIF
                 </td>
               </tr>
@@ -133,14 +133,14 @@ export default function InvoicePreview({ invoice, establishment }: InvoicePrevie
       <div className="flex justify-end mb-8">
         <div className="w-64">
           <div className="flex justify-between py-2">
-            <span className="text-gray-600">Sous-total:</span>
-            <span className="font-medium text-gray-900">
+            <span className="text-luxury-text">Sous-total:</span>
+            <span className="font-medium text-luxury-dark">
               {invoice.subtotal.toLocaleString()} BIF
             </span>
           </div>
           {invoice.discount && (
             <div className="flex justify-between py-2">
-              <span className="text-gray-600">
+              <span className="text-luxury-text">
                 Remise{invoice.discount.reason && ` (${invoice.discount.reason})`}:
               </span>
               <span className="font-medium text-green-600">
@@ -150,15 +150,15 @@ export default function InvoicePreview({ invoice, establishment }: InvoicePrevie
           )}
           {invoice.tax && (
             <div className="flex justify-between py-2">
-              <span className="text-gray-600">Taxes ({invoice.tax.rate}%):</span>
-              <span className="font-medium text-gray-900">
+              <span className="text-luxury-text">Taxes ({invoice.tax.rate}%):</span>
+              <span className="font-medium text-luxury-dark">
                 {invoice.tax.amount.toLocaleString()} BIF
               </span>
             </div>
           )}
           <div className="flex justify-between py-3 border-t-2 border-gray-200">
-            <span className="text-lg font-semibold text-gray-900">TOTAL:</span>
-            <span className="text-lg font-bold text-gray-900">
+            <span className="text-lg font-semibold text-luxury-dark">TOTAL:</span>
+            <span className="text-lg font-bold text-luxury-dark">
               {invoice.total.toLocaleString()} BIF
             </span>
           </div>
@@ -173,23 +173,23 @@ export default function InvoicePreview({ invoice, establishment }: InvoicePrevie
             <table className="w-full min-w-[400px]">
             <thead>
               <tr className="border-b border-gray-200">
-                <th className="text-left py-2 text-xs font-semibold text-gray-600">DATE</th>
-                <th className="text-left py-2 text-xs font-semibold text-gray-600">MÉTHODE</th>
-                <th className="text-left py-2 text-xs font-semibold text-gray-600">RÉFÉRENCE</th>
-                <th className="text-right py-2 text-xs font-semibold text-gray-600">MONTANT</th>
+                <th className="text-left py-2 text-xs font-semibold text-luxury-text">DATE</th>
+                <th className="text-left py-2 text-xs font-semibold text-luxury-text">MÉTHODE</th>
+                <th className="text-left py-2 text-xs font-semibold text-luxury-text">RÉFÉRENCE</th>
+                <th className="text-right py-2 text-xs font-semibold text-luxury-text">MONTANT</th>
               </tr>
             </thead>
             <tbody>
               {invoice.payments.map((payment, index) => (
                 <tr key={index} className="border-b border-gray-100">
-                  <td className="py-2 text-sm text-gray-900">
+                  <td className="py-2 text-sm text-luxury-dark">
                     {new Date(payment.date).toLocaleDateString('fr-FR')}
                   </td>
-                  <td className="py-2 text-sm text-gray-900">
+                  <td className="py-2 text-sm text-luxury-dark">
                     {getPaymentMethodLabel(payment.method)}
                   </td>
-                  <td className="py-2 text-sm text-gray-600">{payment.reference || '-'}</td>
-                  <td className="py-2 text-sm text-right font-medium text-gray-900">
+                  <td className="py-2 text-sm text-luxury-text">{payment.reference || '-'}</td>
+                  <td className="py-2 text-sm text-right font-medium text-luxury-dark">
                     {payment.amount.toLocaleString()} BIF
                   </td>
                 </tr>
@@ -200,7 +200,7 @@ export default function InvoicePreview({ invoice, establishment }: InvoicePrevie
           <div className="flex justify-end mt-4">
             <div className="w-64">
               <div className="flex justify-between py-2">
-                <span className="text-gray-600">Total payé:</span>
+                <span className="text-luxury-text">Total payé:</span>
                 <span className="font-medium text-green-600">
                   {invoice.payments
                     .reduce((sum, p) => sum + p.amount, 0)
@@ -209,7 +209,7 @@ export default function InvoicePreview({ invoice, establishment }: InvoicePrevie
                 </span>
               </div>
               <div className="flex justify-between py-2 border-t border-gray-200">
-                <span className="font-semibold text-gray-900">Solde restant:</span>
+                <span className="font-semibold text-luxury-dark">Solde restant:</span>
                 <span
                   className={`font-bold ${invoice.balance === 0 ? 'text-green-600' : 'text-red-600'}`}
                 >

@@ -135,8 +135,8 @@ export default function EstablishmentCardOptimized({
         <div className="absolute top-4 left-4">
           <span className={`px-3 py-1 rounded-full text-xs font-semibold ${
             isAvailable 
-              ? 'bg-green-500 text-white' 
-              : 'bg-red-500 text-white'
+              ? 'bg-green-500 text-luxury-cream' 
+              : 'bg-red-500 text-luxury-cream'
           }`}>
             {isAvailable ? 'Disponible' : 'Complet'}
           </span>
@@ -145,7 +145,7 @@ export default function EstablishmentCardOptimized({
         {/* Price Badge */}
         <div className="absolute top-4 right-4">
           <div className="bg-white/90 backdrop-blur-sm px-3 py-1 rounded-full">
-            <span className="text-sm font-bold text-gray-900">{priceRange}</span>
+            <span className="text-sm font-bold text-luxury-dark">{priceRange}</span>
           </div>
         </div>
 
@@ -193,7 +193,7 @@ export default function EstablishmentCardOptimized({
         {/* Header */}
         <div className="mb-4">
           <div className="flex items-start justify-between mb-2">
-            <h3 className="text-xl font-bold text-gray-900 group-hover:text-amber-600 transition-colors">
+            <h3 className="text-xl font-bold text-luxury-dark group-hover:text-amber-600 transition-colors">
               {name}
             </h3>
             <div className="flex items-center space-x-1">
@@ -201,7 +201,7 @@ export default function EstablishmentCardOptimized({
             </div>
           </div>
           
-          <div className="flex items-center text-sm text-gray-600 mb-2">
+          <div className="flex items-center text-sm text-luxury-text mb-2">
             <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
@@ -209,7 +209,7 @@ export default function EstablishmentCardOptimized({
             <span>{location}</span>
           </div>
 
-          <div className="flex items-center text-sm text-gray-600">
+          <div className="flex items-center text-sm text-luxury-text">
             <span className="font-semibold text-amber-600">{rating}</span>
             <span className="mx-1">•</span>
             <span>{reviewCount} avis</span>
@@ -217,7 +217,7 @@ export default function EstablishmentCardOptimized({
         </div>
 
         {/* Description */}
-        <p className="text-gray-600 text-sm leading-relaxed mb-4 line-clamp-2">
+        <p className="text-luxury-text text-sm leading-relaxed mb-4 line-clamp-2">
           {description}
         </p>
 
@@ -255,7 +255,7 @@ export default function EstablishmentCardOptimized({
             disabled={!isAvailable}
             className={`flex-1 px-4 py-2.5 rounded-xl font-medium text-sm transition-all duration-200 ${
               isAvailable
-                ? 'bg-gradient-to-r from-amber-600 to-amber-700 text-white hover:from-amber-700 hover:to-amber-800 shadow-md hover:shadow-lg transform hover:scale-105'
+                ? 'bg-gradient-to-r from-amber-600 to-amber-700 text-luxury-cream hover:from-amber-700 hover:to-amber-800 shadow-md hover:shadow-lg transform hover:scale-105'
                 : 'bg-gray-300 text-gray-500 cursor-not-allowed'
             }`}
           >

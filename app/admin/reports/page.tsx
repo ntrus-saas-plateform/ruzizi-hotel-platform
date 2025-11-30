@@ -101,14 +101,14 @@ export default function ReportsPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-gray-100 to-green-50 p-4 md:p-6 lg:p-8">
+    <div className="min-h-screen p-4 md:p-6">
       <div className="max-w-7xl mx-auto">
         {/* Header */}
         <div className="mb-8">
-          <h1 className="text-3xl md:text-4xl font-bold bg-gradient-to-r from-gray-900 via-green-800 to-green-900 bg-clip-text text-transparent mb-2">
+          <h1 className="text-3xl md:text-4xl font-bold text-luxury-dark mb-2">
             Rapports
           </h1>
-          <p className="text-gray-600">Générer et consulter les rapports détaillés</p>
+          <p className="text-luxury-text">Générer et consulter les rapports détaillés</p>
         </div>
 
         {/* Report Type Selection */}
@@ -119,11 +119,11 @@ export default function ReportsPage() {
               onClick={() => setReportType(type)}
               className={`p-6 rounded-2xl border-2 transition-all duration-300 transform hover:scale-105 ${
                 reportType === type
-                  ? 'bg-gradient-to-br from-green-500 to-green-600 border-green-600 text-white shadow-xl'
-                  : 'bg-white/80 backdrop-blur-sm border-gray-200 text-gray-700 hover:border-green-500'
+                  ? 'bg-gradient-luxury border-luxury-gold text-luxury-cream shadow-xl'
+                  : 'bg-white/80 backdrop-blur-sm border-gray-200 text-gray-700 hover:border-[hsl(var(--color-luxury-gold))]'
               }`}
             >
-              <svg className={`w-8 h-8 mx-auto mb-3 ${reportType === type ? 'text-white' : 'text-green-600'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg className={`w-8 h-8 mx-auto mb-3 ${reportType === type ? 'text-luxury-cream' : 'text-luxury-gold'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 {reportTypeIcons[type]}
               </svg>
               <p className="font-semibold text-center">
@@ -139,8 +139,8 @@ export default function ReportsPage() {
         {/* Configuration */}
         <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg border border-white/20 p-6 mb-8">
           <div className="flex items-center justify-between mb-6">
-            <h2 className="text-xl font-bold text-gray-900 flex items-center">
-              <svg className="w-6 h-6 mr-3 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <h2 className="text-xl font-bold text-luxury-dark flex items-center">
+              <svg className="w-6 h-6 mr-3 text-luxury-gold" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4" />
               </svg>
               Configuration du rapport
@@ -181,7 +181,7 @@ export default function ReportsPage() {
                         type="checkbox"
                         checked={selectedEstablishments.includes(est.id)}
                         onChange={() => toggleEstablishment(est.id)}
-                        className="w-5 h-5 text-green-600 border-gray-300 rounded focus:ring-green-500"
+                        className="w-5 h-5 text-luxury-gold border-gray-300 rounded focus:ring-green-500"
                       />
                       <span className="text-sm font-medium text-gray-700">{est.name}</span>
                     </label>
@@ -245,7 +245,7 @@ export default function ReportsPage() {
             <button
               onClick={generateReport}
               disabled={loading}
-              className="w-full md:w-auto px-8 py-4 bg-gradient-to-r from-green-600 to-green-700 text-white rounded-xl hover:from-green-700 hover:to-green-800 disabled:from-gray-400 disabled:to-gray-500 transition-all duration-300 shadow-lg hover:shadow-xl font-semibold flex items-center justify-center transform hover:scale-105 disabled:transform-none"
+              className="w-full md:w-auto px-8 py-4 bg-luxury-gold text-luxury-cream rounded-xl  disabled:from-gray-400 disabled:to-gray-500 transition-all duration-300 shadow-lg hover:shadow-xl font-semibold flex items-center justify-center transform hover:scale-105 disabled:transform-none"
             >
               {loading ? (
                 <>
@@ -270,8 +270,8 @@ export default function ReportsPage() {
         {report && (
           <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg border border-white/20 p-6 md:p-8">
             <div className="mb-8 pb-6 border-b border-gray-200">
-              <h2 className="text-3xl font-bold text-gray-900 mb-2">{report.title}</h2>
-              <p className="text-sm text-gray-600 flex items-center">
+              <h2 className="text-3xl font-bold text-luxury-dark mb-2">{report.title}</h2>
+              <p className="text-sm text-luxury-text flex items-center">
                 <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                 </svg>
@@ -281,14 +281,14 @@ export default function ReportsPage() {
 
             {report.summary && (
               <div className="mb-8">
-                <h3 className="text-xl font-bold text-gray-900 mb-6">Résumé</h3>
+                <h3 className="text-xl font-bold text-luxury-dark mb-6">Résumé</h3>
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                   {Object.entries(report.summary).map(([key, value]) => (
                     <div key={key} className="bg-gradient-to-br from-gray-50 to-green-50 rounded-xl p-6 border border-gray-200">
-                      <p className="text-sm text-gray-600 capitalize mb-2">
+                      <p className="text-sm text-luxury-text capitalize mb-2">
                         {key.replace(/([A-Z])/g, ' $1').trim()}
                       </p>
-                      <p className="text-2xl font-bold text-gray-900">
+                      <p className="text-2xl font-bold text-luxury-dark">
                         {typeof value === 'number'
                           ? key.includes('rate') || key.includes('margin')
                             ? `${value.toFixed(2)}%`
@@ -305,11 +305,11 @@ export default function ReportsPage() {
 
             {report.details && (
               <div className="space-y-8">
-                <h3 className="text-xl font-bold text-gray-900">Détails</h3>
+                <h3 className="text-xl font-bold text-luxury-dark">Détails</h3>
                 
                 {report.details.expensesByCategory && (
                   <div>
-                    <h4 className="text-lg font-semibold text-gray-900 mb-4">Dépenses par catégorie</h4>
+                    <h4 className="text-lg font-semibold text-luxury-dark mb-4">Dépenses par catégorie</h4>
                     <div className="overflow-x-auto">
                       <table className="min-w-full divide-y divide-gray-200">
                         <thead className="bg-gradient-to-r from-gray-50 to-green-50">
@@ -322,9 +322,9 @@ export default function ReportsPage() {
                         <tbody className="bg-white divide-y divide-gray-200">
                           {report.details.expensesByCategory.map((item: any, idx: number) => (
                             <tr key={idx} className="hover:bg-green-50 transition-colors">
-                              <td className="px-6 py-4 text-sm font-medium text-gray-900">{item.category}</td>
-                              <td className="px-6 py-4 text-sm text-gray-900">{item.amount.toLocaleString()} BIF</td>
-                              <td className="px-6 py-4 text-sm text-gray-900">{item.count}</td>
+                              <td className="px-6 py-4 text-sm font-medium text-luxury-dark">{item.category}</td>
+                              <td className="px-6 py-4 text-sm text-luxury-dark">{item.amount.toLocaleString()} BIF</td>
+                              <td className="px-6 py-4 text-sm text-luxury-dark">{item.count}</td>
                             </tr>
                           ))}
                         </tbody>
@@ -335,7 +335,7 @@ export default function ReportsPage() {
 
                 {report.details.topAccommodations && (
                   <div>
-                    <h4 className="text-lg font-semibold text-gray-900 mb-4">Top 10 Hébergements</h4>
+                    <h4 className="text-lg font-semibold text-luxury-dark mb-4">Top 10 Hébergements</h4>
                     <div className="overflow-x-auto">
                       <table className="min-w-full divide-y divide-gray-200">
                         <thead className="bg-gradient-to-r from-gray-50 to-green-50">
@@ -349,10 +349,10 @@ export default function ReportsPage() {
                         <tbody className="bg-white divide-y divide-gray-200">
                           {report.details.topAccommodations.map((item: any, idx: number) => (
                             <tr key={idx} className="hover:bg-green-50 transition-colors">
-                              <td className="px-6 py-4 text-sm font-medium text-gray-900">{item.name}</td>
-                              <td className="px-6 py-4 text-sm text-gray-900">{item.type}</td>
-                              <td className="px-6 py-4 text-sm text-gray-900">{item.bookings}</td>
-                              <td className="px-6 py-4 text-sm font-bold text-green-600">{item.revenue.toLocaleString()} BIF</td>
+                              <td className="px-6 py-4 text-sm font-medium text-luxury-dark">{item.name}</td>
+                              <td className="px-6 py-4 text-sm text-luxury-dark">{item.type}</td>
+                              <td className="px-6 py-4 text-sm text-luxury-dark">{item.bookings}</td>
+                              <td className="px-6 py-4 text-sm font-bold text-luxury-gold">{item.revenue.toLocaleString()} BIF</td>
                             </tr>
                           ))}
                         </tbody>
@@ -365,7 +365,7 @@ export default function ReportsPage() {
 
             {report.establishments && (
               <div className="mt-8">
-                <h3 className="text-xl font-bold text-gray-900 mb-6">Comparaison des Établissements</h3>
+                <h3 className="text-xl font-bold text-luxury-dark mb-6">Comparaison des Établissements</h3>
                 <div className="overflow-x-auto">
                   <table className="min-w-full divide-y divide-gray-200">
                     <thead className="bg-gradient-to-r from-gray-50 to-green-50">
@@ -381,12 +381,12 @@ export default function ReportsPage() {
                     <tbody className="bg-white divide-y divide-gray-200">
                       {report.establishments.map((est: any, idx: number) => (
                         <tr key={idx} className="hover:bg-green-50 transition-colors">
-                          <td className="px-6 py-4 text-sm font-bold text-gray-900">{est.name}</td>
-                          <td className="px-6 py-4 text-sm text-gray-900">{est.revenue.toLocaleString()} BIF</td>
-                          <td className="px-6 py-4 text-sm text-gray-900">{est.expenses.toLocaleString()} BIF</td>
-                          <td className="px-6 py-4 text-sm font-bold text-green-600">{est.netProfit.toLocaleString()} BIF</td>
-                          <td className="px-6 py-4 text-sm text-gray-900">{est.profitMargin.toFixed(2)}%</td>
-                          <td className="px-6 py-4 text-sm text-gray-900">{est.occupancyRate.toFixed(2)}%</td>
+                          <td className="px-6 py-4 text-sm font-bold text-luxury-dark">{est.name}</td>
+                          <td className="px-6 py-4 text-sm text-luxury-dark">{est.revenue.toLocaleString()} BIF</td>
+                          <td className="px-6 py-4 text-sm text-luxury-dark">{est.expenses.toLocaleString()} BIF</td>
+                          <td className="px-6 py-4 text-sm font-bold text-luxury-gold">{est.netProfit.toLocaleString()} BIF</td>
+                          <td className="px-6 py-4 text-sm text-luxury-dark">{est.profitMargin.toFixed(2)}%</td>
+                          <td className="px-6 py-4 text-sm text-luxury-dark">{est.occupancyRate.toFixed(2)}%</td>
                         </tr>
                       ))}
                     </tbody>

@@ -73,7 +73,7 @@ export default function NotificationBell() {
     <div className="relative">
       <button
         onClick={() => setShowDropdown(!showDropdown)}
-        className="relative p-2 text-gray-600 hover:text-gray-900"
+        className="relative p-2 text-luxury-text hover:text-[hsl(var(--color-luxury-dark))]"
       >
         <svg
           className="w-6 h-6"
@@ -89,7 +89,7 @@ export default function NotificationBell() {
           />
         </svg>
         {unreadCount > 0 && (
-          <span className="absolute top-0 right-0 inline-flex items-center justify-center px-2 py-1 text-xs font-bold leading-none text-white transform translate-x-1/2 -translate-y-1/2 bg-red-600 rounded-full">
+          <span className="absolute top-0 right-0 inline-flex items-center justify-center px-2 py-1 text-xs font-bold leading-none text-luxury-cream transform translate-x-1/2 -translate-y-1/2 bg-red-600 rounded-full">
             {unreadCount}
           </span>
         )}
@@ -97,11 +97,11 @@ export default function NotificationBell() {
 
       {showDropdown && (
         <div className="absolute right-0 mt-2 w-80 bg-white rounded-lg shadow-lg z-50 max-h-96 overflow-y-auto">
-          <div className="p-4 border-b">
-            <h3 className="text-lg font-semibold">Notifications</h3>
+          <div className="px-4 py-2 border-b border-gray-200">
+            <h3 className="text-lg font-semibold text-luxury-dark">Notifications</h3>
           </div>
           {notifications.length === 0 ? (
-            <div className="p-4 text-center text-gray-500">
+            <div className="p-4 text-center text-[hsl(var(--color-luxury-text))]/90">
               Aucune notification
             </div>
           ) : (
@@ -109,7 +109,7 @@ export default function NotificationBell() {
               {notifications.map((notification) => (
                 <div
                   key={notification.id}
-                  className={`p-4 border-b hover:bg-gray-50 cursor-pointer ${!notification.read ? 'bg-blue-50' : ''
+                  className={`p-4 border-b border-gray-200 hover:bg-gray-50 cursor-pointer ${!notification.read ? 'bg-blue-50' : ''
                     }`}
                   onClick={() => !notification.read && markAsRead(notification.id)}
                 >
@@ -119,7 +119,7 @@ export default function NotificationBell() {
                     </span>
                     <div className="flex-1">
                       <p className="font-semibold text-sm">{notification.title}</p>
-                      <p className="text-sm text-gray-600">{notification.message}</p>
+                      <p className="text-sm text-luxury-text">{notification.message}</p>
                       <p className="text-xs text-gray-400 mt-1">
                         {new Date(notification.createdAt).toLocaleString('fr-FR')}
                       </p>

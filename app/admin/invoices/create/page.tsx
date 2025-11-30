@@ -207,12 +207,12 @@ export default function CreateInvoicePage() {
         <div className="mb-6">
           <button
             onClick={() => router.push('/invoices')}
-            className="text-blue-600 hover:text-blue-800 mb-2"
+            className="text-luxury-gold  mb-2"
           >
             ← Retour aux factures
           </button>
-          <h1 className="text-3xl font-bold text-gray-900">Nouvelle Facture</h1>
-          <p className="text-gray-600 mt-2">Créer une facture manuellement</p>
+          <h1 className="text-3xl font-bold text-luxury-dark">Nouvelle Facture</h1>
+          <p className="text-luxury-text mt-2">Créer une facture manuellement</p>
         </div>
 
         {/* Error */}
@@ -225,7 +225,7 @@ export default function CreateInvoicePage() {
         <form onSubmit={handleSubmit} className="space-y-6">
           {/* Establishment and Booking */}
           <div className="bg-white rounded-lg shadow p-6">
-            <h2 className="text-lg font-semibold text-gray-900 mb-4">Informations de base</h2>
+            <h2 className="text-lg font-semibold text-luxury-dark mb-4">Informations de base</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -285,7 +285,7 @@ export default function CreateInvoicePage() {
 
           {/* Client Info */}
           <div className="bg-white rounded-lg shadow p-6">
-            <h2 className="text-lg font-semibold text-gray-900 mb-4">Informations Client</h2>
+            <h2 className="text-lg font-semibold text-luxury-dark mb-4">Informations Client</h2>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Nom *</label>
@@ -330,11 +330,11 @@ export default function CreateInvoicePage() {
           {/* Items */}
           <div className="bg-white rounded-lg shadow p-6">
             <div className="flex justify-between items-center mb-4">
-              <h2 className="text-lg font-semibold text-gray-900">Articles</h2>
+              <h2 className="text-lg font-semibold text-luxury-dark">Articles</h2>
               <button
                 type="button"
                 onClick={addItem}
-                className="px-3 py-1 bg-blue-600 text-white text-sm rounded-md hover:bg-blue-700"
+                className="px-3 py-1 bg-luxury-gold text-luxury-cream text-sm rounded-md "
               >
                 + Ajouter un article
               </button>
@@ -402,7 +402,7 @@ export default function CreateInvoicePage() {
                       <button
                         type="button"
                         onClick={() => removeItem(index)}
-                        className="w-full px-3 py-2 bg-red-600 text-white rounded-md hover:bg-red-700"
+                        className="w-full px-3 py-2 bg-red-600 text-luxury-cream rounded-md hover:bg-red-700"
                       >
                         ×
                       </button>
@@ -415,7 +415,7 @@ export default function CreateInvoicePage() {
 
           {/* Discount and Tax */}
           <div className="bg-white rounded-lg shadow p-6">
-            <h2 className="text-lg font-semibold text-gray-900 mb-4">Remise et Taxes</h2>
+            <h2 className="text-lg font-semibold text-luxury-dark mb-4">Remise et Taxes</h2>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -465,15 +465,15 @@ export default function CreateInvoicePage() {
 
           {/* Summary */}
           <div className="bg-white rounded-lg shadow p-6">
-            <h2 className="text-lg font-semibold text-gray-900 mb-4">Résumé</h2>
+            <h2 className="text-lg font-semibold text-luxury-dark mb-4">Résumé</h2>
             <div className="space-y-2">
               <div className="flex justify-between">
-                <span className="text-gray-600">Sous-total:</span>
+                <span className="text-luxury-text">Sous-total:</span>
                 <span className="font-medium">{calculateSubtotal().toLocaleString()} BIF</span>
               </div>
               {formData.discountAmount && (
                 <div className="flex justify-between">
-                  <span className="text-gray-600">Remise:</span>
+                  <span className="text-luxury-text">Remise:</span>
                   <span className="font-medium text-green-600">
                     -{parseFloat(formData.discountAmount).toLocaleString()} BIF
                   </span>
@@ -481,7 +481,7 @@ export default function CreateInvoicePage() {
               )}
               {formData.taxRate && (
                 <div className="flex justify-between">
-                  <span className="text-gray-600">Taxes ({formData.taxRate}%):</span>
+                  <span className="text-luxury-text">Taxes ({formData.taxRate}%):</span>
                   <span className="font-medium">
                     {(
                       ((calculateSubtotal() -
@@ -495,7 +495,7 @@ export default function CreateInvoicePage() {
               )}
               <div className="flex justify-between pt-2 border-t">
                 <span className="text-lg font-semibold">Total:</span>
-                <span className="text-lg font-bold text-blue-600">
+                <span className="text-lg font-bold text-luxury-gold">
                   {calculateTotal().toLocaleString()} BIF
                 </span>
               </div>
@@ -505,7 +505,7 @@ export default function CreateInvoicePage() {
           <button
             type="submit"
             disabled={submitting}
-            className="w-full px-4 py-3 bg-blue-600 text-white font-medium rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+            className="w-full px-4 py-3 bg-luxury-gold text-luxury-cream font-medium rounded-md  disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {submitting ? 'Création en cours...' : 'Créer la facture'}
           </button>

@@ -92,18 +92,18 @@ export default function CreateBookingPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 p-6">
+    <div className="min-h-screen p-6">
       <div className="max-w-4xl mx-auto">
         {/* Header */}
         <div className="mb-6">
           <button
             onClick={() => router.push('/bookings')}
-            className="text-blue-600 hover:text-blue-800 mb-2"
+            className="text-luxury-gold  mb-2"
           >
             ← Retour aux réservations
           </button>
-          <h1 className="text-3xl font-bold text-gray-900">Nouvelle Réservation</h1>
-          <p className="text-gray-600 mt-2">Créer une réservation sur place</p>
+          <h1 className="text-3xl font-bold text-luxury-dark">Nouvelle Réservation</h1>
+          <p className="text-luxury-text mt-2">Créer une réservation sur place</p>
         </div>
 
         {/* Error */}
@@ -120,7 +120,7 @@ export default function CreateBookingPage() {
               <form onSubmit={handleSubmit} className="space-y-6">
                 {/* Establishment and Accommodation Selection */}
                 <div>
-                  <h2 className="text-lg font-semibold text-gray-900 mb-4">
+                  <h2 className="text-lg font-semibold text-luxury-dark mb-4">
                     Sélection de l'hébergement
                   </h2>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -170,7 +170,7 @@ export default function CreateBookingPage() {
 
                 {/* Dates */}
                 <div>
-                  <h2 className="text-lg font-semibold text-gray-900 mb-4">Dates du séjour</h2>
+                  <h2 className="text-lg font-semibold text-luxury-dark mb-4">Dates du séjour</h2>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -206,7 +206,7 @@ export default function CreateBookingPage() {
 
                 {/* Client Information */}
                 <div>
-                  <h2 className="text-lg font-semibold text-gray-900 mb-4">
+                  <h2 className="text-lg font-semibold text-luxury-dark mb-4">
                     Informations Client
                   </h2>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -314,7 +314,7 @@ export default function CreateBookingPage() {
                 <button
                   type="submit"
                   disabled={createBookingMutation.isPending}
-                  className="w-full px-4 py-3 bg-blue-600 text-white font-medium rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="w-full px-4 py-3 bg-luxury-gold text-luxury-cream font-medium rounded-md  disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {createBookingMutation.isPending ? 'Création en cours...' : 'Créer la réservation'}
                 </button>
@@ -326,7 +326,7 @@ export default function CreateBookingPage() {
           <div>
             {selectedAccommodation ? (
               <div className="bg-white rounded-lg shadow p-6 sticky top-6">
-                <h2 className="text-lg font-semibold text-gray-900 mb-4">Hébergement sélectionné</h2>
+                <h2 className="text-lg font-semibold text-luxury-dark mb-4">Hébergement sélectionné</h2>
 
                 {selectedAccommodation.images[0] && (
                   <img
@@ -336,8 +336,8 @@ export default function CreateBookingPage() {
                   />
                 )}
 
-                <h3 className="font-semibold text-gray-900">{selectedAccommodation.name}</h3>
-                <p className="text-sm text-gray-600 mb-4">
+                <h3 className="font-semibold text-luxury-dark">{selectedAccommodation.name}</h3>
+                <p className="text-sm text-luxury-text mb-4">
                   {selectedAccommodation.type === 'standard_room'
                     ? 'Chambre Standard'
                     : selectedAccommodation.type === 'suite'
@@ -349,23 +349,23 @@ export default function CreateBookingPage() {
 
                 <div className="space-y-2 text-sm">
                   <div className="flex justify-between">
-                    <span className="text-gray-600">Prix</span>
+                    <span className="text-luxury-text">Prix</span>
                     <span className="font-semibold">
                       {selectedAccommodation.pricing.basePrice.toLocaleString()} BIF
                     </span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-gray-600">Capacité</span>
+                    <span className="text-luxury-text">Capacité</span>
                     <span className="font-semibold">
                       {selectedAccommodation.capacity.maxGuests} personnes
                     </span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-gray-600">Chambres</span>
+                    <span className="text-luxury-text">Chambres</span>
                     <span className="font-semibold">{selectedAccommodation.capacity.bedrooms}</span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-gray-600">Salles de bain</span>
+                    <span className="text-luxury-text">Salles de bain</span>
                     <span className="font-semibold">{selectedAccommodation.capacity.bathrooms}</span>
                   </div>
                 </div>

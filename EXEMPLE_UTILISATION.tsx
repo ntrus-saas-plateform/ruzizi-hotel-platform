@@ -73,7 +73,7 @@ export function LoginPage() {
         <button
           type="submit"
           disabled={isLoading}
-          className="w-full bg-blue-600 text-white py-2 rounded hover:bg-blue-700 disabled:opacity-50"
+          className="w-full bg-luxury-gold text-luxury-cream py-2 rounded  disabled:opacity-50"
         >
           {isLoading ? 'Connexion...' : 'Se connecter'}
         </button>
@@ -124,7 +124,7 @@ export function CreateEstablishmentButton() {
     <button
       onClick={handleCreate}
       disabled={isLoading}
-      className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 disabled:opacity-50"
+      className="bg-green-600 text-luxury-cream px-4 py-2 rounded hover:bg-green-700 disabled:opacity-50"
     >
       {isLoading ? 'Création...' : 'Créer un établissement'}
     </button>
@@ -161,7 +161,7 @@ export function UserProfile() {
 
       <button
         onClick={logout}
-        className="mt-4 bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700"
+        className="mt-4 bg-red-600 text-luxury-cream px-4 py-2 rounded hover:bg-red-700"
       >
         Déconnexion
       </button>
@@ -224,7 +224,7 @@ export function EstablishmentsList() {
           {establishments.map((establishment) => (
             <div key={establishment.id} className="p-4 bg-white rounded shadow">
               <h3 className="font-bold text-lg">{establishment.name}</h3>
-              <p className="text-gray-600">{establishment.description}</p>
+              <p className="text-luxury-text">{establishment.description}</p>
               <p className="text-sm mt-2">
                 📍 {establishment.address.city}
               </p>

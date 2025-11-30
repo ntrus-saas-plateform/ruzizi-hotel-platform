@@ -199,8 +199,8 @@ export default function EditEstablishmentPage() {
     return (
       <div className="p-6 flex items-center justify-center min-h-screen">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
-          <p className="mt-4 text-gray-600">Chargement...</p>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-luxury-gold mx-auto"></div>
+          <p className="mt-4 text-luxury-text">Chargement...</p>
         </div>
       </div>
     );
@@ -211,12 +211,12 @@ export default function EditEstablishmentPage() {
       <div className="mb-6">
         <button
           onClick={() => router.back()}
-          className="text-gray-600 hover:text-gray-900 flex items-center gap-2 mb-4"
+          className="text-luxury-text hover:text-luxury-dark flex items-center gap-2 mb-4"
         >
           ← Retour
         </button>
-        <h1 className="text-3xl font-bold text-gray-900">Modifier l'Établissement</h1>
-        <p className="text-gray-600 mt-2">Mettre à jour les informations de l'établissement</p>
+        <h1 className="text-3xl font-bold text-luxury-dark">Modifier l'Établissement</h1>
+        <p className="text-luxury-text mt-2">Mettre à jour les informations de l'établissement</p>
       </div>
 
       {error && (
@@ -236,8 +236,8 @@ export default function EditEstablishmentPage() {
                   onClick={() => setActiveTab(tab.id)}
                   className={`px-6 py-4 text-sm font-medium whitespace-nowrap border-b-2 transition-colors ${
                     activeTab === tab.id
-                      ? 'border-blue-600 text-blue-600'
-                      : 'border-transparent text-gray-600 hover:text-gray-900'
+                      ? 'border-luxury-gold text-luxury-gold'
+                      : 'border-transparent text-luxury-text hover:text-luxury-dark'
                   }`}
                 >
                   <span className="mr-2">{tab.icon}</span>
@@ -477,7 +477,7 @@ export default function EditEstablishmentPage() {
                           type="checkbox"
                           checked={formData.services.includes(service)}
                           onChange={() => toggleService(service)}
-                          className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                          className="w-4 h-4 text-luxury-gold border-gray-300 rounded focus:ring-blue-500"
                         />
                         <span className="text-sm text-gray-700">{service}</span>
                       </label>
@@ -496,7 +496,7 @@ export default function EditEstablishmentPage() {
                           type="checkbox"
                           checked={formData.amenities.includes(amenity)}
                           onChange={() => toggleAmenity(amenity)}
-                          className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                          className="w-4 h-4 text-luxury-gold border-gray-300 rounded focus:ring-blue-500"
                         />
                         <span className="text-sm text-gray-700">{amenity}</span>
                       </label>
@@ -526,7 +526,7 @@ export default function EditEstablishmentPage() {
               id="isActive"
               checked={formData.isActive}
               onChange={(e) => setFormData({ ...formData, isActive: e.target.checked })}
-              className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+              className="w-4 h-4 text-luxury-gold border-gray-300 rounded focus:ring-blue-500"
             />
             <label htmlFor="isActive" className="text-sm font-medium text-gray-700">
               Établissement actif
@@ -545,7 +545,7 @@ export default function EditEstablishmentPage() {
             <button
               type="submit"
               disabled={saving}
-              className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50"
+              className="px-6 py-2 bg-luxury-gold text-luxury-cream rounded-lg  disabled:opacity-50"
             >
               {saving ? 'Enregistrement...' : 'Enregistrer les modifications'}
             </button>

@@ -123,8 +123,8 @@ export default function PendingBookingsPage() {
     return (
       <div className="p-6 flex items-center justify-center min-h-screen">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
-          <p className="mt-4 text-gray-600">Chargement...</p>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-luxury-gold mx-auto"></div>
+          <p className="mt-4 text-luxury-text">Chargement...</p>
         </div>
       </div>
     );
@@ -135,14 +135,14 @@ export default function PendingBookingsPage() {
       <div className="mb-6">
         <button
           onClick={() => router.back()}
-          className="text-gray-600 hover:text-gray-900 flex items-center gap-2 mb-4"
+          className="text-luxury-text hover:text-luxury-dark flex items-center gap-2 mb-4"
         >
           ← Retour
         </button>
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-3xl font-bold text-gray-900">Réservations en attente</h1>
-            <p className="text-gray-600 mt-2">
+            <h1 className="text-3xl font-bold text-luxury-dark">Réservations en attente</h1>
+            <p className="text-luxury-text mt-2">
               {bookings.length} réservation(s) en attente de confirmation
             </p>
           </div>
@@ -160,7 +160,7 @@ export default function PendingBookingsPage() {
           <svg className="w-16 h-16 text-gray-400 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
           </svg>
-          <p className="text-gray-600 text-lg font-medium">Aucune réservation en attente</p>
+          <p className="text-luxury-text text-lg font-medium">Aucune réservation en attente</p>
           <p className="text-gray-500 text-sm mt-2">Toutes les réservations ont été traitées</p>
         </div>
       ) : (
@@ -173,7 +173,7 @@ export default function PendingBookingsPage() {
               <div className="flex items-start justify-between">
                 <div className="flex-1">
                   <div className="flex items-center gap-3 mb-3">
-                    <h3 className="text-lg font-bold text-gray-900">
+                    <h3 className="text-lg font-bold text-luxury-dark">
                       {booking.bookingCode}
                     </h3>
                     <span className="px-3 py-1 bg-yellow-100 text-yellow-800 text-xs font-medium rounded-full">
@@ -184,26 +184,26 @@ export default function PendingBookingsPage() {
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
                     <div>
                       <p className="text-sm text-gray-500">Client</p>
-                      <p className="font-medium text-gray-900">
+                      <p className="font-medium text-luxury-dark">
                         {booking.clientInfo.firstName} {booking.clientInfo.lastName}
                       </p>
-                      <p className="text-sm text-gray-600">{booking.clientInfo.email}</p>
+                      <p className="text-sm text-luxury-text">{booking.clientInfo.email}</p>
                     </div>
 
                     <div>
                       <p className="text-sm text-gray-500">Dates</p>
-                      <p className="font-medium text-gray-900">
+                      <p className="font-medium text-luxury-dark">
                         {new Date(booking.checkIn).toLocaleDateString('fr-FR')} →{' '}
                         {new Date(booking.checkOut).toLocaleDateString('fr-FR')}
                       </p>
-                      <p className="text-sm text-gray-600">
+                      <p className="text-sm text-luxury-text">
                         {booking.numberOfGuests} personne(s)
                       </p>
                     </div>
 
                     <div>
                       <p className="text-sm text-gray-500">Montant</p>
-                      <p className="font-bold text-blue-600 text-lg">
+                      <p className="font-bold text-luxury-gold text-lg">
                         {booking.pricingDetails.total.toLocaleString()} BIF
                       </p>
                       <p className="text-xs text-gray-500">
@@ -219,7 +219,7 @@ export default function PendingBookingsPage() {
                         handleConfirm(booking._id);
                       }}
                       disabled={actionLoading === booking._id}
-                      className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50 flex items-center gap-2 text-sm font-medium"
+                      className="px-4 py-2 bg-green-600 text-luxury-cream rounded-lg hover:bg-green-700 disabled:opacity-50 flex items-center gap-2 text-sm font-medium"
                     >
                       <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
@@ -230,7 +230,7 @@ export default function PendingBookingsPage() {
                     <button
                       onClick={() => handleReject(booking._id)}
                       disabled={actionLoading === booking._id}
-                      className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:opacity-50 flex items-center gap-2 text-sm font-medium"
+                      className="px-4 py-2 bg-red-600 text-luxury-cream rounded-lg hover:bg-red-700 disabled:opacity-50 flex items-center gap-2 text-sm font-medium"
                     >
                       <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />

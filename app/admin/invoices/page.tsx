@@ -112,14 +112,14 @@ export default function InvoicesPage() {
         <div className="mb-6">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-4 sm:space-y-0">
             <div>
-              <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Factures</h1>
-              <p className="text-gray-600 mt-1 text-sm sm:text-base">
+              <h1 className="text-2xl sm:text-3xl font-bold text-luxury-dark">Factures</h1>
+              <p className="text-luxury-text mt-1 text-sm sm:text-base">
                 Gérer toutes les factures
               </p>
             </div>
             <button
               onClick={() => router.push('/admin/invoices/create')}
-              className="px-4 py-2.5 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-lg hover:from-blue-700 hover:to-blue-800 transition-all shadow-md hover:shadow-lg font-medium flex items-center justify-center"
+              className="px-4 py-2.5 bg-luxury-gold text-luxury-cream rounded-lg hover:from-blue-700 hover:to-blue-800 transition-all shadow-md hover:shadow-lg font-medium flex items-center justify-center"
             >
               <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
@@ -133,15 +133,15 @@ export default function InvoicesPage() {
         <div className="bg-white rounded-xl shadow-sm border border-gray-200 mb-6">
           <div className="p-4 sm:p-6">
             <div className="flex items-center justify-between mb-4">
-              <h2 className="text-base sm:text-lg font-semibold text-gray-900 flex items-center">
-                <svg className="w-5 h-5 mr-2 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <h2 className="text-base sm:text-lg font-semibold text-luxury-dark flex items-center">
+                <svg className="w-5 h-5 mr-2 text-luxury-gold" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
                 </svg>
                 Filtres
               </h2>
               <button
                 onClick={() => setShowFilters(!showFilters)}
-                className="lg:hidden px-3 py-2 text-sm text-blue-600 hover:bg-blue-50 rounded-lg transition"
+                className="lg:hidden px-3 py-2 text-sm text-luxury-gold hover:bg-blue-50 rounded-lg transition"
               >
                 {showFilters ? 'Masquer' : 'Afficher'}
               </button>
@@ -232,8 +232,8 @@ export default function InvoicesPage() {
         {/* View Toggle & Stats */}
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-6 space-y-4 sm:space-y-0">
           <div className="flex items-center space-x-4">
-            <div className="text-sm text-gray-600">
-              <span className="font-semibold text-gray-900">{invoices.length}</span> facture(s)
+            <div className="text-sm text-luxury-text">
+              <span className="font-semibold text-luxury-dark">{invoices.length}</span> facture(s)
             </div>
           </div>
           
@@ -242,8 +242,8 @@ export default function InvoicesPage() {
               onClick={() => setViewMode('cards')}
               className={`px-3 py-2 rounded transition-all ${
                 viewMode === 'cards' 
-                  ? 'bg-blue-600 text-white' 
-                  : 'text-gray-600 hover:text-blue-600'
+                  ? 'bg-luxury-gold text-luxury-cream' 
+                  : 'text-luxury-text hover:text-luxury-gold'
               }`}
             >
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -254,8 +254,8 @@ export default function InvoicesPage() {
               onClick={() => setViewMode('table')}
               className={`px-3 py-2 rounded transition-all ${
                 viewMode === 'table' 
-                  ? 'bg-blue-600 text-white' 
-                  : 'text-gray-600 hover:text-blue-600'
+                  ? 'bg-luxury-gold text-luxury-cream' 
+                  : 'text-luxury-text hover:text-luxury-gold'
               }`}
             >
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -280,15 +280,15 @@ export default function InvoicesPage() {
         {/* Loading */}
         {loading ? (
           <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-12 text-center">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
-            <p className="mt-4 text-gray-600">Chargement...</p>
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-luxury-gold mx-auto"></div>
+            <p className="mt-4 text-luxury-text">Chargement...</p>
           </div>
         ) : invoices.length === 0 ? (
           <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-12 text-center">
             <svg className="w-16 h-16 text-gray-400 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
             </svg>
-            <p className="text-gray-600 text-lg font-medium">Aucune facture trouvée</p>
+            <p className="text-luxury-text text-lg font-medium">Aucune facture trouvée</p>
             <p className="text-gray-500 text-sm mt-2">Essayez de modifier vos filtres</p>
           </div>
         ) : viewMode === 'cards' ? (
@@ -303,7 +303,7 @@ export default function InvoicesPage() {
                   <div className="flex items-start justify-between mb-4">
                     <div>
                       <p className="text-xs text-gray-500 mb-1">Facture N°</p>
-                      <p className="text-lg font-bold text-gray-900">{invoice.invoiceNumber}</p>
+                      <p className="text-lg font-bold text-luxury-dark">{invoice.invoiceNumber}</p>
                     </div>
                     <span className={`px-3 py-1 text-xs font-medium rounded-full border ${getStatusColor(invoice.status)}`}>
                       {getStatusLabel(invoice.status)}
@@ -315,10 +315,10 @@ export default function InvoicesPage() {
                       <svg className="w-4 h-4 text-gray-400 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                       </svg>
-                      <span className="text-gray-900 font-medium">{invoice.clientInfo.name}</span>
+                      <span className="text-luxury-dark font-medium">{invoice.clientInfo.name}</span>
                     </div>
                     
-                    <div className="flex items-center text-sm text-gray-600">
+                    <div className="flex items-center text-sm text-luxury-text">
                       <svg className="w-4 h-4 text-gray-400 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                       </svg>
@@ -329,7 +329,7 @@ export default function InvoicesPage() {
                   <div className="grid grid-cols-2 gap-3 mb-4 p-3 bg-gray-50 rounded-lg">
                     <div>
                       <p className="text-xs text-gray-500 mb-1">Montant Total</p>
-                      <p className="text-lg font-bold text-blue-600">{invoice.total.toLocaleString()} BIF</p>
+                      <p className="text-lg font-bold text-luxury-gold">{invoice.total.toLocaleString()} BIF</p>
                     </div>
                     <div>
                       <p className="text-xs text-gray-500 mb-1">Solde</p>
@@ -342,13 +342,13 @@ export default function InvoicesPage() {
                   <div className="flex gap-2">
                     <button
                       onClick={() => router.push(`/admin/invoices/${invoice.id}`)}
-                      className="flex-1 px-3 py-2 bg-blue-600 text-white text-sm rounded-lg hover:bg-blue-700 transition font-medium"
+                      className="flex-1 px-3 py-2 bg-luxury-gold text-luxury-cream text-sm rounded-lg  transition font-medium"
                     >
                       Détails
                     </button>
                     <button
                       onClick={() => window.open(`/api/invoices/${invoice.id}/pdf`, '_blank')}
-                      className="px-3 py-2 bg-gray-600 text-white text-sm rounded-lg hover:bg-gray-700 transition"
+                      className="px-3 py-2 bg-gray-600 text-luxury-cream text-sm rounded-lg hover:bg-gray-700 transition"
                     >
                       <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M9 19l3 3m0 0l3-3m-3 3V10" />
@@ -379,17 +379,17 @@ export default function InvoicesPage() {
                   {invoices.map((invoice) => (
                     <tr key={invoice.id} className="hover:bg-gray-50">
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm font-medium text-gray-900">{invoice.invoiceNumber}</div>
+                        <div className="text-sm font-medium text-luxury-dark">{invoice.invoiceNumber}</div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm text-gray-900">{invoice.clientInfo.name}</div>
+                        <div className="text-sm text-luxury-dark">{invoice.clientInfo.name}</div>
                         <div className="text-sm text-gray-500">{invoice.clientInfo.email}</div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm text-gray-900">{new Date(invoice.issuedAt).toLocaleDateString('fr-FR')}</div>
+                        <div className="text-sm text-luxury-dark">{new Date(invoice.issuedAt).toLocaleDateString('fr-FR')}</div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm font-medium text-gray-900">{invoice.total.toLocaleString()} BIF</div>
+                        <div className="text-sm font-medium text-luxury-dark">{invoice.total.toLocaleString()} BIF</div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className={`text-sm font-medium ${invoice.balance === 0 ? 'text-green-600' : 'text-red-600'}`}>
@@ -404,7 +404,7 @@ export default function InvoicesPage() {
                       <td className="px-6 py-4 whitespace-nowrap text-sm">
                         <button
                           onClick={() => router.push(`/admin/invoices/${invoice.id}`)}
-                          className="text-blue-600 hover:text-blue-900 font-medium"
+                          className="text-luxury-gold hover:text-blue-900 font-medium"
                         >
                           Détails
                         </button>

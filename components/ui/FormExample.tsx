@@ -27,7 +27,7 @@ export default function FormExample() {
   return (
     <div className="max-w-2xl mx-auto p-6">
       <div className="bg-white rounded-xl shadow-lg p-8">
-        <h2 className="text-2xl font-bold text-gray-900 mb-6">
+        <h2 className="text-2xl font-bold text-luxury-dark mb-6">
           Exemple de Formulaire Amélioré
         </h2>
 
@@ -122,7 +122,7 @@ export default function FormExample() {
 
           {/* Variantes d'inputs */}
           <div className="space-y-4">
-            <h3 className="text-lg font-semibold text-gray-900">Variantes disponibles</h3>
+            <h3 className="text-lg font-semibold text-luxury-dark">Variantes disponibles</h3>
 
             <Input
               label="Variante Default"
@@ -148,7 +148,7 @@ export default function FormExample() {
 
           {/* Tailles d'inputs */}
           <div className="space-y-4">
-            <h3 className="text-lg font-semibold text-gray-900">Tailles disponibles</h3>
+            <h3 className="text-lg font-semibold text-luxury-dark">Tailles disponibles</h3>
 
             <Input
               label="Petite taille (sm)"
@@ -174,7 +174,7 @@ export default function FormExample() {
 
           {/* États spéciaux */}
           <div className="space-y-4">
-            <h3 className="text-lg font-semibold text-gray-900">États spéciaux</h3>
+            <h3 className="text-lg font-semibold text-luxury-dark">États spéciaux</h3>
 
             <Input
               label="Input avec erreur"
@@ -196,7 +196,7 @@ export default function FormExample() {
           <div className="flex gap-4 pt-4">
             <button
               type="submit"
-              className="flex-1 bg-amber-500 text-white font-semibold py-3 px-6 rounded-lg hover:bg-amber-600 transition-colors duration-200 focus:outline-none focus:ring-4 focus:ring-amber-500/20"
+              className="flex-1 bg-amber-500 text-luxury-cream font-semibold py-3 px-6 rounded-lg hover:bg-amber-600 transition-colors duration-200 focus:outline-none focus:ring-4 focus:ring-amber-500/20"
             >
               Soumettre
             </button>

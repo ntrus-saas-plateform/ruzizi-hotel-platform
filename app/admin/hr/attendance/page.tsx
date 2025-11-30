@@ -102,8 +102,8 @@ export default function AttendancePage() {
     <div className="min-h-screen bg-gray-50 p-6">
       <div className="max-w-7xl mx-auto">
         <div className="mb-6">
-          <h1 className="text-3xl font-bold text-gray-900">Gestion de la Présence</h1>
-          <p className="text-gray-600 mt-2">Suivre la présence des employés</p>
+          <h1 className="text-3xl font-bold text-luxury-dark">Gestion de la Présence</h1>
+          <p className="text-luxury-text mt-2">Suivre la présence des employés</p>
         </div>
 
         <div className="bg-white rounded-lg shadow p-6 mb-6">
@@ -150,7 +150,7 @@ export default function AttendancePage() {
         <div className="bg-white rounded-lg shadow overflow-hidden">
           {loading ? (
             <div className="p-8 text-center">
-              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-luxury-gold mx-auto"></div>
             </div>
           ) : attendances.length === 0 ? (
             <div className="p-8 text-center text-gray-500">Aucun enregistrement trouvé</div>
@@ -184,7 +184,7 @@ export default function AttendancePage() {
                   {attendances.map((attendance) => (
                     <tr key={attendance.id} className="hover:bg-gray-50">
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm font-medium text-gray-900">
+                        <div className="text-sm font-medium text-luxury-dark">
                           {(attendance as any).employeeId?.personalInfo?.firstName}{' '}
                           {(attendance as any).employeeId?.personalInfo?.lastName}
                         </div>

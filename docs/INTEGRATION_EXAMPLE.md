@@ -100,7 +100,7 @@ export default function LoginPage() {
           <button
             type="submit"
             disabled={isLoading}
-            className="w-full bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 disabled:opacity-50"
+            className="w-full bg-luxury-gold text-luxury-cream py-2 px-4 rounded-md  disabled:opacity-50"
           >
             {isLoading ? 'Connexion...' : 'Se connecter'}
           </button>
@@ -235,7 +235,7 @@ export default function EstablishmentsPage() {
           <h1 className="text-3xl font-bold">Établissements</h1>
           <button
             onClick={() => router.push('/dashboard/establishments/new')}
-            className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700"
+            className="bg-luxury-gold text-luxury-cream px-4 py-2 rounded-md "
           >
             Nouvel établissement
           </button>
@@ -254,7 +254,7 @@ export default function EstablishmentsPage() {
               className="bg-white rounded-lg shadow p-6 hover:shadow-lg transition-shadow"
             >
               <h3 className="text-xl font-semibold mb-2">{establishment.name}</h3>
-              <p className="text-gray-600 mb-4">{establishment.description}</p>
+              <p className="text-luxury-text mb-4">{establishment.description}</p>
               <div className="space-y-2 text-sm">
                 <p>
                   <span className="font-medium">Ville:</span> {establishment.address.city}
@@ -325,25 +325,25 @@ export function Navbar() {
           <div className="flex items-center space-x-8">
             <h1 className="text-xl font-bold">Ruzizi Hotel</h1>
             <div className="flex space-x-4">
-              <a href="/dashboard" className="text-gray-700 hover:text-gray-900">
+              <a href="/dashboard" className="text-gray-700 hover:text-luxury-dark">
                 Tableau de bord
               </a>
-              <a href="/dashboard/establishments" className="text-gray-700 hover:text-gray-900">
+              <a href="/dashboard/establishments" className="text-gray-700 hover:text-luxury-dark">
                 Établissements
               </a>
-              <a href="/dashboard/bookings" className="text-gray-700 hover:text-gray-900">
+              <a href="/dashboard/bookings" className="text-gray-700 hover:text-luxury-dark">
                 Réservations
               </a>
             </div>
           </div>
 
           <div className="flex items-center space-x-4">
-            <span className="text-sm text-gray-600">
+            <span className="text-sm text-luxury-text">
               {user?.firstName} {user?.lastName}
             </span>
             <button
               onClick={handleLogout}
-              className="bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700"
+              className="bg-red-600 text-luxury-cream px-4 py-2 rounded hover:bg-red-700"
             >
               Déconnexion
             </button>

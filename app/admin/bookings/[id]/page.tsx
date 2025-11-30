@@ -215,8 +215,8 @@ export default function BookingDetailPage() {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
-          <p className="mt-4 text-gray-600">Chargement...</p>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-luxury-gold mx-auto"></div>
+          <p className="mt-4 text-luxury-text">Chargement...</p>
         </div>
       </div>
     );
@@ -229,7 +229,7 @@ export default function BookingDetailPage() {
           <p className="text-red-600">{error}</p>
           <button
             onClick={() => router.push('/admin/bookings')}
-            className="mt-4 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
+            className="mt-4 px-4 py-2 bg-luxury-gold text-luxury-cream rounded-md "
           >
             Retour aux réservations
           </button>
@@ -243,22 +243,22 @@ export default function BookingDetailPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 p-6">
+    <div className="min-h-screen p-6">
       <div className="max-w-5xl mx-auto">
         {/* Header */}
         <div className="mb-6">
           <button
             onClick={() => router.push('/admin/bookings')}
-            className="text-blue-600 hover:text-blue-800 mb-2"
+            className="text-luxury-gold  mb-2"
           >
             ← Retour aux réservations
           </button>
           <div className="flex justify-between items-start">
             <div>
-              <h1 className="text-3xl font-bold text-gray-900">
+              <h1 className="text-3xl font-bold text-luxury-dark">
                 Réservation {booking.bookingCode}
               </h1>
-              <p className="text-gray-600 mt-2">
+              <p className="text-luxury-text mt-2">
                 Créée le {new Date(booking.createdAt).toLocaleDateString('fr-FR')} à{' '}
                 {new Date(booking.createdAt).toLocaleTimeString('fr-FR')}
               </p>
@@ -289,7 +289,7 @@ export default function BookingDetailPage() {
 
         {/* Actions */}
         <div className="bg-white rounded-lg shadow p-6 mb-6">
-          <h2 className="text-lg font-semibold text-gray-900 mb-4">Actions disponibles</h2>
+          <h2 className="text-lg font-semibold text-luxury-dark mb-4">Actions disponibles</h2>
           
           {/* Status Info */}
           {booking.status === 'pending' && (
@@ -330,7 +330,7 @@ export default function BookingDetailPage() {
                 <button
                   onClick={handleConfirm}
                   disabled={actionLoading}
-                  className="px-6 py-2.5 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50 flex items-center gap-2 font-medium shadow-sm"
+                  className="px-6 py-2.5 bg-green-600 text-luxury-cream rounded-lg hover:bg-green-700 disabled:opacity-50 flex items-center gap-2 font-medium shadow-sm"
                 >
                   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
@@ -340,7 +340,7 @@ export default function BookingDetailPage() {
                 <button
                   onClick={handleCancel}
                   disabled={actionLoading}
-                  className="px-6 py-2.5 bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:opacity-50 flex items-center gap-2 font-medium shadow-sm"
+                  className="px-6 py-2.5 bg-red-600 text-luxury-cream rounded-lg hover:bg-red-700 disabled:opacity-50 flex items-center gap-2 font-medium shadow-sm"
                 >
                   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -355,7 +355,7 @@ export default function BookingDetailPage() {
                 <button
                   onClick={handleCheckout}
                   disabled={actionLoading}
-                  className="px-6 py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 flex items-center gap-2 font-medium shadow-sm"
+                  className="px-6 py-2.5 bg-luxury-gold text-luxury-cream rounded-lg  disabled:opacity-50 flex items-center gap-2 font-medium shadow-sm"
                 >
                   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
@@ -365,7 +365,7 @@ export default function BookingDetailPage() {
                 <button
                   onClick={handleCancel}
                   disabled={actionLoading}
-                  className="px-6 py-2.5 bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:opacity-50 flex items-center gap-2 font-medium shadow-sm"
+                  className="px-6 py-2.5 bg-red-600 text-luxury-cream rounded-lg hover:bg-red-700 disabled:opacity-50 flex items-center gap-2 font-medium shadow-sm"
                 >
                   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -379,7 +379,7 @@ export default function BookingDetailPage() {
               <button
                 onClick={() => router.push(`/admin/bookings/${bookingId}/edit`)}
                 disabled={actionLoading}
-                className="px-6 py-2.5 bg-gray-600 text-white rounded-lg hover:bg-gray-700 disabled:opacity-50 flex items-center gap-2 font-medium shadow-sm"
+                className="px-6 py-2.5 bg-gray-600 text-luxury-cream rounded-lg hover:bg-gray-700 disabled:opacity-50 flex items-center gap-2 font-medium shadow-sm"
               >
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
@@ -391,7 +391,7 @@ export default function BookingDetailPage() {
             {booking.status === 'cancelled' || booking.status === 'completed' ? (
               <button
                 onClick={() => router.push('/admin/bookings')}
-                className="px-6 py-2.5 bg-gray-600 text-white rounded-lg hover:bg-gray-700 flex items-center gap-2 font-medium shadow-sm"
+                className="px-6 py-2.5 bg-gray-600 text-luxury-cream rounded-lg hover:bg-gray-700 flex items-center gap-2 font-medium shadow-sm"
               >
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
@@ -405,25 +405,25 @@ export default function BookingDetailPage() {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* Client Information */}
           <div className="bg-white rounded-lg shadow p-6">
-            <h2 className="text-lg font-semibold text-gray-900 mb-4">Informations Client</h2>
+            <h2 className="text-lg font-semibold text-luxury-dark mb-4">Informations Client</h2>
             <div className="space-y-3">
               <div>
-                <span className="text-sm text-gray-600">Nom complet</span>
+                <span className="text-sm text-luxury-text">Nom complet</span>
                 <p className="font-medium">
                   {booking.clientInfo.firstName} {booking.clientInfo.lastName}
                 </p>
               </div>
               <div>
-                <span className="text-sm text-gray-600">Email</span>
+                <span className="text-sm text-luxury-text">Email</span>
                 <p className="font-medium">{booking.clientInfo.email}</p>
               </div>
               <div>
-                <span className="text-sm text-gray-600">Téléphone</span>
+                <span className="text-sm text-luxury-text">Téléphone</span>
                 <p className="font-medium">{booking.clientInfo.phone}</p>
               </div>
               {booking.clientInfo.idNumber && (
                 <div>
-                  <span className="text-sm text-gray-600">Numéro d'identité</span>
+                  <span className="text-sm text-luxury-text">Numéro d'identité</span>
                   <p className="font-medium">{booking.clientInfo.idNumber}</p>
                 </div>
               )}
@@ -432,10 +432,10 @@ export default function BookingDetailPage() {
 
           {/* Booking Details */}
           <div className="bg-white rounded-lg shadow p-6">
-            <h2 className="text-lg font-semibold text-gray-900 mb-4">Détails de la Réservation</h2>
+            <h2 className="text-lg font-semibold text-luxury-dark mb-4">Détails de la Réservation</h2>
             <div className="space-y-3">
               <div>
-                <span className="text-sm text-gray-600">Type de réservation</span>
+                <span className="text-sm text-luxury-text">Type de réservation</span>
                 <p className="font-medium">
                   {booking.bookingType === 'online'
                     ? 'En ligne'
@@ -445,7 +445,7 @@ export default function BookingDetailPage() {
                 </p>
               </div>
               <div>
-                <span className="text-sm text-gray-600">Date d'arrivée</span>
+                <span className="text-sm text-luxury-text">Date d'arrivée</span>
                 <p className="font-medium">
                   {new Date(booking.checkIn).toLocaleDateString('fr-FR')}
                   {booking.bookingType === 'walkin' &&
@@ -453,7 +453,7 @@ export default function BookingDetailPage() {
                 </p>
               </div>
               <div>
-                <span className="text-sm text-gray-600">Date de départ</span>
+                <span className="text-sm text-luxury-text">Date de départ</span>
                 <p className="font-medium">
                   {new Date(booking.checkOut).toLocaleDateString('fr-FR')}
                   {booking.bookingType === 'walkin' &&
@@ -461,12 +461,12 @@ export default function BookingDetailPage() {
                 </p>
               </div>
               <div>
-                <span className="text-sm text-gray-600">Nombre de personnes</span>
+                <span className="text-sm text-luxury-text">Nombre de personnes</span>
                 <p className="font-medium">{booking.numberOfGuests} personne(s)</p>
               </div>
               {booking.notes && (
                 <div>
-                  <span className="text-sm text-gray-600">Notes</span>
+                  <span className="text-sm text-luxury-text">Notes</span>
                   <p className="font-medium">{booking.notes}</p>
                 </div>
               )}
@@ -482,10 +482,10 @@ export default function BookingDetailPage() {
 
         {/* Pricing Details */}
         <div className="bg-white rounded-lg shadow p-6 mt-6">
-          <h2 className="text-lg font-semibold text-gray-900 mb-4">Tarification</h2>
+          <h2 className="text-lg font-semibold text-luxury-dark mb-4">Tarification</h2>
           <div className="bg-gray-50 rounded-lg p-4">
             <div className="flex justify-between items-center mb-2">
-              <span className="text-gray-600">
+              <span className="text-luxury-text">
                 Prix unitaire (
                 {booking.pricingDetails.mode === 'nightly'
                   ? 'par nuit'
@@ -499,7 +499,7 @@ export default function BookingDetailPage() {
               </span>
             </div>
             <div className="flex justify-between items-center mb-2">
-              <span className="text-gray-600">
+              <span className="text-luxury-text">
                 Quantité ({booking.pricingDetails.quantity}{' '}
                 {booking.pricingDetails.mode === 'nightly'
                   ? 'nuit(s)'
@@ -511,14 +511,14 @@ export default function BookingDetailPage() {
               <span className="font-medium">{booking.pricingDetails.quantity}</span>
             </div>
             <div className="flex justify-between items-center mb-2">
-              <span className="text-gray-600">Sous-total</span>
+              <span className="text-luxury-text">Sous-total</span>
               <span className="font-medium">
                 {booking.pricingDetails.subtotal.toLocaleString()} BIF
               </span>
             </div>
             {booking.pricingDetails.discount && (
               <div className="flex justify-between items-center mb-2">
-                <span className="text-gray-600">Remise</span>
+                <span className="text-luxury-text">Remise</span>
                 <span className="font-medium text-green-600">
                   -{booking.pricingDetails.discount.toLocaleString()} BIF
                 </span>
@@ -526,7 +526,7 @@ export default function BookingDetailPage() {
             )}
             {booking.pricingDetails.tax && (
               <div className="flex justify-between items-center mb-2">
-                <span className="text-gray-600">Taxes</span>
+                <span className="text-luxury-text">Taxes</span>
                 <span className="font-medium">
                   {booking.pricingDetails.tax.toLocaleString()} BIF
                 </span>
@@ -534,8 +534,8 @@ export default function BookingDetailPage() {
             )}
             <div className="border-t pt-2 mt-2">
               <div className="flex justify-between items-center">
-                <span className="text-lg font-semibold text-gray-900">Total</span>
-                <span className="text-lg font-bold text-blue-600">
+                <span className="text-lg font-semibold text-luxury-dark">Total</span>
+                <span className="text-lg font-bold text-luxury-gold">
                   {booking.pricingDetails.total.toLocaleString()} BIF
                 </span>
               </div>
