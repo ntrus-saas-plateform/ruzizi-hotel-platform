@@ -37,7 +37,7 @@ export default function Navigation({ bg = true }) {
 
   // Handle keyboard navigation for mobile menu
   useEffect(() => {
-    const handleKeyDown = (event) => {
+    const handleKeyDown = (event: any) => {
       if (event.key === 'Escape' && mobileMenuOpen) {
         setMobileMenuOpen(false);
       }
