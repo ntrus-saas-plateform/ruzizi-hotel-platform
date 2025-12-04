@@ -6,11 +6,13 @@ import Link from 'next/link';
 
 export default function TrackBookingPage() {
   const [language, setLanguage] = useState('fr');
-  const savedLanguage = localStorage.getItem('language') || 'fr';
-
+  
   useEffect(() => {
-    setLanguage(savedLanguage);
-  }, [savedLanguage]);
+    const savedLanguage = localStorage.getItem('language') as 'fr' | 'en' | null;
+    if (savedLanguage) {
+      setLanguage(savedLanguage);
+    }
+  }, []);
 
   const handleBookingSearch = (code: string) => {
     // Ici vous pouvez ajouter la logique pour rechercher la réservation

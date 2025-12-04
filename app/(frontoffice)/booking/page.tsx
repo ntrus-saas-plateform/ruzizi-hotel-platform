@@ -76,8 +76,10 @@ function BookingPageContent() {
   const [billingAddress, setBillingAddress] = useState('');
 
   useEffect(() => {
-    const savedLanguage = localStorage.getItem('language') || 'fr';
-    setLanguage(savedLanguage);
+    const savedLanguage = localStorage.getItem('language') as 'fr' | 'en' | null;
+    if (savedLanguage) {
+      setLanguage(savedLanguage);
+    }
   }, []);
 
   // Memoized function to calculate total guests

@@ -4,11 +4,13 @@ import { useState, useEffect } from 'react';
 
 export default function PrivacyPage() {
   const [language, setLanguage] = useState('fr');
-  const savedLanguage = localStorage.getItem('language') || 'fr';
-
+  
   useEffect(() => {
-    setLanguage(savedLanguage);
-  }, [savedLanguage]);
+    const savedLanguage = localStorage.getItem('language') as 'fr' | 'en' | null;
+    if (savedLanguage) {
+      setLanguage(savedLanguage);
+    }
+  }, []);
 
   const content = {
     fr: {

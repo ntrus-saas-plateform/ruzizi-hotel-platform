@@ -58,11 +58,13 @@ export default function AccommodationDetailsPage() {
   const [error, setError] = useState('');
   const [accommodation, setAccommodation] = useState<Accommodation | null>(null);
   const [selectedImage, setSelectedImage] = useState(0);
-  const savedLanguage = localStorage.getItem('language') || 'fr';
 
   useEffect(() => {
-    setLanguage(savedLanguage);
-  }, [savedLanguage]);
+    const savedLanguage = localStorage.getItem('language') as 'fr' | 'en' | null;
+    if (savedLanguage) {
+      setLanguage(savedLanguage);
+    }
+  }, []);
 
   const fetchAccommodation = async () => {
     try {

@@ -16,11 +16,13 @@ export default function EstablishmentsPage() {
     type: '',
     amenities: [] as string[],
   });
-  const savedLanguage = localStorage.getItem('language') || 'fr';
 
   useEffect(() => {
-    setLanguage(savedLanguage);
-  }, [savedLanguage]);
+    const savedLanguage = localStorage.getItem('language') as 'fr' | 'en' | null;
+    if (savedLanguage) {
+      setLanguage(savedLanguage);
+    }
+  }, []);
 
   const fetchEstablishments = async () => {
     try {

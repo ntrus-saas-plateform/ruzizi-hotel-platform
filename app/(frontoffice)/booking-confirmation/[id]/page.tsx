@@ -9,11 +9,13 @@ export default function BookingConfirmationPage({ params }: { params: { id: stri
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [language, setLanguage] = useState('fr');
-  const savedLanguage = localStorage.getItem('language') || 'fr';
 
-  useEffect(() => {
-    setLanguage(savedLanguage);
-  }, [savedLanguage]);
+    useEffect(() => {
+    const savedLanguage = localStorage.getItem('language') as 'fr' | 'en' | null;
+    if (savedLanguage) {
+      setLanguage(savedLanguage);
+    }
+  }, []);
 
   useEffect(() => {
     fetchBooking();
