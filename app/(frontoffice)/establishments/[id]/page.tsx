@@ -61,11 +61,13 @@ export default function EstablishmentDetailPage() {
   const [error, setError] = useState('');
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
   const [showGallery, setShowGallery] = useState(false);
-    const savedLanguage = localStorage.getItem('language') || 'fr';
-  
-    useEffect(() => {
+
+  useEffect(() => {
+    const savedLanguage = localStorage.getItem('language') as 'fr' | 'en' | null;
+    if (savedLanguage) {
       setLanguage(savedLanguage);
-    }, [savedLanguage]);
+    }
+  }, []);
 
   const fetchData = async () => {
     try {

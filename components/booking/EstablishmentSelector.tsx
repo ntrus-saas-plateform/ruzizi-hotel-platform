@@ -51,11 +51,11 @@ export default function EstablishmentSelector({
   const [minBedrooms, setMinBedrooms] = useState<number>(0);
   const [minBathrooms, setMinBathrooms] = useState<number>(0);
   const [selectedAmenities, setSelectedAmenities] = useState<string[]>([]);
-  const savedLanguage = localStorage.getItem('language') || 'fr';
 
   useEffect(() => {
+    const savedLanguage = localStorage.getItem('language') || 'fr';
     setLanguage(savedLanguage);
-  }, [savedLanguage]);
+  }, []);
 
   // SWR fetcher function
   const fetcher = (url: string) => fetch(url).then((res) => res.json());
@@ -339,7 +339,10 @@ export default function EstablishmentSelector({
         {loading ? (
           <div className="space-y-4 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {[...Array(3)].map((_, i) => (
-              <div key={i} className="p-6 rounded-xl border border-[hsl(var(--color-luxury-text))]/5 animate-pulse">
+              <div
+                key={i}
+                className="p-6 rounded-xl border border-[hsl(var(--color-luxury-text))]/5 animate-pulse"
+              >
                 <div className="h-4 bg-[hsl(var(--color-luxury-text))]/5 rounded w-3/4 mb-2"></div>
                 <div className="h-3 bg-[hsl(var(--color-luxury-text))]/5 rounded w-1/2 mb-2"></div>
                 <div className="h-3 bg-[hsl(var(--color-luxury-text))]/5 rounded w-1/4"></div>
@@ -538,7 +541,9 @@ export default function EstablishmentSelector({
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                 {/* Type d'hébergement */}
                 <div>
-                  <label className="block text-sm font-medium text-luxury-text mb-2">{t.type}</label>
+                  <label className="block text-sm font-medium text-luxury-text mb-2">
+                    {t.type}
+                  </label>
                   <select
                     value={typeFilter}
                     onChange={(e) => setTypeFilter(e.target.value as AccommodationType | '')}
@@ -603,7 +608,9 @@ export default function EstablishmentSelector({
 
                 {/* Recherche */}
                 <div>
-                  <label className="block text-sm font-medium text-luxury-text mb-2">{t.search}</label>
+                  <label className="block text-sm font-medium text-luxury-text mb-2">
+                    {t.search}
+                  </label>
                   <input
                     type="text"
                     placeholder="Nom, équipements..."

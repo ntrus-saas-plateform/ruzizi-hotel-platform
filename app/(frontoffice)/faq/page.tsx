@@ -11,11 +11,13 @@ interface FAQItem {
 export default function FAQPage() {
   const [language, setLanguage] = useState('fr');
   const [openItems, setOpenItems] = useState<Set<string>>(new Set());
-  const savedLanguage = localStorage.getItem('language') || 'fr';
 
   useEffect(() => {
-    setLanguage(savedLanguage);
-  }, [savedLanguage]);
+    const savedLanguage = localStorage.getItem('language') as 'fr' | 'en' | null;
+    if (savedLanguage) {
+      setLanguage(savedLanguage);
+    }
+  }, []);
 
   const toggleItem = (id: string) => {
     const newOpenItems = new Set(openItems);

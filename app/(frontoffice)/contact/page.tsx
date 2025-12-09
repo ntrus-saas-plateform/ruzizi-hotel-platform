@@ -5,11 +5,13 @@ import ContactForm from '@/components/frontoffice/ContactForm';
 
 export default function ContactPage() {
   const [language, setLanguage] = useState('fr');
-  const savedLanguage = localStorage.getItem('language') || 'fr';
 
   useEffect(() => {
-    setLanguage(savedLanguage);
-  }, [savedLanguage]);
+    const savedLanguage = localStorage.getItem('language') as 'fr' | 'en' | null;
+    if (savedLanguage) {
+      setLanguage(savedLanguage);
+    }
+  }, []);
 
   const content = {
     fr: {
