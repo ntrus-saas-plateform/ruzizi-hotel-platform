@@ -27,6 +27,7 @@ export default function UsersPage() {
     search: '',
   });
   const [showFilters, setShowFilters] = useState(false);
+  const [currentUser, setCurrentUser] = useState<any>(null);
 
   const fetchUsers = async () => {
     try {

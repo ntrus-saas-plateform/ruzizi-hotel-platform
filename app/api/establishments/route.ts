@@ -15,6 +15,8 @@ import { ZodError } from 'zod';
 export async function GET(request: NextRequest) {
   return requireAuth(async (req, user) => {
     try {
+      console.log('Establishments API called by user:', user); // Debug log
+
       const { searchParams } = new URL(req.url);
 
       // Parse query parameters
@@ -25,8 +27,10 @@ export async function GET(request: NextRequest) {
         managerId: searchParams.get('managerId') || undefined,
         search: searchParams.get('search') || undefined,
         page: parseInt(searchParams.get('page') || '1'),
-        limit: parseInt(searchParams.get('limit') || '10'),
+        limit: parseInt(searchParams.get('limit') || '100'), // Increased limit for dropdown
       });
+
+      console.log('Establishments filters:', filters); // Debug log
 
       // If user is a manager, only show their establishment
       if (user.role === 'manager' && user.establishmentId) {
@@ -34,9 +38,12 @@ export async function GET(request: NextRequest) {
       }
 
       const result = await EstablishmentService.getAll(filters, filters.page, filters.limit);
+      console.log('Establishments result:', result); // Debug log
 
       return createSuccessResponse(result);
     } catch (error) {
+      console.error('Establishments API error:', error); // Debug log
+
       if (error instanceof ZodError) {
         return createErrorResponse('VALIDATION_ERROR', 'Invalid query parameters', 400);
       }
