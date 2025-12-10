@@ -4,23 +4,27 @@ import {
   CreateEstablishmentSchema,
   EstablishmentFilterSchema,
 } from '@/lib/validations/establishment.validation';
-import { requireAuth, requireSuperAdmin, createErrorResponse, createSuccessResponse } from '@/lib/auth/middleware';
+import { requireSuperAdmin, createErrorResponse, createSuccessResponse, createValidationErrorResponse } from '@/lib/auth/middleware';
+import { withEstablishmentIsolation } from '@/lib/auth/establishment-isolation.middleware';
+import { EstablishmentAccessDeniedError } from '@/lib/errors/establishment-errors';
 import { parseRequestBody } from '@/lib/utils/request';
 import { ZodError } from 'zod';
 
 /**
  * GET /api/establishments
  * Get all establishments with filters and pagination
+ * 
+ * Special handling:
+ * - Admins can see all establishments (no automatic filtering)
+ * - Managers/staff can only see their own establishment
  */
 export async function GET(request: NextRequest) {
-  return requireAuth(async (req, user) => {
+  return withEstablishmentIsolation(async (req, context) => {
     try {
-      console.log('Establishments API called by user:', user); // Debug log
-
       const { searchParams } = new URL(req.url);
 
-      // Parse query parameters
-      const filters = EstablishmentFilterSchema.parse({
+      // Validate query parameters
+      const validationResult = EstablishmentFilterSchema.safeParse({
         city: searchParams.get('city') || undefined,
         pricingMode: searchParams.get('pricingMode') || undefined,
         isActive: searchParams.get('isActive') === 'true' ? true : searchParams.get('isActive') === 'false' ? false : undefined,
@@ -30,19 +34,28 @@ export async function GET(request: NextRequest) {
         limit: parseInt(searchParams.get('limit') || '100'), // Increased limit for dropdown
       });
 
-      console.log('Establishments filters:', filters); // Debug log
-
-      // If user is a manager, only show their establishment
-      if (user.role === 'manager' && user.establishmentId) {
-        filters.managerId = user.establishmentId;
+      if (!validationResult.success) {
+        return createValidationErrorResponse(validationResult.error, 'Invalid query parameters');
       }
 
-      const result = await EstablishmentService.getAll(filters, filters.page, filters.limit);
-      console.log('Establishments result:', result); // Debug log
+      const filters = validationResult.data;
+
+      // Get establishments with establishment context
+      // The service will automatically filter for non-admin users
+      const result = await EstablishmentService.getAll(
+        filters,
+        filters.page,
+        filters.limit,
+        context.serviceContext
+      );
 
       return createSuccessResponse(result);
     } catch (error) {
-      console.error('Establishments API error:', error); // Debug log
+      console.error('Establishments API error:', error);
+
+      if (error instanceof EstablishmentAccessDeniedError) {
+        return createErrorResponse('ESTABLISHMENT_ACCESS_DENIED', error.message, 403);
+      }
 
       if (error instanceof ZodError) {
         return createErrorResponse('VALIDATION_ERROR', 'Invalid query parameters', 400);
@@ -54,7 +67,7 @@ export async function GET(request: NextRequest) {
 
       return createErrorResponse('SERVER_ERROR', 'An unexpected error occurred', 500);
     }
-  })(request);
+  }, { requireEstablishment: false })(request); // Don't require establishment for GET - admins need to see all
 }
 
 /**
@@ -68,24 +81,20 @@ export async function POST(request: NextRequest) {
       const body = await parseRequestBody(req);
 
       // Validate request body
-      const validatedData = CreateEstablishmentSchema.parse(body);
-      // Create establishment
+      const validationResult = CreateEstablishmentSchema.safeParse(body);
+      if (!validationResult.success) {
+        return createValidationErrorResponse(validationResult.error, 'Invalid input data');
+      }
+
+      const validatedData = validationResult.data;
+
+      // Create establishment (no context needed - super admin only)
       const establishment = await EstablishmentService.create(validatedData);
 
       return createSuccessResponse(establishment, 'Establishment created successfully', 201);
     } catch (error) {
       if (error instanceof ZodError) {
-        return NextResponse.json(
-          {
-            success: false,
-            error: {
-              code: 'VALIDATION_ERROR',
-              message: 'Invalid input data',
-              details: error.issues,
-            },
-          },
-          { status: 400 }
-        );
+        return createValidationErrorResponse(error, 'Invalid input data');
       }
 
       if (error instanceof Error) {

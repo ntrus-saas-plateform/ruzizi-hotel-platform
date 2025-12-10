@@ -2,10 +2,12 @@ import { NextRequest, NextResponse } from 'next/server';
 import { ExpenseService } from '@/services/Expense.service';
 import { UpdateExpenseSchema } from '@/lib/validations/expense.validation';
 import {
-  requireAuth,
   createErrorResponse,
   createSuccessResponse,
+  createValidationErrorResponse,
 } from '@/lib/auth/middleware';
+import { withEstablishmentIsolation } from '@/lib/auth/establishment-isolation.middleware';
+import { EstablishmentAccessDeniedError } from '@/lib/errors/establishment-errors';
 import { ZodError } from 'zod';
 
 /**
@@ -14,29 +16,24 @@ import { ZodError } from 'zod';
  */
 export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const resolvedParams = await params;
-  return requireAuth(async (req, user) => {
+  return withEstablishmentIsolation(async (req, context) => {
     try {
-      const expense = await ExpenseService.getById(resolvedParams.id);
+      // Get expense with establishment context validation
+      const expense = await ExpenseService.getById(resolvedParams.id, context.serviceContext);
 
       if (!expense) {
         return createErrorResponse('NOT_FOUND', 'Expense not found', 404);
       }
 
-      if (
-        (user as any).role === 'manager' &&
-        (user as any).establishmentId &&
-        expense.establishmentId !== (user as any).establishmentId
-      ) {
-        return createErrorResponse('FORBIDDEN', 'You do not have access to this expense', 403);
-      }
-
       return createSuccessResponse(expense);
-    } catch (error) {
-      if (error instanceof Error) {
-        return createErrorResponse('SERVER_ERROR', error.message, 500);
+    } catch (error: any) {
+      console.error('Error fetching expense:', error);
+      
+      if (error instanceof EstablishmentAccessDeniedError) {
+        return createErrorResponse('ESTABLISHMENT_ACCESS_DENIED', error.message, 403);
       }
 
-      return createErrorResponse('SERVER_ERROR', 'An unexpected error occurred', 500);
+      return createErrorResponse('SERVER_ERROR', error.message || 'An unexpected error occurred', 500);
     }
   })(request);
 }
@@ -47,52 +44,38 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
  */
 export async function PUT(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const resolvedParams = await params;
-  return requireAuth(async (req, user) => {
+  return withEstablishmentIsolation(async (req, context) => {
     try {
-      const existing = await ExpenseService.getById(resolvedParams.id);
-
-      if (!existing) {
-        return createErrorResponse('NOT_FOUND', 'Expense not found', 404);
-      }
-
-      if (
-        (user as any).role === 'manager' &&
-        (user as any).establishmentId &&
-        existing.establishmentId !== (user as any).establishmentId
-      ) {
-        return createErrorResponse('FORBIDDEN', 'You do not have access to this expense', 403);
-      }
-
       const body = await req.json();
-      const validatedData = UpdateExpenseSchema.parse(body);
+      
+      // Validate request body
+      const validationResult = UpdateExpenseSchema.safeParse(body);
+      if (!validationResult.success) {
+        return createValidationErrorResponse(validationResult.error, 'Invalid expense data');
+      }
 
-      const expense = await ExpenseService.update(resolvedParams.id, validatedData);
+      const validatedData = validationResult.data;
+
+      // Update expense with establishment context validation
+      const expense = await ExpenseService.update(resolvedParams.id, validatedData, context.serviceContext);
 
       if (!expense) {
         return createErrorResponse('NOT_FOUND', 'Expense not found', 404);
       }
 
       return createSuccessResponse(expense, 'Expense updated successfully');
-    } catch (error) {
+    } catch (error: any) {
+      console.error('Error updating expense:', error);
+      
+      if (error instanceof EstablishmentAccessDeniedError) {
+        return createErrorResponse('ESTABLISHMENT_ACCESS_DENIED', error.message, 403);
+      }
+
       if (error instanceof ZodError) {
-        return NextResponse.json(
-          {
-            success: false,
-            error: {
-              code: 'VALIDATION_ERROR',
-              message: 'Invalid input data',
-              details: error.issues,
-            },
-          },
-          { status: 400 }
-        );
+        return createValidationErrorResponse(error, 'Invalid input data');
       }
 
-      if (error instanceof Error) {
-        return createErrorResponse('SERVER_ERROR', error.message, 500);
-      }
-
-      return createErrorResponse('SERVER_ERROR', 'An unexpected error occurred', 500);
+      return createErrorResponse('SERVER_ERROR', error.message || 'An unexpected error occurred', 500);
     }
   })(request);
 }
@@ -103,35 +86,24 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
  */
 export async function DELETE(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const resolvedParams = await params;
-  return requireAuth(async (req, user) => {
+  return withEstablishmentIsolation(async (req, context) => {
     try {
-      const existing = await ExpenseService.getById(resolvedParams.id);
-
-      if (!existing) {
-        return createErrorResponse('NOT_FOUND', 'Expense not found', 404);
-      }
-
-      if (
-        (user as any).role === 'manager' &&
-        (user as any).establishmentId &&
-        existing.establishmentId !== (user as any).establishmentId
-      ) {
-        return createErrorResponse('FORBIDDEN', 'You do not have access to this expense', 403);
-      }
-
-      const deleted = await ExpenseService.delete(resolvedParams.id);
+      // Delete expense with establishment context validation
+      const deleted = await ExpenseService.delete(resolvedParams.id, context.serviceContext);
 
       if (!deleted) {
         return createErrorResponse('NOT_FOUND', 'Expense not found', 404);
       }
 
       return createSuccessResponse(null, 'Expense deleted successfully');
-    } catch (error) {
-      if (error instanceof Error) {
-        return createErrorResponse('SERVER_ERROR', error.message, 500);
+    } catch (error: any) {
+      console.error('Error deleting expense:', error);
+      
+      if (error instanceof EstablishmentAccessDeniedError) {
+        return createErrorResponse('ESTABLISHMENT_ACCESS_DENIED', error.message, 403);
       }
 
-      return createErrorResponse('SERVER_ERROR', 'An unexpected error occurred', 500);
+      return createErrorResponse('SERVER_ERROR', error.message || 'An unexpected error occurred', 500);
     }
   })(request);
 }

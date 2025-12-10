@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import ImageUpload from '@/components/admin/ImageUpload';
+import EstablishmentSelector from '@/components/admin/EstablishmentSelector';
 
 export default function EditEstablishmentPage() {
   const router = useRouter();
@@ -32,6 +33,8 @@ export default function EditEstablishmentPage() {
     amenities: [] as string[],
     images: [] as string[],
     isActive: true,
+    // Parent establishment (for future use when hierarchical establishments are implemented)
+    parentEstablishmentId: '',
   });
 
   const servicesList = [
@@ -84,6 +87,8 @@ export default function EditEstablishmentPage() {
         amenities: (est.services || []).filter((s: string) => amenitiesList.includes(s)),
         images: est.images || [],
         isActive: est.isActive !== false,
+        // Parent establishment (for future use when hierarchical establishments are implemented)
+        parentEstablishmentId: est.parentEstablishmentId || '',
       });
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Erreur inconnue');
@@ -250,6 +255,17 @@ export default function EditEstablishmentPage() {
           <div className="p-6">
             {activeTab === 'basic' && (
               <div className="space-y-6">
+                {/* Parent Establishment Selection - For future use when hierarchical establishments are implemented */}
+                {/* 
+                <EstablishmentSelector
+                  value={formData.parentEstablishmentId}
+                  onChange={(establishmentId) => setFormData({ ...formData, parentEstablishmentId: establishmentId })}
+                  label="Établissement parent (optionnel)"
+                  required={false}
+                  className="mb-6"
+                />
+                */}
+                
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div className="md:col-span-2">
                     <label className="block text-sm font-semibold text-gray-700 mb-2">

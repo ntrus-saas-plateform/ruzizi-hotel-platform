@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { PayrollService } from '@/services/Payroll.service';
-import { requireAuth, createErrorResponse, createSuccessResponse } from '@/lib/auth/middleware';
+import { createErrorResponse, createSuccessResponse } from '@/lib/auth/middleware';
+import { withEstablishmentIsolation } from '@/lib/auth/establishment-isolation.middleware';
+import { EstablishmentAccessDeniedError } from '@/lib/errors/establishment-errors';
 import { z } from 'zod';
 
 const UpdatePayrollSchema = z.object({
@@ -39,20 +41,23 @@ export async function GET(
   { params }: { params: Promise<{ id: string }> }
 ) {
   const resolvedParams = await params;
-  return requireAuth(async () => {
+  return withEstablishmentIsolation(async (_, context) => {
     try {
-      const payroll = await PayrollService.getById(resolvedParams.id);
+      const payroll = await PayrollService.getById(resolvedParams.id, context.serviceContext);
 
       if (!payroll) {
         return createErrorResponse('NOT_FOUND', 'Payroll record not found', 404);
       }
 
       return createSuccessResponse(payroll);
-    } catch (error) {
-      if (error instanceof Error) {
-        return createErrorResponse('SERVER_ERROR', error.message, 500);
+    } catch (error: any) {
+      console.error('Error fetching payroll record:', error);
+      
+      if (error instanceof EstablishmentAccessDeniedError) {
+        return createErrorResponse('ESTABLISHMENT_ACCESS_DENIED', error.message, 403);
       }
-      return createErrorResponse('SERVER_ERROR', 'An unexpected error occurred', 500);
+
+      return createErrorResponse('SERVER_ERROR', error.message || 'An unexpected error occurred', 500);
     }
   })(request);
 }
@@ -62,19 +67,25 @@ export async function PUT(
   { params }: { params: Promise<{ id: string }> }
 ) {
   const resolvedParams = await params;
-  return requireAuth(async (req) => {
+  return withEstablishmentIsolation(async (req, context) => {
     try {
       const body = await req.json();
       const validatedData = UpdatePayrollSchema.parse(body);
 
-      const payroll = await PayrollService.update(resolvedParams.id, validatedData);
+      const payroll = await PayrollService.update(resolvedParams.id, validatedData, context.serviceContext);
 
       if (!payroll) {
         return createErrorResponse('NOT_FOUND', 'Payroll record not found', 404);
       }
 
       return createSuccessResponse(payroll, 'Payroll record updated successfully');
-    } catch (error) {
+    } catch (error: any) {
+      console.error('Error updating payroll record:', error);
+      
+      if (error instanceof EstablishmentAccessDeniedError) {
+        return createErrorResponse('ESTABLISHMENT_ACCESS_DENIED', error.message, 403);
+      }
+
       if (error instanceof z.ZodError) {
         return NextResponse.json(
           {
@@ -89,11 +100,7 @@ export async function PUT(
         );
       }
 
-      if (error instanceof Error) {
-        return createErrorResponse('SERVER_ERROR', error.message, 500);
-      }
-
-      return createErrorResponse('SERVER_ERROR', 'An unexpected error occurred', 500);
+      return createErrorResponse('SERVER_ERROR', error.message || 'An unexpected error occurred', 500);
     }
   })(request);
 }
@@ -103,20 +110,23 @@ export async function DELETE(
   { params }: { params: Promise<{ id: string }> }
 ) {
   const resolvedParams = await params;
-  return requireAuth(async () => {
+  return withEstablishmentIsolation(async (_, context) => {
     try {
-      const deleted = await PayrollService.delete(resolvedParams.id);
+      const deleted = await PayrollService.delete(resolvedParams.id, context.serviceContext);
 
       if (!deleted) {
         return createErrorResponse('NOT_FOUND', 'Payroll record not found', 404);
       }
 
       return createSuccessResponse(null, 'Payroll record deleted successfully');
-    } catch (error) {
-      if (error instanceof Error) {
-        return createErrorResponse('SERVER_ERROR', error.message, 500);
+    } catch (error: any) {
+      console.error('Error deleting payroll record:', error);
+      
+      if (error instanceof EstablishmentAccessDeniedError) {
+        return createErrorResponse('ESTABLISHMENT_ACCESS_DENIED', error.message, 403);
       }
-      return createErrorResponse('SERVER_ERROR', 'An unexpected error occurred', 500);
+
+      return createErrorResponse('SERVER_ERROR', error.message || 'An unexpected error occurred', 500);
     }
   })(request);
 }

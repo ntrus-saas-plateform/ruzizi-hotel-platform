@@ -2,6 +2,11 @@ import { PayrollModel } from '@/models/Payroll.model';
 import { EmployeeModel } from '@/models/Employee.model';
 import { connectDB } from '@/lib/db';
 import { paginate, type PaginationResult, toObjectId } from '@/lib/db/utils';
+import { EstablishmentServiceContext } from '@/lib/services/establishment-context';
+import {
+  EstablishmentAccessDeniedError,
+  CrossEstablishmentRelationshipError,
+} from '@/lib/errors/establishment-errors';
 import type {
   CreatePayrollInput,
   PayrollResponse,
@@ -10,8 +15,30 @@ import type {
 } from '@/types/payroll.types';
 
 export class PayrollService {
-  static async create(data: CreatePayrollInput): Promise<PayrollResponse> {
+  static async create(
+    data: CreatePayrollInput,
+    context: EstablishmentServiceContext
+  ): Promise<PayrollResponse> {
     await connectDB();
+
+    // Validate employee exists and get their establishment
+    const employee = await EmployeeModel.findById(data.employeeId);
+    if (!employee) {
+      throw new Error('Employee not found');
+    }
+
+    const employeeEstablishmentId = employee.employmentInfo.establishmentId.toString();
+
+    // Validate relationship: employee must belong to the same establishment
+    if (context && !context.canAccessAll()) {
+      const userEstablishmentId = context.getEstablishmentId();
+      if (employeeEstablishmentId !== userEstablishmentId) {
+        throw new CrossEstablishmentRelationshipError({
+          parentResource: { type: 'employee', id: data.employeeId, establishmentId: employeeEstablishmentId },
+          childResource: { type: 'payroll', id: 'new', establishmentId: userEstablishmentId! },
+        });
+      }
+    }
 
     const existingPayroll = await PayrollModel.findOne({
       employeeId: toObjectId(data.employeeId),
@@ -36,7 +63,10 @@ export class PayrollService {
     return payroll.toJSON() as unknown as PayrollResponse;
   }
 
-  static async getById(id: string): Promise<PayrollResponse | null> {
+  static async getById(
+    id: string,
+    context?: EstablishmentServiceContext
+  ): Promise<PayrollResponse | null> {
     await connectDB();
 
     const payroll = await PayrollModel.findById(id).populate(
@@ -48,28 +78,79 @@ export class PayrollService {
       return null;
     }
 
+    // Validate access if context is provided
+    if (context) {
+      const employee = await EmployeeModel.findById(payroll.employeeId);
+      if (employee) {
+        const hasAccess = await context.validateAccess(
+          { establishmentId: employee.employmentInfo.establishmentId.toString() },
+          'payroll'
+        );
+        if (!hasAccess) {
+          throw new EstablishmentAccessDeniedError({
+            userId: context.getUserId(),
+            resourceType: 'payroll',
+            resourceId: id,
+            userEstablishmentId: context.getEstablishmentId(),
+            resourceEstablishmentId: employee.employmentInfo.establishmentId.toString(),
+          });
+        }
+      }
+    }
+
     return payroll.toJSON() as unknown as PayrollResponse;
   }
 
   static async getAll(
     filters: PayrollFilterOptions = {},
     page: number = 1,
-    limit: number = 10
+    limit: number = 10,
+    context?: EstablishmentServiceContext
   ): Promise<PaginationResult<PayrollResponse>> {
     await connectDB();
 
     const query: any = {};
 
-    if (filters.employeeId) {
-      query.employeeId = toObjectId(filters.employeeId);
+    // Apply establishment filter if context is provided
+    let establishmentIdToFilter: string | undefined;
+    if (context) {
+      const baseFilter = context.applyFilter({});
+      if (baseFilter.establishmentId) {
+        establishmentIdToFilter = baseFilter.establishmentId.toString();
+      }
     }
 
-    if (filters.establishmentId) {
+    // If establishment filter is provided (either from context or filters), use it
+    if (establishmentIdToFilter || filters.establishmentId) {
+      const targetEstablishmentId = establishmentIdToFilter || filters.establishmentId;
       const employees = await EmployeeModel.find({
-        'employmentInfo.establishmentId': toObjectId(filters.establishmentId),
+        'employmentInfo.establishmentId': toObjectId(targetEstablishmentId!),
       });
       const employeeIds = employees.map((emp) => emp._id);
       query.employeeId = { $in: employeeIds };
+    }
+
+    if (filters.employeeId) {
+      // If specific employee is requested, validate access
+      if (context && !context.canAccessAll()) {
+        const employee = await EmployeeModel.findById(filters.employeeId);
+        if (employee) {
+          const hasAccess = await context.validateAccess(
+            { establishmentId: employee.employmentInfo.establishmentId.toString() },
+            'payroll'
+          );
+          if (!hasAccess) {
+            throw new EstablishmentAccessDeniedError({
+              userId: context.getUserId(),
+              resourceType: 'payroll',
+              resourceId: 'list',
+              userEstablishmentId: context.getEstablishmentId(),
+              resourceEstablishmentId: employee.employmentInfo.establishmentId.toString(),
+            });
+          }
+        }
+      }
+      query.employeeId = toObjectId(filters.employeeId);
     }
 
     if (filters.year) {
@@ -99,50 +180,173 @@ export class PayrollService {
     };
   }
 
-  static async update(id: string, data: Partial<CreatePayrollInput>): Promise<PayrollResponse | null> {
+  static async update(
+    id: string,
+    data: Partial<CreatePayrollInput>,
+    context?: EstablishmentServiceContext
+  ): Promise<PayrollResponse | null> {
     await connectDB();
 
-    const payroll = await PayrollModel.findByIdAndUpdate(id, data, { new: true });
+    const payroll = await PayrollModel.findById(id);
 
     if (!payroll) {
       return null;
     }
 
-    return payroll.toJSON() as unknown as PayrollResponse;
+    // Validate access if context is provided
+    if (context) {
+      const employee = await EmployeeModel.findById(payroll.employeeId);
+      if (employee) {
+        const hasAccess = await context.validateAccess(
+          { establishmentId: employee.employmentInfo.establishmentId.toString() },
+          'payroll'
+        );
+        if (!hasAccess) {
+          throw new EstablishmentAccessDeniedError({
+            userId: context.getUserId(),
+            resourceType: 'payroll',
+            resourceId: id,
+            userEstablishmentId: context.getEstablishmentId(),
+            resourceEstablishmentId: employee.employmentInfo.establishmentId.toString(),
+          });
+        }
+      }
+    }
+
+    // If employeeId is being changed, validate the new employee
+    if (data.employeeId && data.employeeId !== payroll.employeeId.toString()) {
+      const newEmployee = await EmployeeModel.findById(data.employeeId);
+      if (!newEmployee) {
+        throw new Error('New employee not found');
+      }
+
+      // Validate relationship with new employee
+      if (context && !context.canAccessAll()) {
+        const userEstablishmentId = context.getEstablishmentId();
+        const newEmployeeEstablishmentId = newEmployee.employmentInfo.establishmentId.toString();
+        if (newEmployeeEstablishmentId !== userEstablishmentId) {
+          throw new CrossEstablishmentRelationshipError({
+            parentResource: { type: 'employee', id: data.employeeId, establishmentId: newEmployeeEstablishmentId },
+            childResource: { type: 'payroll', id: id, establishmentId: userEstablishmentId! },
+          });
+        }
+      }
+    }
+
+    const updatedPayroll = await PayrollModel.findByIdAndUpdate(id, data, { new: true });
+
+    if (!updatedPayroll) {
+      return null;
+    }
+
+    return updatedPayroll.toJSON() as unknown as PayrollResponse;
   }
 
-  static async delete(id: string): Promise<boolean> {
+  static async delete(id: string, context?: EstablishmentServiceContext): Promise<boolean> {
     await connectDB();
 
-    const result = await PayrollModel.findByIdAndDelete(id);
+    const payroll = await PayrollModel.findById(id);
 
-    return !!result;
+    if (!payroll) {
+      return false;
+    }
+
+    // Validate access if context is provided
+    if (context) {
+      const employee = await EmployeeModel.findById(payroll.employeeId);
+      if (employee) {
+        const hasAccess = await context.validateAccess(
+          { establishmentId: employee.employmentInfo.establishmentId.toString() },
+          'payroll'
+        );
+        if (!hasAccess) {
+          throw new EstablishmentAccessDeniedError({
+            userId: context.getUserId(),
+            resourceType: 'payroll',
+            resourceId: id,
+            userEstablishmentId: context.getEstablishmentId(),
+            resourceEstablishmentId: employee.employmentInfo.establishmentId.toString(),
+          });
+        }
+      }
+    }
+
+    await PayrollModel.findByIdAndDelete(id);
+
+    return true;
   }
 
   static async getByEmployee(
     employeeId: string,
     year?: number,
-    month?: number
+    month?: number,
+    context?: EstablishmentServiceContext
   ): Promise<PayrollResponse[]> {
     await connectDB();
+
+    // Validate access if context is provided
+    if (context) {
+      const employee = await EmployeeModel.findById(employeeId);
+      if (employee) {
+        const hasAccess = await context.validateAccess(
+          { establishmentId: employee.employmentInfo.establishmentId.toString() },
+          'payroll'
+        );
+        if (!hasAccess) {
+          throw new EstablishmentAccessDeniedError({
+            userId: context.getUserId(),
+            resourceType: 'payroll',
+            resourceId: 'list',
+            userEstablishmentId: context.getEstablishmentId(),
+            resourceEstablishmentId: employee.employmentInfo.establishmentId.toString(),
+          });
+        }
+      }
+    }
 
     const payrolls = await PayrollModel.findByEmployee(employeeId, year, month);
 
     return payrolls.map((payroll) => payroll.toJSON() as unknown as PayrollResponse);
   }
 
-  static async getByPeriod(year: number, month: number): Promise<PayrollResponse[]> {
+  static async getByPeriod(
+    year: number,
+    month: number,
+    context?: EstablishmentServiceContext
+  ): Promise<PayrollResponse[]> {
     await connectDB();
 
-    const payrolls = await PayrollModel.findByPeriod(year, month);
+    let payrolls = await PayrollModel.findByPeriod(year, month);
+
+    // Apply establishment filter if context is provided
+    if (context && !context.canAccessAll()) {
+      const userEstablishmentId = context.getEstablishmentId();
+      payrolls = payrolls.filter((payroll: any) => {
+        const employee = payroll.employeeId;
+        return employee && employee.employmentInfo.establishmentId.toString() === userEstablishmentId;
+      });
+    }
 
     return payrolls.map((payroll) => payroll.toJSON() as unknown as PayrollResponse);
   }
 
-  static async getSummary(year: number, month: number): Promise<PayrollSummary> {
+  static async getSummary(
+    year: number,
+    month: number,
+    context?: EstablishmentServiceContext
+  ): Promise<PayrollSummary> {
     await connectDB();
 
-    const payrolls = await PayrollModel.findByPeriod(year, month);
+    let payrolls = await PayrollModel.findByPeriod(year, month);
+
+    // Apply establishment filter if context is provided
+    if (context && !context.canAccessAll()) {
+      const userEstablishmentId = context.getEstablishmentId();
+      payrolls = payrolls.filter((payroll: any) => {
+        const employee = payroll.employeeId;
+        return employee && employee.employmentInfo.establishmentId.toString() === userEstablishmentId;
+      });
+    }
 
     const totalEmployees = payrolls.length;
     const totalGross = payrolls.reduce((sum, p) => sum + p.totalGross, 0);
@@ -159,48 +363,114 @@ export class PayrollService {
     };
   }
 
-  static async approve(id: string): Promise<PayrollResponse | null> {
+  static async approve(
+    id: string,
+    context?: EstablishmentServiceContext
+  ): Promise<PayrollResponse | null> {
     await connectDB();
 
-    const payroll = await PayrollModel.findByIdAndUpdate(
+    const payroll = await PayrollModel.findById(id);
+
+    if (!payroll) {
+      return null;
+    }
+
+    // Validate access if context is provided
+    if (context) {
+      const employee = await EmployeeModel.findById(payroll.employeeId);
+      if (employee) {
+        const hasAccess = await context.validateAccess(
+          { establishmentId: employee.employmentInfo.establishmentId.toString() },
+          'payroll'
+        );
+        if (!hasAccess) {
+          throw new EstablishmentAccessDeniedError({
+            userId: context.getUserId(),
+            resourceType: 'payroll',
+            resourceId: id,
+            userEstablishmentId: context.getEstablishmentId(),
+            resourceEstablishmentId: employee.employmentInfo.establishmentId.toString(),
+          });
+        }
+      }
+    }
+
+    const updatedPayroll = await PayrollModel.findByIdAndUpdate(
       id,
       { status: 'approved' },
       { new: true }
     );
 
+    if (!updatedPayroll) {
+      return null;
+    }
+
+    return updatedPayroll.toJSON() as unknown as PayrollResponse;
+  }
+
+  static async markAsPaid(
+    id: string,
+    context?: EstablishmentServiceContext
+  ): Promise<PayrollResponse | null> {
+    await connectDB();
+
+    const payroll = await PayrollModel.findById(id);
+
     if (!payroll) {
       return null;
     }
 
-    return payroll.toJSON() as unknown as PayrollResponse;
-  }
+    // Validate access if context is provided
+    if (context) {
+      const employee = await EmployeeModel.findById(payroll.employeeId);
+      if (employee) {
+        const hasAccess = await context.validateAccess(
+          { establishmentId: employee.employmentInfo.establishmentId.toString() },
+          'payroll'
+        );
+        if (!hasAccess) {
+          throw new EstablishmentAccessDeniedError({
+            userId: context.getUserId(),
+            resourceType: 'payroll',
+            resourceId: id,
+            userEstablishmentId: context.getEstablishmentId(),
+            resourceEstablishmentId: employee.employmentInfo.establishmentId.toString(),
+          });
+        }
+      }
+    }
 
-  static async markAsPaid(id: string): Promise<PayrollResponse | null> {
-    await connectDB();
-
-    const payroll = await PayrollModel.findByIdAndUpdate(
+    const updatedPayroll = await PayrollModel.findByIdAndUpdate(
       id,
       { status: 'paid', paidAt: new Date() },
       { new: true }
     );
 
-    if (!payroll) {
+    if (!updatedPayroll) {
       return null;
     }
 
-    return payroll.toJSON() as unknown as PayrollResponse;
+    return updatedPayroll.toJSON() as unknown as PayrollResponse;
   }
 
   static async generateForAllEmployees(
     year: number,
     month: number,
-    establishmentId?: string
+    establishmentId?: string,
+    context?: EstablishmentServiceContext
   ): Promise<PayrollResponse[]> {
     await connectDB();
 
     const query: any = { 'employmentInfo.status': 'active' };
-    if (establishmentId) {
-      query['employmentInfo.establishmentId'] = toObjectId(establishmentId);
+    
+    // Apply establishment filter from context or parameter
+    let targetEstablishmentId = establishmentId;
+    if (context && !context.canAccessAll()) {
+      targetEstablishmentId = context.getEstablishmentId();
+    }
+
+    if (targetEstablishmentId) {
+      query['employmentInfo.establishmentId'] = toObjectId(targetEstablishmentId);
     }
 
     const employees = await EmployeeModel.find(query);

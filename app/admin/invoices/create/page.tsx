@@ -2,11 +2,14 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import { useAuth } from '@/lib/auth/AuthContext';
+import EstablishmentSelector from '@/components/admin/EstablishmentSelector';
 import type { InvoiceItem } from '@/types/invoice.types';
 
 export default function CreateInvoicePage() {
   const router = useRouter();
-  const [establishments, setEstablishments] = useState<any[]>([]);
+  const { user } = useAuth();
+  const [selectedEstablishment, setSelectedEstablishment] = useState('');
   const [bookings, setBookings] = useState<any[]>([]);
   const [selectedBooking, setSelectedBooking] = useState<any>(null);
   const [loading, setLoading] = useState(false);
@@ -15,7 +18,6 @@ export default function CreateInvoicePage() {
 
   // Form data
   const [formData, setFormData] = useState({
-    establishmentId: '',
     bookingId: '',
     clientName: '',
     clientEmail: '',
@@ -31,14 +33,10 @@ export default function CreateInvoicePage() {
   ]);
 
   useEffect(() => {
-    fetchEstablishments();
-  }, []);
-
-  useEffect(() => {
-    if (formData.establishmentId) {
+    if (selectedEstablishment) {
       fetchBookings();
     }
-  }, [formData.establishmentId]);
+  }, [selectedEstablishment]);
 
   useEffect(() => {
     if (formData.bookingId) {
@@ -65,23 +63,11 @@ export default function CreateInvoicePage() {
     }
   }, [formData.bookingId, bookings]);
 
-  const fetchEstablishments = async () => {
-    try {
-      const response = await fetch('/api/establishments');
-      const data = await response.json();
-      if (data.success) {
-        setEstablishments(data.data.data || []);
-      }
-    } catch (err) {
-      console.error('Failed to fetch establishments:', err);
-    }
-  };
-
   const fetchBookings = async () => {
     try {
       setLoading(true);
       const response = await fetch(
-        `/api/bookings?establishmentId=${formData.establishmentId}&status=confirmed&limit=100`
+        `/api/bookings?establishmentId=${selectedEstablishment}&status=confirmed&limit=100`
       );
       const data = await response.json();
       if (data.success) {
@@ -143,12 +129,20 @@ export default function CreateInvoicePage() {
     setError('');
 
     try {
-      if (!formData.establishmentId) {
-        throw new Error('Please select an establishment');
+      // Client-side validation for establishment
+      if (!selectedEstablishment) {
+        throw new Error('Veuillez sélectionner un établissement');
+      }
+
+      // Validate establishment permissions for non-admin users
+      if (user && user.role !== 'root' && user.role !== 'super_admin') {
+        if (selectedEstablishment !== user.establishmentId) {
+          throw new Error('Vous ne pouvez créer des factures que pour votre établissement assigné');
+        }
       }
 
       const invoiceData: any = {
-        establishmentId: formData.establishmentId,
+        establishmentId: selectedEstablishment,
         bookingId: formData.bookingId || undefined,
         clientInfo: {
           name: formData.clientName,
@@ -227,25 +221,18 @@ export default function CreateInvoicePage() {
           <div className="bg-white rounded-lg shadow p-6">
             <h2 className="text-lg font-semibold text-luxury-dark mb-4">Informations de base</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Établissement *
-                </label>
-                <select
-                  name="establishmentId"
-                  value={formData.establishmentId}
-                  onChange={handleInputChange}
-                  required
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                >
-                  <option value="">Sélectionner un établissement</option>
-                  {establishments.map((est) => (
-                    <option key={est.id} value={est.id}>
-                      {est.name}
-                    </option>
-                  ))}
-                </select>
-              </div>
+              <EstablishmentSelector
+                value={selectedEstablishment}
+                onChange={(establishmentId) => {
+                  setSelectedEstablishment(establishmentId);
+                  setSelectedBooking(null);
+                  setFormData(prev => ({ ...prev, bookingId: '' }));
+                }}
+                required
+                userRole={user?.role}
+                userEstablishmentId={user?.establishmentId}
+                label="Établissement"
+              />
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -255,7 +242,7 @@ export default function CreateInvoicePage() {
                   name="bookingId"
                   value={formData.bookingId}
                   onChange={handleInputChange}
-                  disabled={!formData.establishmentId || loading}
+                  disabled={!selectedEstablishment || loading}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100"
                 >
                   <option value="">Sélectionner une réservation</option>

@@ -9,6 +9,8 @@ import type {
   ClientFilterOptions,
 } from '@/types/client.types';
 import type { BookingResponse } from '@/types/booking.types';
+import { EstablishmentServiceContext } from '@/lib/services/establishment-context';
+import { EstablishmentQueryBuilder } from '@/lib/db/establishment-query-builder';
 
 /**
  * Client Service
@@ -18,18 +20,33 @@ export class ClientService {
   /**
    * Create a new client
    */
-  static async create(data: CreateClientInput): Promise<ClientResponse> {
+  static async create(data: CreateClientInput, context?: EstablishmentServiceContext): Promise<ClientResponse> {
     await connectDB();
 
-    // Check if client already exists
-    const existing = await ClientModel.findByEmail(data.personalInfo.email);
-
-    if (existing) {
-      throw new Error('A client with this email already exists');
+    // Apply establishment context for non-admin users
+    let establishmentId = data.establishmentId;
+    if (context && !context.canAccessAll()) {
+      establishmentId = context.getEstablishmentId()!;
     }
 
-    // Create client
-    const client = await ClientModel.create(data);
+    // Note: Establishment validation is handled by the API layer
+
+    // Check if client already exists in this establishment
+    const existing = await ClientModel.findOne({
+      establishmentId,
+      'personalInfo.email': data.personalInfo.email.toLowerCase(),
+    });
+
+    if (existing) {
+      throw new Error('A client with this email already exists in this establishment');
+    }
+
+    // Create client with establishment
+    const clientData = {
+      ...data,
+      establishmentId,
+    };
+    const client = await ClientModel.create(clientData);
 
     return client.toJSON() as unknown as ClientResponse;
   }
@@ -39,13 +56,15 @@ export class ClientService {
    */
   static async getById(
     id: string,
+    context?: EstablishmentServiceContext,
     includeBookingHistory: boolean = false,
     bookingHistoryPage: number = 1,
     bookingHistoryLimit: number = 10
   ): Promise<ClientResponse | null> {
     await connectDB();
 
-    let clientQuery = ClientModel.findById(id);
+    const queryBuilder = new EstablishmentQueryBuilder(ClientModel, context);
+    let clientQuery = queryBuilder.findById(id);
 
     if (includeBookingHistory) {
       // Populate booking history with pagination
@@ -66,16 +85,25 @@ export class ClientService {
       return null;
     }
 
+    // Validate access if context provided
+    if (context) {
+      const hasAccess = await context.validateAccess(client, 'Client');
+      if (!hasAccess) {
+        return null; // Access denied, return null as if not found
+      }
+    }
+
     return client.toJSON() as unknown as ClientResponse;
   }
 
   /**
    * Get client by email
    */
-  static async getByEmail(email: string): Promise<ClientResponse | null> {
+  static async getByEmail(email: string, context?: EstablishmentServiceContext): Promise<ClientResponse | null> {
     await connectDB();
 
-    const client = await ClientModel.findByEmail(email);
+    const queryBuilder = new EstablishmentQueryBuilder(ClientModel, context);
+    const client = await queryBuilder.findOne({ 'personalInfo.email': email.toLowerCase() });
 
     if (!client) {
       return null;
@@ -90,7 +118,8 @@ export class ClientService {
   static async getAll(
     filters: ClientFilterOptions = {},
     page: number = 1,
-    limit: number = 10
+    limit: number = 10,
+    context?: EstablishmentServiceContext
   ): Promise<PaginationResult<ClientResponse>> {
     await connectDB();
 
@@ -113,8 +142,14 @@ export class ClientService {
       query.$text = { $search: filters.search };
     }
 
-    // Execute query with pagination
-    const result = await paginate(ClientModel.find(query), {
+    // For admins, allow optional establishment filtering
+    if (filters.establishmentId && context?.canAccessAll()) {
+      query.establishmentId = filters.establishmentId;
+    }
+
+    // Execute query with pagination and establishment filtering
+    const queryBuilder = new EstablishmentQueryBuilder(ClientModel, context);
+    const result = await paginate(queryBuilder.find(query), {
       page,
       limit,
       sort: { createdAt: -1 },
@@ -129,20 +164,32 @@ export class ClientService {
   /**
    * Update client
    */
-  static async update(id: string, data: UpdateClientInput): Promise<ClientResponse | null> {
+  static async update(id: string, data: UpdateClientInput, context?: EstablishmentServiceContext): Promise<ClientResponse | null> {
     await connectDB();
 
-    const client = await ClientModel.findById(id);
+    const queryBuilder = new EstablishmentQueryBuilder(ClientModel, context);
+    const client = await queryBuilder.findById(id);
 
     if (!client) {
       return null;
     }
 
-    // If email is being changed, check if new email is available
+    // Validate access if context provided
+    if (context) {
+      const hasAccess = await context.validateAccess(client, 'Client');
+      if (!hasAccess) {
+        throw new Error('Access denied: Client belongs to a different establishment');
+      }
+    }
+
+    // If email is being changed, check if new email is available in this establishment
     if (data.personalInfo?.email && data.personalInfo.email !== client.personalInfo.email) {
-      const existing = await ClientModel.findByEmail(data.personalInfo.email);
+      const existing = await ClientModel.findOne({
+        establishmentId: client.establishmentId,
+        'personalInfo.email': data.personalInfo.email.toLowerCase(),
+      });
       if (existing) {
-        throw new Error('A client with this email already exists');
+        throw new Error('A client with this email already exists in this establishment');
       }
     }
 
@@ -179,13 +226,22 @@ export class ClientService {
   /**
    * Delete client
    */
-  static async delete(id: string): Promise<boolean> {
+  static async delete(id: string, context?: EstablishmentServiceContext): Promise<boolean> {
     await connectDB();
 
-    const client = await ClientModel.findById(id);
+    const queryBuilder = new EstablishmentQueryBuilder(ClientModel, context);
+    const client = await queryBuilder.findById(id);
 
     if (!client) {
       return false;
+    }
+
+    // Validate access if context provided
+    if (context) {
+      const hasAccess = await context.validateAccess(client, 'Client');
+      if (!hasAccess) {
+        throw new Error('Access denied: Client belongs to a different establishment');
+      }
     }
 
     await client.deleteOne();
@@ -199,13 +255,15 @@ export class ClientService {
   static async getByClassification(
     classification: 'regular' | 'walkin' | 'corporate',
     page: number = 1,
-    limit: number = 20
+    limit: number = 20,
+    context?: EstablishmentServiceContext
   ): Promise<PaginationResult<ClientResponse>> {
     await connectDB();
 
-    // Execute query with pagination
+    // Execute query with pagination and establishment filtering
+    const queryBuilder = new EstablishmentQueryBuilder(ClientModel, context);
     const result = await paginate(
-      ClientModel.find({ classification })
+      queryBuilder.find({ classification })
         .hint({ classification: 1 })
         .select('personalInfo classification totalStays totalSpent debt createdAt'),
       {
@@ -226,14 +284,24 @@ export class ClientService {
    */
   static async addDiscount(
     id: string,
-    discount: { type: string; percentage: number; validUntil?: Date }
+    discount: { type: string; percentage: number; validUntil?: Date },
+    context?: EstablishmentServiceContext
   ): Promise<ClientResponse | null> {
     await connectDB();
 
-    const client = await ClientModel.findById(id);
+    const queryBuilder = new EstablishmentQueryBuilder(ClientModel, context);
+    const client = await queryBuilder.findById(id);
 
     if (!client) {
       return null;
+    }
+
+    // Validate access if context provided
+    if (context) {
+      const hasAccess = await context.validateAccess(client, 'Client');
+      if (!hasAccess) {
+        throw new Error('Access denied: Client belongs to a different establishment');
+      }
     }
 
     client.discounts.push(discount);
@@ -245,13 +313,22 @@ export class ClientService {
   /**
    * Remove discount from client
    */
-  static async removeDiscount(id: string, discountIndex: number): Promise<ClientResponse | null> {
+  static async removeDiscount(id: string, discountIndex: number, context?: EstablishmentServiceContext): Promise<ClientResponse | null> {
     await connectDB();
 
-    const client = await ClientModel.findById(id);
+    const queryBuilder = new EstablishmentQueryBuilder(ClientModel, context);
+    const client = await queryBuilder.findById(id);
 
     if (!client) {
       return null;
+    }
+
+    // Validate access if context provided
+    if (context) {
+      const hasAccess = await context.validateAccess(client, 'Client');
+      if (!hasAccess) {
+        throw new Error('Access denied: Client belongs to a different establishment');
+      }
     }
 
     if (discountIndex >= 0 && discountIndex < client.discounts.length) {
@@ -265,10 +342,11 @@ export class ClientService {
   /**
    * Get top clients by total spent
    */
-  static async getTopClients(limit: number = 10): Promise<ClientResponse[]> {
+  static async getTopClients(limit: number = 10, context?: EstablishmentServiceContext): Promise<ClientResponse[]> {
     await connectDB();
 
-    const clients = await ClientModel.find().sort({ totalSpent: -1 }).limit(limit);
+    const queryBuilder = new EstablishmentQueryBuilder(ClientModel, context);
+    const clients = await queryBuilder.find({}).sort({ totalSpent: -1 }).limit(limit);
 
     return clients.map((client) => client.toJSON() as unknown as ClientResponse);
   }
@@ -279,14 +357,24 @@ export class ClientService {
   static async getClientBookingHistory(
     clientId: string,
     page: number = 1,
-    limit: number = 10
+    limit: number = 10,
+    context?: EstablishmentServiceContext
   ): Promise<PaginationResult<BookingResponse>> {
     await connectDB();
 
-    const client = await ClientModel.findById(clientId);
+    const queryBuilder = new EstablishmentQueryBuilder(ClientModel, context);
+    const client = await queryBuilder.findById(clientId);
 
     if (!client) {
       throw new Error('Client not found');
+    }
+
+    // Validate access if context provided
+    if (context) {
+      const hasAccess = await context.validateAccess(client, 'Client');
+      if (!hasAccess) {
+        throw new Error('Access denied: Client belongs to a different establishment');
+      }
     }
 
     // Get booking history IDs with pagination
@@ -335,7 +423,8 @@ export class ClientService {
   static async search(
     searchTerm: string,
     page: number = 1,
-    limit: number = 20
+    limit: number = 20,
+    context?: EstablishmentServiceContext
   ): Promise<PaginationResult<ClientResponse>> {
     await connectDB();
 
@@ -343,9 +432,10 @@ export class ClientService {
       $text: { $search: searchTerm },
     };
 
-    // Execute query with pagination
+    // Execute query with pagination and establishment filtering
+    const queryBuilder = new EstablishmentQueryBuilder(ClientModel, context);
     const result = await paginate(
-      ClientModel.find(query).select(
+      queryBuilder.find(query).select(
         'personalInfo classification totalStays totalSpent debt createdAt'
       ),
       {

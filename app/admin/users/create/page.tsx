@@ -2,19 +2,15 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import { useAuth } from '@/lib/auth/AuthContext';
+import EstablishmentSelector from '@/components/admin/EstablishmentSelector';
 import type { UserResponse } from '@/types/user.types';
-
-interface Establishment {
-    id: string;
-    name: string;
-}
 
 export default function CreateUserPage() {
     const router = useRouter();
+    const { user } = useAuth();
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
-    const [establishments, setEstablishments] = useState<Establishment[]>([]);
-    const [currentUser, setCurrentUser] = useState<UserResponse | null>(null);
 
     const [formData, setFormData] = useState({
         firstName: '',
@@ -27,87 +23,28 @@ export default function CreateUserPage() {
         isActive: true,
     });
 
-    useEffect(() => {
-        fetchCurrentUser();
-        fetchEstablishments();
-    }, []);
 
-    const fetchCurrentUser = async () => {
-        try {
-            const token = localStorage.getItem('accessToken');
-            if (!token) {
-                setError('Token d\'authentification manquant');
-                return;
-            }
-
-            const response = await fetch('/api/auth/me', {
-                headers: { 'Authorization': `Bearer ${token}` },
-            });
-
-            if (!response.ok) {
-                const errorData = await response.json();
-                throw new Error(errorData.error?.message || `Erreur HTTP ${response.status}`);
-            }
-
-            const data = await response.json();
-            if (data.success && data.user) {
-                setCurrentUser(data.user);
-                // Pre-select establishment for non-admin users
-                if (data.user.role !== 'super_admin' && data.user.establishmentId) {
-                    setFormData(prev => ({ ...prev, establishmentId: data.user.establishmentId }));
-                }
-            }
-        } catch (err) {
-            console.error('Erreur chargement utilisateur:', err);
-            setError(`Erreur lors du chargement de l'utilisateur: ${err instanceof Error ? err.message : 'Erreur inconnue'}`);
-        }
-    };
-
-    const fetchEstablishments = async () => {
-        try {
-            const token = localStorage.getItem('accessToken');
-            if (!token) {
-                setError('Token d\'authentification manquant');
-                return;
-            }
-
-            const response = await fetch('/api/establishments?limit=100', {
-                headers: { 'Authorization': `Bearer ${token}` },
-            });
-
-            if (!response.ok) {
-                const errorData = await response.json();
-                throw new Error(errorData.error?.message || `Erreur HTTP ${response.status}`);
-            }
-
-            const data = await response.json();
-            console.log('Establishments data:', data); // Debug log
-
-            if (data.success && data.data) {
-                // Handle both paginated and non-paginated responses
-                const establishmentsList = data.data.data || data.data || [];
-                console.log('Establishments list:', establishmentsList); // Debug log
-
-                // Ensure establishments have valid _id and name
-                const validEstablishments = establishmentsList.filter((est: any) =>
-                    est.id && typeof est.id === 'string' && est.name && typeof est.name === 'string'
-                );
-                console.log('Valid establishments:', validEstablishments); // Debug log
-                setEstablishments(validEstablishments);
-            } else {
-                console.error('Unexpected API response:', data);
-                setError('Format de réponse API inattendu');
-            }
-        } catch (err) {
-            console.error('Erreur chargement établissements:', err);
-            setError(`Erreur lors du chargement des établissements: ${err instanceof Error ? err.message : 'Erreur inconnue'}`);
-        }
-    };
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setLoading(true);
         setError('');
+
+        // Client-side validation for establishment (required for non-admin users)
+        if (!formData.establishmentId && formData.role !== 'super_admin' && formData.role !== 'root') {
+            setError('Veuillez sélectionner un établissement pour ce rôle');
+            setLoading(false);
+            return;
+        }
+
+        // Validate establishment permissions for non-admin users
+        if (user && user.role !== 'root' && user.role !== 'super_admin') {
+            if (formData.establishmentId !== user.establishmentId) {
+                setError('Vous ne pouvez créer des utilisateurs que pour votre établissement assigné');
+                setLoading(false);
+                return;
+            }
+        }
 
         try {
             // Prepare data - ensure establishmentId is properly handled
@@ -115,8 +52,6 @@ export default function CreateUserPage() {
                 ...formData,
                 establishmentId: formData.establishmentId || undefined, // Convert empty string to undefined
             };
-
-            console.log('Submitting user data:', submitData); // Debug log
 
             const token = localStorage.getItem('accessToken');
             if (!token) {
@@ -253,35 +188,16 @@ export default function CreateUserPage() {
                     </div>
 
                     <div className="md:col-span-2">
-                        <label className="block text-sm font-semibold text-gray-700 mb-2">
-                            Établissement
-                        </label>
-                        <select
+                        <EstablishmentSelector
                             value={formData.establishmentId}
-                            onChange={(e) => setFormData({ ...formData, establishmentId: e.target.value })}
-                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                            disabled={currentUser?.role !== 'super_admin'}
-                        >
-                            {currentUser?.role === 'super_admin' ? (
-                                <>
-                                    <option value="">Aucun (Super Admin)</option>
-                                    {establishments.map((est) => (
-                                        <option key={est.id} value={est.id}>{est.name}</option>
-                                    ))}
-                                </>
-                            ) : (
-                                establishments
-                                    .filter(est => est.id === currentUser?.establishmentId)
-                                    .map((est) => (
-                                        <option key={est.id} value={est.id}>{est.name}</option>
-                                    ))
-                            )}
-                        </select>
+                            onChange={(establishmentId) => setFormData({ ...formData, establishmentId })}
+                            required={formData.role !== 'super_admin' && formData.role !== 'root'}
+                            userRole={user?.role}
+                            userEstablishmentId={user?.establishmentId}
+                            label="Établissement"
+                        />
                         <p className="text-xs text-gray-500 mt-1">
-                            {currentUser?.role === 'super_admin'
-                                ? 'Requis pour les managers et le personnel'
-                                : 'Votre établissement est automatiquement sélectionné'
-                            }
+                            Requis pour les managers et le personnel. Les super admins peuvent ne pas avoir d'établissement assigné.
                         </p>
                     </div>
                 </div>

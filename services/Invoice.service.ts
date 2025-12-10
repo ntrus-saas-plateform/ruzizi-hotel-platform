@@ -3,6 +3,8 @@ import { InvoiceModel } from '@/models/Invoice.model';
 import { BookingModel } from '@/models/Booking.model';
 import { connectDB } from '@/lib/db';
 import { paginate, type PaginationResult, toObjectId } from '@/lib/db/utils';
+import { EstablishmentServiceContext } from '@/lib/services/establishment-context';
+import { CrossEstablishmentRelationshipError } from '@/lib/errors/establishment-errors';
 import type {
   CreateInvoiceInput,
   UpdateInvoiceInput,
@@ -19,13 +21,21 @@ export class InvoiceService {
   /**
    * Create a new invoice
    */
-  static async create(data: CreateInvoiceInput): Promise<InvoiceResponse> {
+  static async create(data: CreateInvoiceInput, context?: EstablishmentServiceContext): Promise<InvoiceResponse> {
     await connectDB();
 
     // Verify booking exists
     const booking = await BookingModel.findById(data.bookingId);
     if (!booking) {
       throw new Error('Booking not found');
+    }
+
+    // Validate relationship: booking and invoice must be in same establishment
+    if (context) {
+      await context.validateRelationship(
+        { establishmentId: booking.establishmentId.toString() },
+        { establishmentId: data.establishmentId }
+      );
     }
 
     // Check if invoice already exists for this booking
@@ -115,7 +125,7 @@ export class InvoiceService {
   /**
    * Get invoice by ID
    */
-  static async getById(id: string): Promise<InvoiceResponse | null> {
+  static async getById(id: string, context?: EstablishmentServiceContext): Promise<InvoiceResponse | null> {
     await connectDB();
 
     const invoice = await InvoiceModel.findById(id)
@@ -124,6 +134,11 @@ export class InvoiceService {
 
     if (!invoice) {
       return null;
+    }
+
+    // Validate access
+    if (context) {
+      await context.validateAccess({ establishmentId: invoice.establishmentId.toString() }, 'invoice');
     }
 
     return invoice.toJSON() as unknown as InvoiceResponse;
@@ -168,7 +183,8 @@ export class InvoiceService {
   static async getAll(
     filters: InvoiceFilterOptions = {},
     page: number = 1,
-    limit: number = 10
+    limit: number = 10,
+    context?: EstablishmentServiceContext
   ): Promise<PaginationResult<InvoiceResponse>> {
     await connectDB();
 
@@ -177,6 +193,14 @@ export class InvoiceService {
 
     if (filters.establishmentId) {
       query.establishmentId = toObjectId(filters.establishmentId);
+    }
+
+    // Apply establishment filter from context
+    if (context) {
+      const contextFilter = context.applyFilter({});
+      if (contextFilter.establishmentId) {
+        query.establishmentId = toObjectId(contextFilter.establishmentId.toString());
+      }
     }
 
     if (filters.status) {
@@ -217,13 +241,18 @@ export class InvoiceService {
   /**
    * Update invoice
    */
-  static async update(id: string, data: UpdateInvoiceInput): Promise<InvoiceResponse | null> {
+  static async update(id: string, data: UpdateInvoiceInput, context?: EstablishmentServiceContext): Promise<InvoiceResponse | null> {
     await connectDB();
 
     const invoice = await InvoiceModel.findById(id);
 
     if (!invoice) {
       return null;
+    }
+
+    // Validate access
+    if (context) {
+      await context.validateAccess({ establishmentId: invoice.establishmentId.toString() }, 'invoice');
     }
 
     // Update fields
@@ -369,13 +398,18 @@ export class InvoiceService {
   /**
    * Delete invoice
    */
-  static async delete(id: string): Promise<boolean> {
+  static async delete(id: string, context?: EstablishmentServiceContext): Promise<boolean> {
     await connectDB();
 
     const invoice = await InvoiceModel.findById(id);
 
     if (!invoice) {
       return false;
+    }
+
+    // Validate access
+    if (context) {
+      await context.validateAccess({ establishmentId: invoice.establishmentId.toString() }, 'invoice');
     }
 
     // Only allow deletion of unpaid invoices with no payments

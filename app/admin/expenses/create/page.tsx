@@ -1,18 +1,15 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-
-interface Establishment {
-  _id: string;
-  name: string;
-}
+import { useAuth } from '@/lib/auth/AuthContext';
+import EstablishmentSelector from '@/components/admin/EstablishmentSelector';
 
 export default function CreateExpensePage() {
   const router = useRouter();
+  const { user } = useAuth();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-  const [establishments, setEstablishments] = useState<Establishment[]>([]);
   
   const [formData, setFormData] = useState({
     title: '',
@@ -24,29 +21,26 @@ export default function CreateExpensePage() {
     paymentMethod: 'cash',
   });
 
-  useEffect(() => {
-    fetchEstablishments();
-  }, []);
-
-  const fetchEstablishments = async () => {
-    try {
-      const token = localStorage.getItem('accessToken');
-      const response = await fetch('/api/establishments', {
-        headers: { 'Authorization': `Bearer ${token}` },
-      });
-      const data = await response.json();
-      if (response.ok) {
-        setEstablishments(data.data.data || []);
-      }
-    } catch (err) {
-      console.error('Erreur chargement établissements:', err);
-    }
-  };
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setError('');
+
+    // Client-side validation for establishment
+    if (!formData.establishmentId) {
+      setError('Veuillez sélectionner un établissement');
+      setLoading(false);
+      return;
+    }
+
+    // Validate establishment permissions for non-admin users
+    if (user && user.role !== 'root' && user.role !== 'super_admin') {
+      if (formData.establishmentId !== user.establishmentId) {
+        setError('Vous ne pouvez créer des dépenses que pour votre établissement assigné');
+        setLoading(false);
+        return;
+      }
+    }
 
     try {
       const token = localStorage.getItem('accessToken');
@@ -93,6 +87,18 @@ export default function CreateExpensePage() {
       )}
 
       <form onSubmit={handleSubmit} className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 space-y-6">
+        {/* Establishment Selection */}
+        <div>
+          <EstablishmentSelector
+            value={formData.establishmentId}
+            onChange={(establishmentId) => setFormData({ ...formData, establishmentId })}
+            required
+            userRole={user?.role}
+            userEstablishmentId={user?.establishmentId}
+            label="Établissement"
+          />
+        </div>
+
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div className="md:col-span-2">
             <label className="block text-sm font-semibold text-gray-700 mb-2">
@@ -174,22 +180,7 @@ export default function CreateExpensePage() {
             </select>
           </div>
 
-          <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-2">
-              Établissement *
-            </label>
-            <select
-              value={formData.establishmentId}
-              onChange={(e) => setFormData({ ...formData, establishmentId: e.target.value })}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              required
-            >
-              <option value="">Sélectionner un établissement</option>
-              {establishments.map((est) => (
-                <option key={est._id} value={est._id}>{est.name}</option>
-              ))}
-            </select>
-          </div>
+
 
           <div className="md:col-span-2">
             <label className="block text-sm font-semibold text-gray-700 mb-2">

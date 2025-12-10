@@ -1,7 +1,13 @@
 import { PipelineStage } from 'mongoose';
 import { ExpenseModel } from '@/models/Expense.model';
+import { EstablishmentModel } from '@/models/Establishment.model';
 import { connectDB } from '@/lib/db';
 import { paginate, type PaginationResult, toObjectId } from '@/lib/db/utils';
+import { EstablishmentServiceContext } from '@/lib/services/establishment-context';
+import {
+  EstablishmentAccessDeniedError,
+  EstablishmentNotFoundError,
+} from '@/lib/errors/establishment-errors';
 import type {
   CreateExpenseInput,
   UpdateExpenseInput,
@@ -20,12 +26,26 @@ export class ExpenseService {
   /**
    * Create a new expense
    */
-  static async create(data: CreateExpenseInput): Promise<ExpenseResponse> {
+  static async create(
+    data: CreateExpenseInput,
+    context: EstablishmentServiceContext
+  ): Promise<ExpenseResponse> {
     await connectDB();
+
+    // For non-admin users, enforce their establishment
+    const establishmentId = context.canAccessAll()
+      ? data.establishmentId
+      : context.getEstablishmentId()!;
+
+    // Validate establishment exists
+    const establishment = await EstablishmentModel.findById(establishmentId);
+    if (!establishment) {
+      throw new EstablishmentNotFoundError(establishmentId);
+    }
 
     const expense = await ExpenseModel.create({
       ...data,
-      establishmentId: toObjectId(data.establishmentId),
+      establishmentId: toObjectId(establishmentId),
       createdBy: toObjectId(data.createdBy),
       status: 'pending',
     });
@@ -36,7 +56,10 @@ export class ExpenseService {
   /**
    * Get expense by ID
    */
-  static async getById(id: string): Promise<ExpenseResponse | null> {
+  static async getById(
+    id: string,
+    context?: EstablishmentServiceContext
+  ): Promise<ExpenseResponse | null> {
     await connectDB();
 
     const expense = await ExpenseModel.findById(id)
@@ -48,6 +71,20 @@ export class ExpenseService {
       return null;
     }
 
+    // Validate access if context is provided
+    if (context) {
+      const hasAccess = await context.validateAccess(expense, 'expense');
+      if (!hasAccess) {
+        throw new EstablishmentAccessDeniedError({
+          userId: context.getUserId(),
+          resourceType: 'expense',
+          resourceId: id,
+          userEstablishmentId: context.getEstablishmentId(),
+          resourceEstablishmentId: expense.establishmentId.toString(),
+        });
+      }
+    }
+
     return expense.toJSON() as unknown as ExpenseResponse;
   }
 
@@ -57,12 +94,13 @@ export class ExpenseService {
   static async getAll(
     filters: ExpenseFilterOptions = {},
     page: number = 1,
-    limit: number = 10
+    limit: number = 10,
+    context?: EstablishmentServiceContext
   ): Promise<PaginationResult<ExpenseResponse>> {
     await connectDB();
 
     // Build query
-    const query: any = {};
+    let query: any = {};
 
     if (filters.establishmentId) {
       query.establishmentId = toObjectId(filters.establishmentId);
@@ -93,6 +131,11 @@ export class ExpenseService {
       ];
     }
 
+    // Apply establishment filter if context is provided
+    if (context) {
+      query = context.applyFilter(query);
+    }
+
     // Execute query with pagination
     const result = await paginate(ExpenseModel.find(query), {
       page,
@@ -109,13 +152,31 @@ export class ExpenseService {
   /**
    * Update expense
    */
-  static async update(id: string, data: UpdateExpenseInput): Promise<ExpenseResponse | null> {
+  static async update(
+    id: string,
+    data: UpdateExpenseInput,
+    context?: EstablishmentServiceContext
+  ): Promise<ExpenseResponse | null> {
     await connectDB();
 
     const expense = await ExpenseModel.findById(id);
 
     if (!expense) {
       return null;
+    }
+
+    // Validate access if context is provided
+    if (context) {
+      const hasAccess = await context.validateAccess(expense, 'expense');
+      if (!hasAccess) {
+        throw new EstablishmentAccessDeniedError({
+          userId: context.getUserId(),
+          resourceType: 'expense',
+          resourceId: id,
+          userEstablishmentId: context.getEstablishmentId(),
+          resourceEstablishmentId: expense.establishmentId.toString(),
+        });
+      }
     }
 
     // Only allow updates if expense is pending
@@ -134,13 +195,31 @@ export class ExpenseService {
   /**
    * Approve expense
    */
-  static async approve(id: string, data: ApproveExpenseInput): Promise<ExpenseResponse | null> {
+  static async approve(
+    id: string,
+    data: ApproveExpenseInput,
+    context?: EstablishmentServiceContext
+  ): Promise<ExpenseResponse | null> {
     await connectDB();
 
     const expense = await ExpenseModel.findById(id);
 
     if (!expense) {
       return null;
+    }
+
+    // Validate access if context is provided
+    if (context) {
+      const hasAccess = await context.validateAccess(expense, 'expense');
+      if (!hasAccess) {
+        throw new EstablishmentAccessDeniedError({
+          userId: context.getUserId(),
+          resourceType: 'expense',
+          resourceId: id,
+          userEstablishmentId: context.getEstablishmentId(),
+          resourceEstablishmentId: expense.establishmentId.toString(),
+        });
+      }
     }
 
     if (expense.status !== 'pending') {
@@ -159,13 +238,31 @@ export class ExpenseService {
   /**
    * Reject expense
    */
-  static async reject(id: string, data: ApproveExpenseInput): Promise<ExpenseResponse | null> {
+  static async reject(
+    id: string,
+    data: ApproveExpenseInput,
+    context?: EstablishmentServiceContext
+  ): Promise<ExpenseResponse | null> {
     await connectDB();
 
     const expense = await ExpenseModel.findById(id);
 
     if (!expense) {
       return null;
+    }
+
+    // Validate access if context is provided
+    if (context) {
+      const hasAccess = await context.validateAccess(expense, 'expense');
+      if (!hasAccess) {
+        throw new EstablishmentAccessDeniedError({
+          userId: context.getUserId(),
+          resourceType: 'expense',
+          resourceId: id,
+          userEstablishmentId: context.getEstablishmentId(),
+          resourceEstablishmentId: expense.establishmentId.toString(),
+        });
+      }
     }
 
     if (expense.status !== 'pending') {
@@ -184,13 +281,27 @@ export class ExpenseService {
   /**
    * Delete expense
    */
-  static async delete(id: string): Promise<boolean> {
+  static async delete(id: string, context?: EstablishmentServiceContext): Promise<boolean> {
     await connectDB();
 
     const expense = await ExpenseModel.findById(id);
 
     if (!expense) {
       return false;
+    }
+
+    // Validate access if context is provided
+    if (context) {
+      const hasAccess = await context.validateAccess(expense, 'expense');
+      if (!hasAccess) {
+        throw new EstablishmentAccessDeniedError({
+          userId: context.getUserId(),
+          resourceType: 'expense',
+          resourceId: id,
+          userEstablishmentId: context.getEstablishmentId(),
+          resourceEstablishmentId: expense.establishmentId.toString(),
+        });
+      }
     }
 
     // Only allow deletion if expense is pending
@@ -206,8 +317,24 @@ export class ExpenseService {
   /**
    * Get expenses by establishment
    */
-  static async getByEstablishment(establishmentId: string): Promise<ExpenseResponse[]> {
+  static async getByEstablishment(
+    establishmentId: string,
+    context?: EstablishmentServiceContext
+  ): Promise<ExpenseResponse[]> {
     await connectDB();
+
+    // If context is provided and user is not admin, validate they can access this establishment
+    if (context && !context.canAccessAll()) {
+      if (context.getEstablishmentId() !== establishmentId) {
+        throw new EstablishmentAccessDeniedError({
+          userId: context.getUserId(),
+          resourceType: 'expense',
+          resourceId: 'list',
+          userEstablishmentId: context.getEstablishmentId(),
+          resourceEstablishmentId: establishmentId,
+        });
+      }
+    }
 
     const expenses = await ExpenseModel.findByEstablishment(establishmentId);
 
@@ -217,10 +344,21 @@ export class ExpenseService {
   /**
    * Get expenses by category
    */
-  static async getByCategory(category: ExpenseCategory): Promise<ExpenseResponse[]> {
+  static async getByCategory(
+    category: ExpenseCategory,
+    context?: EstablishmentServiceContext
+  ): Promise<ExpenseResponse[]> {
     await connectDB();
 
-    const expenses = await ExpenseModel.findByCategory(category);
+    let expenses = await ExpenseModel.findByCategory(category);
+
+    // Apply establishment filtering if context is provided
+    if (context && !context.canAccessAll()) {
+      const userEstId = context.getEstablishmentId();
+      expenses = expenses.filter(
+        (expense) => expense.establishmentId.toString() === userEstId
+      );
+    }
 
     return expenses.map((expense) => expense.toJSON() as unknown as ExpenseResponse);
   }
@@ -231,9 +369,23 @@ export class ExpenseService {
   static async getStatistics(
     establishmentId: string,
     startDate: Date,
-    endDate: Date
+    endDate: Date,
+    context?: EstablishmentServiceContext
   ): Promise<ExpenseStatistics> {
     await connectDB();
+
+    // If context is provided and user is not admin, validate they can access this establishment
+    if (context && !context.canAccessAll()) {
+      if (context.getEstablishmentId() !== establishmentId) {
+        throw new EstablishmentAccessDeniedError({
+          userId: context.getUserId(),
+          resourceType: 'expense',
+          resourceId: 'statistics',
+          userEstablishmentId: context.getEstablishmentId(),
+          resourceEstablishmentId: establishmentId,
+        });
+      }
+    }
 
     const result = await ExpenseModel.aggregate([
       {
@@ -310,7 +462,8 @@ export class ExpenseService {
     establishmentId: string,
     startDate: Date,
     endDate: Date,
-    revenue: number
+    revenue: number,
+    context?: EstablishmentServiceContext
   ): Promise<{
     revenue: number;
     expenses: number;
@@ -318,6 +471,19 @@ export class ExpenseService {
     profitMargin: number;
   }> {
     await connectDB();
+
+    // If context is provided and user is not admin, validate they can access this establishment
+    if (context && !context.canAccessAll()) {
+      if (context.getEstablishmentId() !== establishmentId) {
+        throw new EstablishmentAccessDeniedError({
+          userId: context.getUserId(),
+          resourceType: 'expense',
+          resourceId: 'net-profit',
+          userEstablishmentId: context.getEstablishmentId(),
+          resourceEstablishmentId: establishmentId,
+        });
+      }
+    }
 
     const result = await ExpenseModel.aggregate([
       {

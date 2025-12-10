@@ -2,6 +2,11 @@ import { LeaveModel } from '@/models/Leave.model';
 import { EmployeeModel } from '@/models/Employee.model';
 import { connectDB } from '@/lib/db';
 import { paginate, type PaginationResult, toObjectId } from '@/lib/db/utils';
+import { EstablishmentServiceContext } from '@/lib/services/establishment-context';
+import {
+  EstablishmentAccessDeniedError,
+  CrossEstablishmentRelationshipError,
+} from '@/lib/errors/establishment-errors';
 import type {
   CreateLeaveInput,
   LeaveResponse,
@@ -11,18 +16,35 @@ import type {
 } from '@/types/leave.types';
 
 export class LeaveService {
-  static async create(data: CreateLeaveInput): Promise<LeaveResponse> {
+  static async create(
+    data: CreateLeaveInput,
+    context: EstablishmentServiceContext
+  ): Promise<LeaveResponse> {
     await connectDB();
 
+    // Validate employee exists and get their establishment
     const employee = await EmployeeModel.findById(data.employeeId);
     if (!employee) {
       throw new Error('Employee not found');
     }
 
+    const employeeEstablishmentId = employee.employmentInfo.establishmentId.toString();
+
+    // Validate relationship: employee must belong to the same establishment
+    if (context && !context.canAccessAll()) {
+      const userEstablishmentId = context.getEstablishmentId();
+      if (employeeEstablishmentId !== userEstablishmentId) {
+        throw new CrossEstablishmentRelationshipError({
+          parentResource: { type: 'employee', id: data.employeeId, establishmentId: employeeEstablishmentId },
+          childResource: { type: 'leave', id: 'new', establishmentId: userEstablishmentId! },
+        });
+      }
+    }
+
     const days = LeaveModel.calculateDays(data.startDate, data.endDate);
 
     if (data.type === 'annual') {
-      const balance = await this.getBalance(data.employeeId, new Date().getFullYear());
+      const balance = await this.getBalance(data.employeeId, new Date().getFullYear(), context);
       if (balance.annual.remaining < days) {
         throw new Error('Insufficient annual leave balance');
       }
@@ -52,7 +74,10 @@ export class LeaveService {
     return leave.toJSON() as unknown as LeaveResponse;
   }
 
-  static async getById(id: string): Promise<LeaveResponse | null> {
+  static async getById(
+    id: string,
+    context?: EstablishmentServiceContext
+  ): Promise<LeaveResponse | null> {
     await connectDB();
 
     const leave = await LeaveModel.findById(id)
@@ -63,28 +88,79 @@ export class LeaveService {
       return null;
     }
 
+    // Validate access if context is provided
+    if (context) {
+      const employee = await EmployeeModel.findById(leave.employeeId);
+      if (employee) {
+        const hasAccess = await context.validateAccess(
+          { establishmentId: employee.employmentInfo.establishmentId.toString() },
+          'leave'
+        );
+        if (!hasAccess) {
+          throw new EstablishmentAccessDeniedError({
+            userId: context.getUserId(),
+            resourceType: 'leave',
+            resourceId: id,
+            userEstablishmentId: context.getEstablishmentId(),
+            resourceEstablishmentId: employee.employmentInfo.establishmentId.toString(),
+          });
+        }
+      }
+    }
+
     return leave.toJSON() as unknown as LeaveResponse;
   }
 
   static async getAll(
     filters: LeaveFilterOptions = {},
     page: number = 1,
-    limit: number = 10
+    limit: number = 10,
+    context?: EstablishmentServiceContext
   ): Promise<PaginationResult<LeaveResponse>> {
     await connectDB();
 
     const query: any = {};
 
-    if (filters.employeeId) {
-      query.employeeId = toObjectId(filters.employeeId);
+    // Apply establishment filter if context is provided
+    let establishmentIdToFilter: string | undefined;
+    if (context) {
+      const baseFilter = context.applyFilter({});
+      if (baseFilter.establishmentId) {
+        establishmentIdToFilter = baseFilter.establishmentId.toString();
+      }
     }
 
-    if (filters.establishmentId) {
+    // If establishment filter is provided (either from context or filters), use it
+    if (establishmentIdToFilter || filters.establishmentId) {
+      const targetEstablishmentId = establishmentIdToFilter || filters.establishmentId;
       const employees = await EmployeeModel.find({
-        'employmentInfo.establishmentId': toObjectId(filters.establishmentId),
+        'employmentInfo.establishmentId': toObjectId(targetEstablishmentId!),
       });
       const employeeIds = employees.map((emp) => emp._id);
       query.employeeId = { $in: employeeIds };
+    }
+
+    if (filters.employeeId) {
+      // If specific employee is requested, validate access
+      if (context && !context.canAccessAll()) {
+        const employee = await EmployeeModel.findById(filters.employeeId);
+        if (employee) {
+          const hasAccess = await context.validateAccess(
+            { establishmentId: employee.employmentInfo.establishmentId.toString() },
+            'leave'
+          );
+          if (!hasAccess) {
+            throw new EstablishmentAccessDeniedError({
+              userId: context.getUserId(),
+              resourceType: 'leave',
+              resourceId: 'list',
+              userEstablishmentId: context.getEstablishmentId(),
+              resourceEstablishmentId: employee.employmentInfo.establishmentId.toString(),
+            });
+          }
+        }
+      }
+      query.employeeId = toObjectId(filters.employeeId);
     }
 
     if (filters.type) {
@@ -120,30 +196,136 @@ export class LeaveService {
     };
   }
 
-  static async update(id: string, data: Partial<CreateLeaveInput>): Promise<LeaveResponse | null> {
+  static async update(
+    id: string,
+    data: Partial<CreateLeaveInput>,
+    context?: EstablishmentServiceContext
+  ): Promise<LeaveResponse | null> {
     await connectDB();
 
-    const leave = await LeaveModel.findByIdAndUpdate(id, data, { new: true });
+    const leave = await LeaveModel.findById(id);
 
     if (!leave) {
       return null;
     }
 
-    return leave.toJSON() as unknown as LeaveResponse;
+    // Validate access if context is provided
+    if (context) {
+      const employee = await EmployeeModel.findById(leave.employeeId);
+      if (employee) {
+        const hasAccess = await context.validateAccess(
+          { establishmentId: employee.employmentInfo.establishmentId.toString() },
+          'leave'
+        );
+        if (!hasAccess) {
+          throw new EstablishmentAccessDeniedError({
+            userId: context.getUserId(),
+            resourceType: 'leave',
+            resourceId: id,
+            userEstablishmentId: context.getEstablishmentId(),
+            resourceEstablishmentId: employee.employmentInfo.establishmentId.toString(),
+          });
+        }
+      }
+    }
+
+    // If employeeId is being changed, validate the new employee
+    if (data.employeeId && data.employeeId !== leave.employeeId.toString()) {
+      const newEmployee = await EmployeeModel.findById(data.employeeId);
+      if (!newEmployee) {
+        throw new Error('New employee not found');
+      }
+
+      // Validate relationship with new employee
+      if (context && !context.canAccessAll()) {
+        const userEstablishmentId = context.getEstablishmentId();
+        const newEmployeeEstablishmentId = newEmployee.employmentInfo.establishmentId.toString();
+        if (newEmployeeEstablishmentId !== userEstablishmentId) {
+          throw new CrossEstablishmentRelationshipError({
+            parentResource: { type: 'employee', id: data.employeeId, establishmentId: newEmployeeEstablishmentId },
+            childResource: { type: 'leave', id: id, establishmentId: userEstablishmentId! },
+          });
+        }
+      }
+    }
+
+    const updatedLeave = await LeaveModel.findByIdAndUpdate(id, data, { new: true });
+
+    if (!updatedLeave) {
+      return null;
+    }
+
+    return updatedLeave.toJSON() as unknown as LeaveResponse;
   }
 
-  static async delete(id: string): Promise<boolean> {
+  static async delete(id: string, context?: EstablishmentServiceContext): Promise<boolean> {
     await connectDB();
 
-    const result = await LeaveModel.findByIdAndDelete(id);
+    const leave = await LeaveModel.findById(id);
 
-    return !!result;
+    if (!leave) {
+      return false;
+    }
+
+    // Validate access if context is provided
+    if (context) {
+      const employee = await EmployeeModel.findById(leave.employeeId);
+      if (employee) {
+        const hasAccess = await context.validateAccess(
+          { establishmentId: employee.employmentInfo.establishmentId.toString() },
+          'leave'
+        );
+        if (!hasAccess) {
+          throw new EstablishmentAccessDeniedError({
+            userId: context.getUserId(),
+            resourceType: 'leave',
+            resourceId: id,
+            userEstablishmentId: context.getEstablishmentId(),
+            resourceEstablishmentId: employee.employmentInfo.establishmentId.toString(),
+          });
+        }
+      }
+    }
+
+    await LeaveModel.findByIdAndDelete(id);
+
+    return true;
   }
 
-  static async approve(id: string, approvedBy: string): Promise<LeaveResponse | null> {
+  static async approve(
+    id: string,
+    approvedBy: string,
+    context?: EstablishmentServiceContext
+  ): Promise<LeaveResponse | null> {
     await connectDB();
 
-    const leave = await LeaveModel.findByIdAndUpdate(
+    const leave = await LeaveModel.findById(id);
+
+    if (!leave) {
+      return null;
+    }
+
+    // Validate access if context is provided
+    if (context) {
+      const employee = await EmployeeModel.findById(leave.employeeId);
+      if (employee) {
+        const hasAccess = await context.validateAccess(
+          { establishmentId: employee.employmentInfo.establishmentId.toString() },
+          'leave'
+        );
+        if (!hasAccess) {
+          throw new EstablishmentAccessDeniedError({
+            userId: context.getUserId(),
+            resourceType: 'leave',
+            resourceId: id,
+            userEstablishmentId: context.getEstablishmentId(),
+            resourceEstablishmentId: employee.employmentInfo.establishmentId.toString(),
+          });
+        }
+      }
+    }
+
+    const updatedLeave = await LeaveModel.findByIdAndUpdate(
       id,
       {
         status: 'approved',
@@ -153,21 +335,48 @@ export class LeaveService {
       { new: true }
     );
 
-    if (!leave) {
+    if (!updatedLeave) {
       return null;
     }
 
-    return leave.toJSON() as unknown as LeaveResponse;
+    return updatedLeave.toJSON() as unknown as LeaveResponse;
   }
 
   static async reject(
     id: string,
     approvedBy: string,
-    reason: string
+    reason: string,
+    context?: EstablishmentServiceContext
   ): Promise<LeaveResponse | null> {
     await connectDB();
 
-    const leave = await LeaveModel.findByIdAndUpdate(
+    const leave = await LeaveModel.findById(id);
+
+    if (!leave) {
+      return null;
+    }
+
+    // Validate access if context is provided
+    if (context) {
+      const employee = await EmployeeModel.findById(leave.employeeId);
+      if (employee) {
+        const hasAccess = await context.validateAccess(
+          { establishmentId: employee.employmentInfo.establishmentId.toString() },
+          'leave'
+        );
+        if (!hasAccess) {
+          throw new EstablishmentAccessDeniedError({
+            userId: context.getUserId(),
+            resourceType: 'leave',
+            resourceId: id,
+            userEstablishmentId: context.getEstablishmentId(),
+            resourceEstablishmentId: employee.employmentInfo.establishmentId.toString(),
+          });
+        }
+      }
+    }
+
+    const updatedLeave = await LeaveModel.findByIdAndUpdate(
       id,
       {
         status: 'rejected',
@@ -178,51 +387,134 @@ export class LeaveService {
       { new: true }
     );
 
+    if (!updatedLeave) {
+      return null;
+    }
+
+    return updatedLeave.toJSON() as unknown as LeaveResponse;
+  }
+
+  static async cancel(
+    id: string,
+    context?: EstablishmentServiceContext
+  ): Promise<LeaveResponse | null> {
+    await connectDB();
+
+    const leave = await LeaveModel.findById(id);
+
     if (!leave) {
       return null;
     }
 
-    return leave.toJSON() as unknown as LeaveResponse;
-  }
+    // Validate access if context is provided
+    if (context) {
+      const employee = await EmployeeModel.findById(leave.employeeId);
+      if (employee) {
+        const hasAccess = await context.validateAccess(
+          { establishmentId: employee.employmentInfo.establishmentId.toString() },
+          'leave'
+        );
+        if (!hasAccess) {
+          throw new EstablishmentAccessDeniedError({
+            userId: context.getUserId(),
+            resourceType: 'leave',
+            resourceId: id,
+            userEstablishmentId: context.getEstablishmentId(),
+            resourceEstablishmentId: employee.employmentInfo.establishmentId.toString(),
+          });
+        }
+      }
+    }
 
-  static async cancel(id: string): Promise<LeaveResponse | null> {
-    await connectDB();
-
-    const leave = await LeaveModel.findByIdAndUpdate(
+    const updatedLeave = await LeaveModel.findByIdAndUpdate(
       id,
       { status: 'cancelled' },
       { new: true }
     );
 
-    if (!leave) {
+    if (!updatedLeave) {
       return null;
     }
 
-    return leave.toJSON() as unknown as LeaveResponse;
+    return updatedLeave.toJSON() as unknown as LeaveResponse;
   }
 
-  static async getByEmployee(employeeId: string, year?: number): Promise<LeaveResponse[]> {
+  static async getByEmployee(
+    employeeId: string,
+    year?: number,
+    context?: EstablishmentServiceContext
+  ): Promise<LeaveResponse[]> {
     await connectDB();
+
+    // Validate access if context is provided
+    if (context) {
+      const employee = await EmployeeModel.findById(employeeId);
+      if (employee) {
+        const hasAccess = await context.validateAccess(
+          { establishmentId: employee.employmentInfo.establishmentId.toString() },
+          'leave'
+        );
+        if (!hasAccess) {
+          throw new EstablishmentAccessDeniedError({
+            userId: context.getUserId(),
+            resourceType: 'leave',
+            resourceId: 'list',
+            userEstablishmentId: context.getEstablishmentId(),
+            resourceEstablishmentId: employee.employmentInfo.establishmentId.toString(),
+          });
+        }
+      }
+    }
 
     const leaves = await LeaveModel.findByEmployee(employeeId, year);
 
     return leaves.map((leave) => leave.toJSON() as unknown as LeaveResponse);
   }
 
-  static async getPending(): Promise<LeaveResponse[]> {
+  static async getPending(context?: EstablishmentServiceContext): Promise<LeaveResponse[]> {
     await connectDB();
 
-    const leaves = await LeaveModel.findPending();
+    let leaves = await LeaveModel.findPending();
+
+    // Apply establishment filter if context is provided
+    if (context && !context.canAccessAll()) {
+      const userEstablishmentId = context.getEstablishmentId();
+      leaves = leaves.filter((leave: any) => {
+        const employee = leave.employeeId;
+        return employee && employee.employmentInfo.establishmentId.toString() === userEstablishmentId;
+      });
+    }
 
     return leaves.map((leave) => leave.toJSON() as unknown as LeaveResponse);
   }
 
-  static async getBalance(employeeId: string, year: number): Promise<LeaveBalance> {
+  static async getBalance(
+    employeeId: string,
+    year: number,
+    context?: EstablishmentServiceContext
+  ): Promise<LeaveBalance> {
     await connectDB();
 
     const employee = await EmployeeModel.findById(employeeId);
     if (!employee) {
       throw new Error('Employee not found');
+    }
+
+    // Validate access if context is provided
+    if (context && !context.canAccessAll()) {
+      const hasAccess = await context.validateAccess(
+        { establishmentId: employee.employmentInfo.establishmentId.toString() },
+        'leave'
+      );
+      if (!hasAccess) {
+        throw new EstablishmentAccessDeniedError({
+          userId: context.getUserId(),
+          resourceType: 'leave',
+          resourceId: 'balance',
+          userEstablishmentId: context.getEstablishmentId(),
+          resourceEstablishmentId: employee.employmentInfo.establishmentId.toString(),
+        });
+      }
     }
 
     const leaves = await LeaveModel.findByEmployee(employeeId, year);
@@ -257,21 +549,54 @@ export class LeaveService {
     };
   }
 
-  static async getSummary(filters: LeaveFilterOptions = {}): Promise<LeaveSummary> {
+  static async getSummary(
+    filters: LeaveFilterOptions = {},
+    context?: EstablishmentServiceContext
+  ): Promise<LeaveSummary> {
     await connectDB();
 
     const query: any = {};
 
-    if (filters.employeeId) {
-      query.employeeId = toObjectId(filters.employeeId);
+    // Apply establishment filter if context is provided
+    let establishmentIdToFilter: string | undefined;
+    if (context) {
+      const baseFilter = context.applyFilter({});
+      if (baseFilter.establishmentId) {
+        establishmentIdToFilter = baseFilter.establishmentId.toString();
+      }
     }
 
-    if (filters.establishmentId) {
+    // If establishment filter is provided (either from context or filters), use it
+    if (establishmentIdToFilter || filters.establishmentId) {
+      const targetEstablishmentId = establishmentIdToFilter || filters.establishmentId;
       const employees = await EmployeeModel.find({
-        'employmentInfo.establishmentId': toObjectId(filters.establishmentId),
+        'employmentInfo.establishmentId': toObjectId(targetEstablishmentId!),
       });
       const employeeIds = employees.map((emp) => emp._id);
       query.employeeId = { $in: employeeIds };
+    }
+
+    if (filters.employeeId) {
+      // If specific employee is requested, validate access
+      if (context && !context.canAccessAll()) {
+        const employee = await EmployeeModel.findById(filters.employeeId);
+        if (employee) {
+          const hasAccess = await context.validateAccess(
+            { establishmentId: employee.employmentInfo.establishmentId.toString() },
+            'leave'
+          );
+          if (!hasAccess) {
+            throw new EstablishmentAccessDeniedError({
+              userId: context.getUserId(),
+              resourceType: 'leave',
+              resourceId: 'summary',
+              userEstablishmentId: context.getEstablishmentId(),
+              resourceEstablishmentId: employee.employmentInfo.establishmentId.toString(),
+            });
+          }
+        }
+      }
+      query.employeeId = toObjectId(filters.employeeId);
     }
 
     if (filters.startDate || filters.endDate) {

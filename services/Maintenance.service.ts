@@ -3,6 +3,11 @@ import { AccommodationModel } from '@/models/Accommodation.model';
 import { NotificationService } from './Notification.service';
 import { connectDB } from '@/lib/db';
 import { paginate, type PaginationResult, toObjectId } from '@/lib/db/utils';
+import { EstablishmentServiceContext } from '@/lib/services/establishment-context';
+import {
+  EstablishmentAccessDeniedError,
+  CrossEstablishmentRelationshipError,
+} from '@/lib/errors/establishment-errors';
 import type {
   CreateMaintenanceInput,
   MaintenanceResponse,
@@ -11,12 +16,38 @@ import type {
 } from '@/types/maintenance.types';
 
 export class MaintenanceService {
-  static async create(data: CreateMaintenanceInput): Promise<MaintenanceResponse> {
+  static async create(
+    data: CreateMaintenanceInput,
+    context?: EstablishmentServiceContext
+  ): Promise<MaintenanceResponse> {
     await connectDB();
 
     const accommodation = await AccommodationModel.findById(data.accommodationId);
     if (!accommodation) {
       throw new Error('Accommodation not found');
+    }
+
+    // Validate accommodation-maintenance relationship (same establishment)
+    if (context) {
+      const hasAccess = await context.validateAccess(
+        { establishmentId: accommodation.establishmentId },
+        'accommodation'
+      );
+
+      if (!hasAccess) {
+        throw new CrossEstablishmentRelationshipError({
+          parentResource: {
+            type: 'accommodation',
+            id: data.accommodationId,
+            establishmentId: accommodation.establishmentId.toString(),
+          },
+          childResource: {
+            type: 'maintenance',
+            id: 'new',
+            establishmentId: context.getEstablishmentId() || 'unknown',
+          },
+        });
+      }
     }
 
     const maintenance = await MaintenanceModel.create({
@@ -51,15 +82,37 @@ export class MaintenanceService {
     return maintenance.toJSON() as unknown as MaintenanceResponse;
   }
 
-  static async getById(id: string): Promise<MaintenanceResponse | null> {
+  static async getById(
+    id: string,
+    context?: EstablishmentServiceContext
+  ): Promise<MaintenanceResponse | null> {
     await connectDB();
 
     const maintenance = await MaintenanceModel.findById(id)
-      .populate('accommodationId', 'name type')
+      .populate('accommodationId', 'name type establishmentId')
       .populate('assignedTo', 'personalInfo');
 
     if (!maintenance) {
       return null;
+    }
+
+    // Validate access through accommodation's establishment
+    if (context && maintenance.accommodationId) {
+      const accommodation = maintenance.accommodationId as any;
+      const hasAccess = await context.validateAccess(
+        { establishmentId: accommodation.establishmentId },
+        'maintenance'
+      );
+
+      if (!hasAccess) {
+        throw new EstablishmentAccessDeniedError({
+          userId: context.getUserId(),
+          resourceType: 'maintenance',
+          resourceId: id,
+          userEstablishmentId: context.getEstablishmentId(),
+          resourceEstablishmentId: accommodation.establishmentId.toString(),
+        });
+      }
     }
 
     return maintenance.toJSON() as unknown as MaintenanceResponse;
@@ -68,19 +121,29 @@ export class MaintenanceService {
   static async getAll(
     filters: MaintenanceFilterOptions = {},
     page: number = 1,
-    limit: number = 10
+    limit: number = 10,
+    context?: EstablishmentServiceContext
   ): Promise<PaginationResult<MaintenanceResponse>> {
     await connectDB();
 
     const query: any = {};
 
+    // Apply establishment filter from context
+    let effectiveEstablishmentId = filters.establishmentId;
+    if (context) {
+      const filteredConditions = context.applyFilter(filters);
+      if (filteredConditions.establishmentId) {
+        effectiveEstablishmentId = filteredConditions.establishmentId;
+      }
+    }
+
     if (filters.accommodationId) {
       query.accommodationId = toObjectId(filters.accommodationId);
     }
 
-    if (filters.establishmentId) {
+    if (effectiveEstablishmentId) {
       const accommodations = await AccommodationModel.find({
-        establishmentId: toObjectId(filters.establishmentId),
+        establishmentId: toObjectId(effectiveEstablishmentId),
       });
       const accommodationIds = accommodations.map((acc) => acc._id);
       query.accommodationId = { $in: accommodationIds };
@@ -131,42 +194,140 @@ export class MaintenanceService {
 
   static async update(
     id: string,
-    data: Partial<CreateMaintenanceInput>
+    data: Partial<CreateMaintenanceInput>,
+    context?: EstablishmentServiceContext
   ): Promise<MaintenanceResponse | null> {
     await connectDB();
 
-    const maintenance = await MaintenanceModel.findByIdAndUpdate(id, data, { new: true });
+    const maintenance = await MaintenanceModel.findById(id).populate('accommodationId', 'establishmentId');
 
     if (!maintenance) {
       return null;
     }
+
+    // Validate access through accommodation's establishment
+    if (context && maintenance.accommodationId) {
+      const accommodation = maintenance.accommodationId as any;
+      const hasAccess = await context.validateAccess(
+        { establishmentId: accommodation.establishmentId },
+        'maintenance'
+      );
+
+      if (!hasAccess) {
+        throw new EstablishmentAccessDeniedError({
+          userId: context.getUserId(),
+          resourceType: 'maintenance',
+          resourceId: id,
+          userEstablishmentId: context.getEstablishmentId(),
+          resourceEstablishmentId: accommodation.establishmentId.toString(),
+        });
+      }
+    }
+
+    // If updating accommodationId, validate the new accommodation
+    if (data.accommodationId && context) {
+      const newAccommodation = await AccommodationModel.findById(data.accommodationId);
+      if (!newAccommodation) {
+        throw new Error('Accommodation not found');
+      }
+
+      const hasAccess = await context.validateAccess(
+        { establishmentId: newAccommodation.establishmentId },
+        'accommodation'
+      );
+
+      if (!hasAccess) {
+        throw new CrossEstablishmentRelationshipError({
+          parentResource: {
+            type: 'accommodation',
+            id: data.accommodationId,
+            establishmentId: newAccommodation.establishmentId.toString(),
+          },
+          childResource: {
+            type: 'maintenance',
+            id: id,
+            establishmentId: context.getEstablishmentId() || 'unknown',
+          },
+        });
+      }
+    }
+
+    Object.assign(maintenance, data);
+    await maintenance.save();
 
     return maintenance.toJSON() as unknown as MaintenanceResponse;
   }
 
-  static async delete(id: string): Promise<boolean> {
+  static async delete(
+    id: string,
+    context?: EstablishmentServiceContext
+  ): Promise<boolean> {
     await connectDB();
 
-    const result = await MaintenanceModel.findByIdAndDelete(id);
+    const maintenance = await MaintenanceModel.findById(id).populate('accommodationId', 'establishmentId');
 
-    return !!result;
+    if (!maintenance) {
+      return false;
+    }
+
+    // Validate access through accommodation's establishment
+    if (context && maintenance.accommodationId) {
+      const accommodation = maintenance.accommodationId as any;
+      const hasAccess = await context.validateAccess(
+        { establishmentId: accommodation.establishmentId },
+        'maintenance'
+      );
+
+      if (!hasAccess) {
+        throw new EstablishmentAccessDeniedError({
+          userId: context.getUserId(),
+          resourceType: 'maintenance',
+          resourceId: id,
+          userEstablishmentId: context.getEstablishmentId(),
+          resourceEstablishmentId: accommodation.establishmentId.toString(),
+        });
+      }
+    }
+
+    await maintenance.deleteOne();
+
+    return true;
   }
 
-  static async complete(id: string): Promise<MaintenanceResponse | null> {
+  static async complete(
+    id: string,
+    context?: EstablishmentServiceContext
+  ): Promise<MaintenanceResponse | null> {
     await connectDB();
 
-    const maintenance = await MaintenanceModel.findByIdAndUpdate(
-      id,
-      {
-        status: 'completed',
-        completedDate: new Date(),
-      },
-      { new: true }
-    ).populate('accommodationId');
+    const maintenance = await MaintenanceModel.findById(id).populate('accommodationId', 'establishmentId');
 
     if (!maintenance) {
       return null;
     }
+
+    // Validate access through accommodation's establishment
+    if (context && maintenance.accommodationId) {
+      const accommodation = maintenance.accommodationId as any;
+      const hasAccess = await context.validateAccess(
+        { establishmentId: accommodation.establishmentId },
+        'maintenance'
+      );
+
+      if (!hasAccess) {
+        throw new EstablishmentAccessDeniedError({
+          userId: context.getUserId(),
+          resourceType: 'maintenance',
+          resourceId: id,
+          userEstablishmentId: context.getEstablishmentId(),
+          resourceEstablishmentId: accommodation.establishmentId.toString(),
+        });
+      }
+    }
+
+    maintenance.status = 'completed';
+    maintenance.completedDate = new Date();
+    await maintenance.save();
 
     // Remettre l'hébergement disponible
     await AccommodationModel.findByIdAndUpdate(maintenance.accommodationId, {
@@ -176,71 +337,189 @@ export class MaintenanceService {
     return maintenance.toJSON() as unknown as MaintenanceResponse;
   }
 
-  static async start(id: string): Promise<MaintenanceResponse | null> {
+  static async start(
+    id: string,
+    context?: EstablishmentServiceContext
+  ): Promise<MaintenanceResponse | null> {
     await connectDB();
 
-    const maintenance = await MaintenanceModel.findByIdAndUpdate(
-      id,
-      { status: 'in_progress' },
-      { new: true }
-    );
+    const maintenance = await MaintenanceModel.findById(id).populate('accommodationId', 'establishmentId');
 
     if (!maintenance) {
       return null;
     }
 
+    // Validate access through accommodation's establishment
+    if (context && maintenance.accommodationId) {
+      const accommodation = maintenance.accommodationId as any;
+      const hasAccess = await context.validateAccess(
+        { establishmentId: accommodation.establishmentId },
+        'maintenance'
+      );
+
+      if (!hasAccess) {
+        throw new EstablishmentAccessDeniedError({
+          userId: context.getUserId(),
+          resourceType: 'maintenance',
+          resourceId: id,
+          userEstablishmentId: context.getEstablishmentId(),
+          resourceEstablishmentId: accommodation.establishmentId.toString(),
+        });
+      }
+    }
+
+    maintenance.status = 'in_progress';
+    await maintenance.save();
+
     return maintenance.toJSON() as unknown as MaintenanceResponse;
   }
 
-  static async assign(id: string, assignedTo: string): Promise<MaintenanceResponse | null> {
+  static async assign(
+    id: string,
+    assignedTo: string,
+    context?: EstablishmentServiceContext
+  ): Promise<MaintenanceResponse | null> {
     await connectDB();
 
-    const maintenance = await MaintenanceModel.findByIdAndUpdate(
-      id,
-      { assignedTo: toObjectId(assignedTo) },
-      { new: true }
-    ).populate('accommodationId', 'name type')
-     .populate('assignedTo', 'personalInfo');
+    const maintenance = await MaintenanceModel.findById(id).populate('accommodationId', 'name type establishmentId');
 
     if (!maintenance) {
       return null;
     }
 
+    // Validate access through accommodation's establishment
+    if (context && maintenance.accommodationId) {
+      const accommodation = maintenance.accommodationId as any;
+      const hasAccess = await context.validateAccess(
+        { establishmentId: accommodation.establishmentId },
+        'maintenance'
+      );
+
+      if (!hasAccess) {
+        throw new EstablishmentAccessDeniedError({
+          userId: context.getUserId(),
+          resourceType: 'maintenance',
+          resourceId: id,
+          userEstablishmentId: context.getEstablishmentId(),
+          resourceEstablishmentId: accommodation.establishmentId.toString(),
+        });
+      }
+    }
+
+    maintenance.assignedTo = toObjectId(assignedTo) as any;
+    await maintenance.save();
+
+    await maintenance.populate('assignedTo', 'personalInfo');
+
     return maintenance.toJSON() as unknown as MaintenanceResponse;
   }
 
-  static async getByAccommodation(accommodationId: string): Promise<MaintenanceResponse[]> {
+  static async getByAccommodation(
+    accommodationId: string,
+    context?: EstablishmentServiceContext
+  ): Promise<MaintenanceResponse[]> {
     await connectDB();
+
+    // Validate access to the accommodation
+    if (context) {
+      const accommodation = await AccommodationModel.findById(accommodationId);
+      if (!accommodation) {
+        throw new Error('Accommodation not found');
+      }
+
+      const hasAccess = await context.validateAccess(
+        { establishmentId: accommodation.establishmentId },
+        'accommodation'
+      );
+
+      if (!hasAccess) {
+        throw new EstablishmentAccessDeniedError({
+          userId: context.getUserId(),
+          resourceType: 'accommodation',
+          resourceId: accommodationId,
+          userEstablishmentId: context.getEstablishmentId(),
+          resourceEstablishmentId: accommodation.establishmentId.toString(),
+        });
+      }
+    }
 
     const maintenances = await MaintenanceModel.findByAccommodation(accommodationId);
 
     return maintenances.map((m) => m.toJSON() as unknown as MaintenanceResponse);
   }
 
-  static async getUpcoming(days: number = 7): Promise<MaintenanceResponse[]> {
+  static async getUpcoming(
+    days: number = 7,
+    context?: EstablishmentServiceContext
+  ): Promise<MaintenanceResponse[]> {
     await connectDB();
 
-    const maintenances = await MaintenanceModel.findUpcoming(days);
+    let maintenances = await MaintenanceModel.findUpcoming(days);
+
+    // Filter by establishment if context is provided
+    if (context && !context.canAccessAll()) {
+      const establishmentId = context.getEstablishmentId();
+      if (establishmentId) {
+        const accommodations = await AccommodationModel.find({
+          establishmentId: toObjectId(establishmentId),
+        });
+        const accommodationIds = accommodations.map((acc) => acc._id.toString());
+        
+        maintenances = maintenances.filter((m) => 
+          accommodationIds.includes(m.accommodationId.toString())
+        );
+      }
+    }
 
     return maintenances.map((m) => m.toJSON() as unknown as MaintenanceResponse);
   }
 
-  static async getByAssignee(assigneeId: string): Promise<MaintenanceResponse[]> {
+  static async getByAssignee(
+    assigneeId: string,
+    context?: EstablishmentServiceContext
+  ): Promise<MaintenanceResponse[]> {
     await connectDB();
 
-    const maintenances = await MaintenanceModel.findByAssignee(assigneeId);
+    let maintenances = await MaintenanceModel.findByAssignee(assigneeId);
+
+    // Filter by establishment if context is provided
+    if (context && !context.canAccessAll()) {
+      const establishmentId = context.getEstablishmentId();
+      if (establishmentId) {
+        const accommodations = await AccommodationModel.find({
+          establishmentId: toObjectId(establishmentId),
+        });
+        const accommodationIds = accommodations.map((acc) => acc._id.toString());
+        
+        maintenances = maintenances.filter((m) => 
+          accommodationIds.includes(m.accommodationId.toString())
+        );
+      }
+    }
 
     return maintenances.map((m) => m.toJSON() as unknown as MaintenanceResponse);
   }
 
-  static async getSummary(filters: MaintenanceFilterOptions = {}): Promise<MaintenanceSummary> {
+  static async getSummary(
+    filters: MaintenanceFilterOptions = {},
+    context?: EstablishmentServiceContext
+  ): Promise<MaintenanceSummary> {
     await connectDB();
 
     const query: any = {};
 
-    if (filters.establishmentId) {
+    // Apply establishment filter from context
+    let effectiveEstablishmentId = filters.establishmentId;
+    if (context) {
+      const filteredConditions = context.applyFilter(filters);
+      if (filteredConditions.establishmentId) {
+        effectiveEstablishmentId = filteredConditions.establishmentId;
+      }
+    }
+
+    if (effectiveEstablishmentId) {
       const accommodations = await AccommodationModel.find({
-        establishmentId: toObjectId(filters.establishmentId),
+        establishmentId: toObjectId(effectiveEstablishmentId),
       });
       const accommodationIds = accommodations.map((acc) => acc._id);
       query.accommodationId = { $in: accommodationIds };

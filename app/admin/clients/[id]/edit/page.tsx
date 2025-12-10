@@ -2,17 +2,21 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter, useParams } from 'next/navigation';
+import { useAuth } from '@/lib/auth/AuthContext';
+import EstablishmentSelector from '@/components/admin/EstablishmentSelector';
 
 export default function EditClientPage() {
   const router = useRouter();
   const params = useParams();
   const id = params.id as string;
+  const { user } = useAuth();
   
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
   
   const [formData, setFormData] = useState({
+    establishmentId: '',
     firstName: '',
     lastName: '',
     email: '',
@@ -44,6 +48,7 @@ export default function EditClientPage() {
 
       const client = data.data;
       setFormData({
+        establishmentId: client.establishmentId || '',
         firstName: client.personalInfo?.firstName || '',
         lastName: client.personalInfo?.lastName || '',
         email: client.personalInfo?.email || '',
@@ -67,6 +72,22 @@ export default function EditClientPage() {
     setSaving(true);
     setError('');
 
+    // Client-side validation for establishment
+    if (!formData.establishmentId) {
+      setError('Veuillez sélectionner un établissement');
+      setSaving(false);
+      return;
+    }
+
+    // Validate establishment permissions for non-admin users
+    if (user && user.role !== 'root' && user.role !== 'super_admin') {
+      if (formData.establishmentId !== user.establishmentId) {
+        setError('Vous ne pouvez modifier que les clients de votre établissement assigné');
+        setSaving(false);
+        return;
+      }
+    }
+
     try {
       const token = localStorage.getItem('accessToken');
       const response = await fetch(`/api/clients/${id}`, {
@@ -76,6 +97,7 @@ export default function EditClientPage() {
           'Authorization': `Bearer ${token}`,
         },
         body: JSON.stringify({
+          establishmentId: formData.establishmentId,
           personalInfo: {
             firstName: formData.firstName,
             lastName: formData.lastName,
@@ -138,6 +160,18 @@ export default function EditClientPage() {
       )}
 
       <form onSubmit={handleSubmit} className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 space-y-6">
+        {/* Establishment Selection */}
+        <div>
+          <EstablishmentSelector
+            value={formData.establishmentId}
+            onChange={(establishmentId) => setFormData({ ...formData, establishmentId })}
+            required
+            userRole={user?.role}
+            userEstablishmentId={user?.establishmentId}
+            label="Établissement"
+          />
+        </div>
+
         <div>
           <h2 className="text-lg font-semibold text-luxury-dark mb-4">Informations personnelles</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">

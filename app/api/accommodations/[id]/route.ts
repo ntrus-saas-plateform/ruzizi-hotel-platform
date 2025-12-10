@@ -1,54 +1,44 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest } from 'next/server';
 import { AccommodationService } from '@/services/Accommodation.service';
 import { UpdateAccommodationSchema } from '@/lib/validations/accommodation.validation';
 import {
-    requireAuth,
-    requireManager,
     createErrorResponse,
     createSuccessResponse,
+    createValidationErrorResponse,
 } from '@/lib/auth/middleware';
-import { ZodError } from 'zod';
+import { withEstablishmentIsolation } from '@/lib/auth/establishment-isolation.middleware';
+import { EstablishmentAccessDeniedError } from '@/lib/errors/establishment-errors';
 
 /**
  * GET /api/accommodations/[id]
  * Get accommodation by ID
  */
 export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
-    return requireAuth(async (req, user) => {
+    return withEstablishmentIsolation(async (req, context) => {
         try {
             const { id } = await params;
-            
+
             // Ignore "new" route (used for create page)
             if (id === 'new') {
                 return createErrorResponse('BAD_REQUEST', 'Invalid accommodation ID', 400);
             }
-            
-            const accommodation = await AccommodationService.getById(id);
+
+            // Get accommodation with establishment context validation
+            const accommodation = await AccommodationService.getById(id, context.serviceContext);
 
             if (!accommodation) {
                 return createErrorResponse('NOT_FOUND', 'Accommodation not found', 404);
             }
 
-            // Check if user has access to this accommodation
-            if (
-                user.role === 'manager' &&
-                user.establishmentId &&
-                accommodation.establishmentId !== user.establishmentId
-            ) {
-                return createErrorResponse(
-                    'FORBIDDEN',
-                    'You do not have access to this accommodation',
-                    403
-                );
-            }
-
             return createSuccessResponse(accommodation);
-        } catch (error) {
-            if (error instanceof Error) {
-                return createErrorResponse('SERVER_ERROR', error.message, 500);
+        } catch (error: any) {
+            console.error('Error fetching accommodation:', error);
+
+            if (error instanceof EstablishmentAccessDeniedError) {
+                return createErrorResponse('ESTABLISHMENT_ACCESS_DENIED', error.message, 403);
             }
 
-            return createErrorResponse('SERVER_ERROR', 'An unexpected error occurred', 500);
+            return createErrorResponse('SERVER_ERROR', error.message || 'An unexpected error occurred', 500);
         }
     })(request);
 }
@@ -58,67 +48,42 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
  * Update accommodation (Manager or Super Admin)
  */
 export async function PUT(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
-    return requireManager(async (request: NextRequest, user) => {
+    return withEstablishmentIsolation(async (req, context) => {
         try {
             const { id } = await params;
-            
+
             // Ignore "new" route
             if (id === 'new') {
                 return createErrorResponse('BAD_REQUEST', 'Invalid accommodation ID', 400);
             }
-            
-            // Check if accommodation exists and user has access
-            const existing = await AccommodationService.getById(id);
 
-            if (!existing) {
-                return createErrorResponse('NOT_FOUND', 'Accommodation not found', 404);
-            }
-
-            if (
-                user.role === 'manager' &&
-                user.establishmentId &&
-                existing.establishmentId !== user.establishmentId
-            ) {
-                return createErrorResponse(
-                    'FORBIDDEN',
-                    'You do not have access to this accommodation',
-                    403
-                );
-            }
-
-            const body = await request.json();
+            const body = await req.json();
 
             // Validate request body
-            const validatedData = UpdateAccommodationSchema.parse(body);
+            const validationResult = UpdateAccommodationSchema.safeParse(body);
+            if (!validationResult.success) {
+                return createValidationErrorResponse(validationResult.error, 'Invalid accommodation data');
+            }
 
-            // Update accommodation
-            const accommodation = await AccommodationService.update(id, validatedData);
+            const validatedData = validationResult.data;
+
+            // Update accommodation with establishment context validation
+            // The service will validate access automatically
+            const accommodation = await AccommodationService.update(id, validatedData, context.serviceContext);
 
             if (!accommodation) {
                 return createErrorResponse('NOT_FOUND', 'Accommodation not found', 404);
             }
 
             return createSuccessResponse(accommodation, 'Accommodation updated successfully');
-        } catch (error) {
-            if (error instanceof ZodError) {
-                return NextResponse.json(
-                    {
-                        success: false,
-                        error: {
-                            code: 'VALIDATION_ERROR',
-                            message: 'Invalid input data',
-                            details: error.issues,
-                        },
-                    },
-                    { status: 400 }
-                );
+        } catch (error: any) {
+            console.error('Error updating accommodation:', error);
+
+            if (error instanceof EstablishmentAccessDeniedError) {
+                return createErrorResponse('ESTABLISHMENT_ACCESS_DENIED', error.message, 403);
             }
 
-            if (error instanceof Error) {
-                return createErrorResponse('SERVER_ERROR', error.message, 500);
-            }
-
-            return createErrorResponse('SERVER_ERROR', 'An unexpected error occurred', 500);
+            return createErrorResponse('SERVER_ERROR', error.message || 'An unexpected error occurred', 500);
         }
     })(request);
 }
@@ -128,47 +93,32 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
  * Delete accommodation (Manager or Super Admin)
  */
 export async function DELETE(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
-    return requireManager(async (req, user) => {
+    return withEstablishmentIsolation(async (req, context) => {
         try {
             const { id } = await params;
-            
+
             // Ignore "new" route
             if (id === 'new') {
                 return createErrorResponse('BAD_REQUEST', 'Invalid accommodation ID', 400);
             }
-            
-            // Check if accommodation exists and user has access
-            const existing = await AccommodationService.getById(id);
 
-            if (!existing) {
-                return createErrorResponse('NOT_FOUND', 'Accommodation not found', 404);
-            }
-
-            if (
-                user.role === 'manager' &&
-                user.establishmentId &&
-                existing.establishmentId !== user.establishmentId
-            ) {
-                return createErrorResponse(
-                    'FORBIDDEN',
-                    'You do not have access to this accommodation',
-                    403
-                );
-            }
-
-            const deleted = await AccommodationService.delete(id);
+            // Delete accommodation with establishment context validation
+            // The service will validate access automatically
+            const deleted = await AccommodationService.delete(id, context.serviceContext);
 
             if (!deleted) {
                 return createErrorResponse('NOT_FOUND', 'Accommodation not found', 404);
             }
 
             return createSuccessResponse(null, 'Accommodation deleted successfully');
-        } catch (error) {
-            if (error instanceof Error) {
-                return createErrorResponse('SERVER_ERROR', error.message, 500);
+        } catch (error: any) {
+            console.error('Error deleting accommodation:', error);
+
+            if (error instanceof EstablishmentAccessDeniedError) {
+                return createErrorResponse('ESTABLISHMENT_ACCESS_DENIED', error.message, 403);
             }
 
-            return createErrorResponse('SERVER_ERROR', 'An unexpected error occurred', 500);
+            return createErrorResponse('SERVER_ERROR', error.message || 'An unexpected error occurred', 500);
         }
     })(request);
 }

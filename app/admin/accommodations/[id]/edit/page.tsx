@@ -3,22 +3,20 @@
 import { useState, useEffect } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import ImageUpload from '@/components/admin/ImageUpload';
+import EstablishmentSelector from '@/components/admin/EstablishmentSelector';
+import { useAuth } from '@/hooks/useAuth';
 
-interface Establishment {
-  _id: string;
-  name: string;
-  pricingMode: string;
-}
+
 
 export default function EditAccommodationPage() {
   const router = useRouter();
   const params = useParams();
   const id = params.id as string;
+  const { user } = useAuth();
   
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
-  const [establishments, setEstablishments] = useState<Establishment[]>([]);
   const [activeTab, setActiveTab] = useState('basic');
   
   const [formData, setFormData] = useState({
@@ -56,24 +54,8 @@ export default function EditAccommodationPage() {
   ];
 
   useEffect(() => {
-    fetchEstablishments();
     fetchAccommodation();
   }, [id]);
-
-  const fetchEstablishments = async () => {
-    try {
-      const token = localStorage.getItem('accessToken');
-      const response = await fetch('/api/establishments', {
-        headers: { 'Authorization': `Bearer ${token}` },
-      });
-      const data = await response.json();
-      if (response.ok) {
-        setEstablishments(data.data.data || []);
-      }
-    } catch (err) {
-      console.error('Erreur chargement établissements:', err);
-    }
-  };
 
   const fetchAccommodation = async () => {
     try {
@@ -253,22 +235,14 @@ export default function EditAccommodationPage() {
           <div className="p-6">
             {activeTab === 'basic' && (
               <div className="space-y-6">
-                <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">
-                    Établissement *
-                  </label>
-                  <select
-                    value={formData.establishmentId}
-                    onChange={(e) => setFormData({ ...formData, establishmentId: e.target.value })}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    required
-                  >
-                    <option value="">Sélectionner un établissement</option>
-                    {establishments.map((est) => (
-                      <option key={est._id} value={est._id}>{est.name}</option>
-                    ))}
-                  </select>
-                </div>
+                <EstablishmentSelector
+                  value={formData.establishmentId}
+                  onChange={(establishmentId) => setFormData({ ...formData, establishmentId })}
+                  required={true}
+                  userRole={user?.role as any}
+                  userEstablishmentId={user?.establishmentId}
+                  label="Établissement"
+                />
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div>

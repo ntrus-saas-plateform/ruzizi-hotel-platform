@@ -67,9 +67,9 @@ export default function EmployeesPage() {
             <h1 className="text-3xl font-bold text-luxury-dark">Gestion des Employés</h1>
             <p className="text-luxury-text mt-2">Gérer tous les employés de la plateforme</p>
           </div>
-          {/* <button
+          <button
             onClick={() => router.push('/admin/hr/employees/create')}
-            className="px-4 py-2.5 bg-luxury-gold text-luxury-cream rounded-lg hover:from-blue-700 hover:to-blue-800 transition-all shadow-md hover:shadow-lg font-medium flex items-center justify-center"
+            className="px-4 py-2.5 bg-luxury-gold text-luxury-cream rounded-lg hover:bg-opacity-90 transition-all shadow-md hover:shadow-lg font-medium flex items-center justify-center"
           >
             <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path
@@ -80,7 +80,7 @@ export default function EmployeesPage() {
               />
             </svg>
             Nouvel Employé
-          </button> */}
+          </button>
         </div>
 
         <div className="bg-white rounded-lg shadow p-6 mb-6">
@@ -193,12 +193,20 @@ export default function EmployeesPage() {
                           </span>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm">
-                          <button
-                            onClick={() => router.push(`/hr/employees/${employee.id}`)}
-                            className="text-luxury-gold hover:text-blue-900"
-                          >
-                            Détails
-                          </button>
+                          <div className="flex gap-2">
+                            <button
+                              onClick={() => router.push(`/admin/hr/employees/${employee.id}/edit`)}
+                              className="text-luxury-gold hover:text-blue-900"
+                            >
+                              Modifier
+                            </button>
+                            <button
+                              onClick={() => router.push(`/admin/hr/employees/${employee.id}`)}
+                              className="text-gray-600 hover:text-gray-900"
+                            >
+                              Détails
+                            </button>
+                          </div>
                         </td>
                       </tr>
                     ))}

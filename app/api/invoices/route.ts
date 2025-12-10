@@ -5,16 +5,21 @@ import {
   InvoiceFilterSchema,
 } from '@/lib/validations/invoice.validation';
 import {
-  withAuth,
   createSuccessResponse,
 } from '@/lib/auth/middleware';
+import { withEstablishmentIsolation } from '@/lib/auth/establishment-isolation.middleware';
+import { EstablishmentServiceContext } from '@/lib/services/establishment-context';
+import { 
+  EstablishmentAccessDeniedError,
+  CrossEstablishmentRelationshipError 
+} from '@/lib/errors/establishment-errors';
 import { ZodError } from 'zod';
 
 /**
  * GET /api/invoices
  * Get all invoices with filters and pagination
  */
-export const GET = withAuth(async (request: NextRequest, user) => {
+export const GET = withEstablishmentIsolation(async (request: NextRequest, context) => {
   try {
     const { searchParams } = new URL(request.url);
 
@@ -33,15 +38,37 @@ export const GET = withAuth(async (request: NextRequest, user) => {
       limit: parseInt(searchParams.get('limit') || '10'),
     });
 
-    // If user is a manager, only show their establishment's invoices
-    if (user.role === 'manager' && user.establishmentId) {
-      filters.establishmentId = user.establishmentId;
+    // Validate establishment access if filter is provided
+    if (filters.establishmentId && !context.serviceContext.canAccessAll()) {
+      if (filters.establishmentId !== context.establishmentId) {
+        throw new EstablishmentAccessDeniedError({
+          userId: context.userId,
+          resourceType: 'invoice',
+          resourceId: 'list',
+          userEstablishmentId: context.establishmentId,
+          resourceEstablishmentId: filters.establishmentId
+        });
+      }
     }
 
-    const result = await InvoiceService.getAll(filters, filters.page, filters.limit);
+    const result = await InvoiceService.getAll(filters, filters.page, filters.limit, context.serviceContext);
 
     return createSuccessResponse(result);
   } catch (error) {
+    if (error instanceof EstablishmentAccessDeniedError) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: {
+            code: 'ESTABLISHMENT_ACCESS_DENIED',
+            message: error.message,
+            details: error.details,
+          },
+        },
+        { status: 403 }
+      );
+    }
+
     if (error instanceof ZodError) {
       return NextResponse.json(
         {
@@ -86,7 +113,7 @@ export const GET = withAuth(async (request: NextRequest, user) => {
  * POST /api/invoices
  * Create a new invoice
  */
-export const POST = withAuth(async (request: NextRequest, user) => {
+export const POST = withEstablishmentIsolation(async (request: NextRequest, context) => {
   try {
     let body;
     try {
@@ -107,11 +134,42 @@ export const POST = withAuth(async (request: NextRequest, user) => {
     // Validate request body
     const validatedData = CreateInvoiceSchema.parse(body);
 
-    // Create invoice
-    const invoice = await InvoiceService.create(validatedData);
+    // For non-admin users, enforce their establishment
+    if (!context.serviceContext.canAccessAll()) {
+      validatedData.establishmentId = context.establishmentId!;
+    } else if (!validatedData.establishmentId) {
+      // Admin must provide establishmentId
+      return NextResponse.json(
+        {
+          success: false,
+          error: {
+            code: 'VALIDATION_ERROR',
+            message: 'establishmentId is required for administrators',
+          },
+        },
+        { status: 400 }
+      );
+    }
 
-    return createSuccessResponse(invoice);
+    // Create invoice
+    const invoice = await InvoiceService.create(validatedData, context.serviceContext);
+
+    return createSuccessResponse(invoice, undefined, 201);
   } catch (error) {
+    if (error instanceof CrossEstablishmentRelationshipError) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: {
+            code: 'CROSS_ESTABLISHMENT_RELATIONSHIP',
+            message: error.message,
+            details: error.details,
+          },
+        },
+        { status: 400 }
+      );
+    }
+
     if (error instanceof ZodError) {
       return NextResponse.json(
         {

@@ -49,7 +49,15 @@ export function cleanupExpiredTokens(): void {
   }
 
   if (cleaned > 0) {
-    }
+    console.log(`Cleaned up ${cleaned} expired tokens from blacklist`);
+  }
+}
+
+/**
+ * Clear all tokens from blacklist (for testing purposes)
+ */
+export function clearBlacklist(): void {
+  tokenBlacklist.clear();
 }
 
 // Clean up expired tokens every 30 minutes

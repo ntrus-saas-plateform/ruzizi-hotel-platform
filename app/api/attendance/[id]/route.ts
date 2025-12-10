@@ -1,7 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { requireAuth, createErrorResponse, createSuccessResponse } from '@/lib/auth/middleware';
+import { createErrorResponse, createSuccessResponse } from '@/lib/auth/middleware';
+import { withEstablishmentIsolation } from '@/lib/auth/establishment-isolation.middleware';
+import { EstablishmentAccessDeniedError, EstablishmentNotFoundError } from '@/lib/errors/establishment-errors';
 import { z } from 'zod';
-import AttendanceService from '@/services/Attendance.service';
+import { AttendanceService } from '@/services/Attendance.service';
 
 const UpdateAttendanceSchema = z.object({
     checkIn: z.coerce.date().optional(),
@@ -17,20 +19,23 @@ export async function GET(
     { params }: { params: Promise<{ id: string }> }
 ) {
   const resolvedParams = await params;
-    return requireAuth(async () => {
+    return withEstablishmentIsolation(async (req, context) => {
         try {
-            const attendance = await AttendanceService.getById(resolvedParams.id);
+            const attendance = await AttendanceService.getById(resolvedParams.id, context.serviceContext);
 
             if (!attendance) {
                 return createErrorResponse('NOT_FOUND', 'Attendance record not found', 404);
             }
 
             return createSuccessResponse(attendance);
-        } catch (error) {
-            if (error instanceof Error) {
-                return createErrorResponse('SERVER_ERROR', error.message, 500);
+        } catch (error: any) {
+            console.error('Error fetching attendance record:', error);
+            
+            if (error instanceof EstablishmentAccessDeniedError) {
+                return createErrorResponse('ESTABLISHMENT_ACCESS_DENIED', error.message, 403);
             }
-            return createErrorResponse('SERVER_ERROR', 'An unexpected error occurred', 500);
+
+            return createErrorResponse('SERVER_ERROR', error.message || 'An unexpected error occurred', 500);
         }
     })(request);
 }
@@ -40,19 +45,29 @@ export async function PUT(
     { params }: { params: Promise<{ id: string }> }
 ) {
   const resolvedParams = await params;
-    return requireAuth(async (req) => {
+    return withEstablishmentIsolation(async (req, context) => {
         try {
             const body = await req.json();
             const validatedData = UpdateAttendanceSchema.parse(body);
 
-            const attendance = await AttendanceService.update(resolvedParams.id, validatedData);
+            const attendance = await AttendanceService.update(resolvedParams.id, validatedData, context.serviceContext);
 
             if (!attendance) {
                 return createErrorResponse('NOT_FOUND', 'Attendance record not found', 404);
             }
 
             return createSuccessResponse(attendance, 'Attendance record updated successfully');
-        } catch (error) {
+        } catch (error: any) {
+            console.error('Error updating attendance record:', error);
+            
+            if (error instanceof EstablishmentAccessDeniedError) {
+                return createErrorResponse('ESTABLISHMENT_ACCESS_DENIED', error.message, 403);
+            }
+            
+            if (error instanceof EstablishmentNotFoundError) {
+                return createErrorResponse('ESTABLISHMENT_NOT_FOUND', error.message, 404);
+            }
+
             if (error instanceof z.ZodError) {
                 return NextResponse.json(
                     {
@@ -67,11 +82,7 @@ export async function PUT(
                 );
             }
 
-            if (error instanceof Error) {
-                return createErrorResponse('SERVER_ERROR', error.message, 500);
-            }
-
-            return createErrorResponse('SERVER_ERROR', 'An unexpected error occurred', 500);
+            return createErrorResponse('SERVER_ERROR', error.message || 'An unexpected error occurred', 500);
         }
     })(request);
 }
@@ -81,20 +92,23 @@ export async function DELETE(
     { params }: { params: Promise<{ id: string }> }
 ) {
   const resolvedParams = await params;
-    return requireAuth(async () => {
+    return withEstablishmentIsolation(async (req, context) => {
         try {
-            const deleted = await AttendanceService.delete(resolvedParams.id);
+            const deleted = await AttendanceService.delete(resolvedParams.id, context.serviceContext);
 
             if (!deleted) {
                 return createErrorResponse('NOT_FOUND', 'Attendance record not found', 404);
             }
 
             return createSuccessResponse(null, 'Attendance record deleted successfully');
-        } catch (error) {
-            if (error instanceof Error) {
-                return createErrorResponse('SERVER_ERROR', error.message, 500);
+        } catch (error: any) {
+            console.error('Error deleting attendance record:', error);
+            
+            if (error instanceof EstablishmentAccessDeniedError) {
+                return createErrorResponse('ESTABLISHMENT_ACCESS_DENIED', error.message, 403);
             }
-            return createErrorResponse('SERVER_ERROR', 'An unexpected error occurred', 500);
+
+            return createErrorResponse('SERVER_ERROR', error.message || 'An unexpected error occurred', 500);
         }
     })(request);
 }

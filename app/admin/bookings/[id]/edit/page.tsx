@@ -2,15 +2,19 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter, useParams } from 'next/navigation';
+import { useAuth } from '@/lib/auth/AuthContext';
+import EstablishmentSelector from '@/components/admin/EstablishmentSelector';
 
 export default function EditBookingPage() {
   const router = useRouter();
   const params = useParams();
   const id = params.id as string;
+  const { user } = useAuth();
   
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
+  const [bookingEstablishmentId, setBookingEstablishmentId] = useState('');
   
   const [formData, setFormData] = useState({
     checkIn: '',
@@ -18,6 +22,7 @@ export default function EditBookingPage() {
     numberOfGuests: 1,
     status: 'pending',
     specialRequests: '',
+    establishmentId: '',
   });
 
   useEffect(() => {
@@ -38,12 +43,14 @@ export default function EditBookingPage() {
       }
 
       const booking = data.data;
+      setBookingEstablishmentId(booking.establishmentId);
       setFormData({
         checkIn: new Date(booking.checkIn).toISOString().split('T')[0],
         checkOut: new Date(booking.checkOut).toISOString().split('T')[0],
         numberOfGuests: booking.numberOfGuests,
         status: booking.status,
         specialRequests: booking.specialRequests || '',
+        establishmentId: booking.establishmentId,
       });
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Erreur inconnue');
@@ -56,6 +63,22 @@ export default function EditBookingPage() {
     e.preventDefault();
     setSaving(true);
     setError('');
+
+    // Client-side validation for establishment
+    if (!formData.establishmentId) {
+      setError('Veuillez sélectionner un établissement');
+      setSaving(false);
+      return;
+    }
+
+    // Validate establishment permissions for non-admin users
+    if (user && user.role !== 'root' && user.role !== 'super_admin') {
+      if (formData.establishmentId !== user.establishmentId) {
+        setError('Vous ne pouvez modifier que les réservations de votre établissement assigné');
+        setSaving(false);
+        return;
+      }
+    }
 
     try {
       const token = localStorage.getItem('accessToken');
@@ -113,6 +136,18 @@ export default function EditBookingPage() {
       )}
 
       <form onSubmit={handleSubmit} className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 space-y-6">
+        {/* Establishment Selection */}
+        <div>
+          <EstablishmentSelector
+            value={formData.establishmentId}
+            onChange={(establishmentId) => setFormData({ ...formData, establishmentId })}
+            required
+            userRole={user?.role}
+            userEstablishmentId={user?.establishmentId}
+            label="Établissement"
+          />
+        </div>
+
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div>
             <label className="block text-sm font-semibold text-gray-700 mb-2">

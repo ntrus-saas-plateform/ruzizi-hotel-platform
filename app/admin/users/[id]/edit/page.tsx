@@ -2,21 +2,18 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter, useParams } from 'next/navigation';
-
-interface Establishment {
-  _id: string;
-  name: string;
-}
+import { useAuth } from '@/lib/auth/AuthContext';
+import EstablishmentSelector from '@/components/admin/EstablishmentSelector';
 
 export default function EditUserPage() {
   const router = useRouter();
   const params = useParams();
   const id = params.id as string;
+  const { user } = useAuth();
   
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
-  const [establishments, setEstablishments] = useState<Establishment[]>([]);
   
   const [formData, setFormData] = useState({
     firstName: '',
@@ -29,24 +26,8 @@ export default function EditUserPage() {
   });
 
   useEffect(() => {
-    fetchEstablishments();
     fetchUser();
   }, [id]);
-
-  const fetchEstablishments = async () => {
-    try {
-      const token = localStorage.getItem('accessToken');
-      const response = await fetch('/api/establishments', {
-        headers: { 'Authorization': `Bearer ${token}` },
-      });
-      const data = await response.json();
-      if (response.ok) {
-        setEstablishments(data.data.data || []);
-      }
-    } catch (err) {
-      console.error('Erreur chargement établissements:', err);
-    }
-  };
 
   const fetchUser = async () => {
     try {
@@ -82,6 +63,22 @@ export default function EditUserPage() {
     e.preventDefault();
     setSaving(true);
     setError('');
+
+    // Client-side validation for establishment (required for non-admin users)
+    if (!formData.establishmentId && formData.role !== 'super_admin' && formData.role !== 'root') {
+      setError('Veuillez sélectionner un établissement pour ce rôle');
+      setSaving(false);
+      return;
+    }
+
+    // Validate establishment permissions for non-admin users
+    if (user && user.role !== 'root' && user.role !== 'super_admin') {
+      if (formData.establishmentId !== user.establishmentId) {
+        setError('Vous ne pouvez modifier des utilisateurs que pour votre établissement assigné');
+        setSaving(false);
+        return;
+      }
+    }
 
     try {
       const token = localStorage.getItem('accessToken');
@@ -209,19 +206,17 @@ export default function EditUserPage() {
           </div>
 
           <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-2">
-              Établissement
-            </label>
-            <select
+            <EstablishmentSelector
               value={formData.establishmentId}
-              onChange={(e) => setFormData({ ...formData, establishmentId: e.target.value })}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-            >
-              <option value="">Aucun (Super Admin)</option>
-              {establishments.map((est) => (
-                <option key={est._id} value={est._id}>{est.name}</option>
-              ))}
-            </select>
+              onChange={(establishmentId) => setFormData({ ...formData, establishmentId })}
+              required={formData.role !== 'super_admin' && formData.role !== 'root'}
+              userRole={user?.role}
+              userEstablishmentId={user?.establishmentId}
+              label="Établissement"
+            />
+            <p className="text-xs text-gray-500 mt-1">
+              Requis pour les managers et le personnel. Les super admins peuvent ne pas avoir d'établissement assigné.
+            </p>
           </div>
         </div>
 

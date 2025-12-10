@@ -86,8 +86,21 @@ export class AuthService {
       throw new Error('A user with this email already exists');
     }
 
+    // Map profile data to direct fields for the User model
+    const userModelData = {
+      email: userData.email,
+      password: userData.password,
+      role: userData.role,
+      permissions: userData.permissions,
+      establishmentId: userData.establishmentId,
+      firstName: userData.profile.firstName,
+      lastName: userData.profile.lastName,
+      phone: userData.profile.phone,
+      isActive: userData.isActive ?? true,
+    };
+
     // Create new user
-    const user = await UserModel.create(userData);
+    const user = await UserModel.create(userModelData);
 
     // Generate JWT tokens
     const payload: JWTPayload = {

@@ -14,7 +14,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: 'Ruzizi Hôtel - Plateforme de Gestion Hôtelière',
+  title: 'Ruzizi Hôtel',
   description: 'Plateforme de gestion complète pour la chaîne hôtelière Ruzizi Hôtel au Burundi. Réservations, gestion des établissements et services hôteliers.',
   keywords: ['hôtel', 'Burundi', 'Ruzizi', 'réservation', 'gestion hôtelière', 'hébergement', "appartement"],
   authors: [{ name: 'Ruzizi Hôtel' }],

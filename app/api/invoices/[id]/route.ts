@@ -2,10 +2,12 @@ import { NextRequest, NextResponse } from 'next/server';
 import { InvoiceService } from '@/services/Invoice.service';
 import { UpdateInvoiceSchema } from '@/lib/validations/invoice.validation';
 import {
-  requireAuth,
   createErrorResponse,
   createSuccessResponse,
 } from '@/lib/auth/middleware';
+import { withEstablishmentIsolation } from '@/lib/auth/establishment-isolation.middleware';
+import { EstablishmentServiceContext } from '@/lib/services/establishment-context';
+import { EstablishmentAccessDeniedError } from '@/lib/errors/establishment-errors';
 import { ZodError } from 'zod';
 
 /**
@@ -14,29 +16,38 @@ import { ZodError } from 'zod';
  */
 export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const resolvedParams = await params;
-  return requireAuth(async (req, user) => {
+  
+  return withEstablishmentIsolation(async (req: NextRequest, context) => {
     try {
-      const invoice = await InvoiceService.getById(resolvedParams.id);
+      // Create service context
+      const serviceContext = new EstablishmentServiceContext(
+        context.userId,
+        context.role,
+        context.establishmentId
+      );
+
+      const invoice = await InvoiceService.getById(resolvedParams.id, serviceContext);
 
       if (!invoice) {
         return createErrorResponse('NOT_FOUND', 'Invoice not found', 404);
       }
 
-      // Check if user has access to this invoice
-      if (
-        (user as any).role === 'manager' &&
-        (user as any).establishmentId &&
-        invoice.establishmentId !== (user as any).establishmentId
-      ) {
-        return createErrorResponse(
-          'FORBIDDEN',
-          'You do not have access to this invoice',
-          403
+      return createSuccessResponse(invoice);
+    } catch (error) {
+      if (error instanceof EstablishmentAccessDeniedError) {
+        return NextResponse.json(
+          {
+            success: false,
+            error: {
+              code: 'ESTABLISHMENT_ACCESS_DENIED',
+              message: error.message,
+              details: error.details,
+            },
+          },
+          { status: 403 }
         );
       }
 
-      return createSuccessResponse(invoice);
-    } catch (error) {
       if (error instanceof Error) {
         return createErrorResponse('SERVER_ERROR', error.message, 500);
       }
@@ -52,26 +63,15 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
  */
 export async function PUT(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const resolvedParams = await params;
-  return requireAuth(async (req, user) => {
+  
+  return withEstablishmentIsolation(async (req: NextRequest, context) => {
     try {
-      // Check if invoice exists and user has access
-      const existing = await InvoiceService.getById(resolvedParams.id);
-
-      if (!existing) {
-        return createErrorResponse('NOT_FOUND', 'Invoice not found', 404);
-      }
-
-      if (
-        (user as any).role === 'manager' &&
-        (user as any).establishmentId &&
-        existing.establishmentId !== (user as any).establishmentId
-      ) {
-        return createErrorResponse(
-          'FORBIDDEN',
-          'You do not have access to this invoice',
-          403
-        );
-      }
+      // Create service context
+      const serviceContext = new EstablishmentServiceContext(
+        context.userId,
+        context.role,
+        context.establishmentId
+      );
 
       const body = await req.json();
 
@@ -79,7 +79,7 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
       const validatedData = UpdateInvoiceSchema.parse(body);
 
       // Update invoice
-      const invoice = await InvoiceService.update(resolvedParams.id, validatedData);
+      const invoice = await InvoiceService.update(resolvedParams.id, validatedData, serviceContext);
 
       if (!invoice) {
         return createErrorResponse('NOT_FOUND', 'Invoice not found', 404);
@@ -87,6 +87,20 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
 
       return createSuccessResponse(invoice, 'Invoice updated successfully');
     } catch (error) {
+      if (error instanceof EstablishmentAccessDeniedError) {
+        return NextResponse.json(
+          {
+            success: false,
+            error: {
+              code: 'ESTABLISHMENT_ACCESS_DENIED',
+              message: error.message,
+              details: error.details,
+            },
+          },
+          { status: 403 }
+        );
+      }
+
       if (error instanceof ZodError) {
         return NextResponse.json(
           {
@@ -116,28 +130,17 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
  */
 export async function DELETE(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const resolvedParams = await params;
-  return requireAuth(async (req, user) => {
+  
+  return withEstablishmentIsolation(async (req: NextRequest, context) => {
     try {
-      // Check if invoice exists and user has access
-      const existing = await InvoiceService.getById(resolvedParams.id);
+      // Create service context
+      const serviceContext = new EstablishmentServiceContext(
+        context.userId,
+        context.role,
+        context.establishmentId
+      );
 
-      if (!existing) {
-        return createErrorResponse('NOT_FOUND', 'Invoice not found', 404);
-      }
-
-      if (
-        (user as any).role === 'manager' &&
-        (user as any).establishmentId &&
-        existing.establishmentId !== (user as any).establishmentId
-      ) {
-        return createErrorResponse(
-          'FORBIDDEN',
-          'You do not have access to this invoice',
-          403
-        );
-      }
-
-      const deleted = await InvoiceService.delete(resolvedParams.id);
+      const deleted = await InvoiceService.delete(resolvedParams.id, serviceContext);
 
       if (!deleted) {
         return createErrorResponse('NOT_FOUND', 'Invoice not found', 404);
@@ -145,6 +148,20 @@ export async function DELETE(request: NextRequest, { params }: { params: Promise
 
       return createSuccessResponse(null, 'Invoice deleted successfully');
     } catch (error) {
+      if (error instanceof EstablishmentAccessDeniedError) {
+        return NextResponse.json(
+          {
+            success: false,
+            error: {
+              code: 'ESTABLISHMENT_ACCESS_DENIED',
+              message: error.message,
+              details: error.details,
+            },
+          },
+          { status: 403 }
+        );
+      }
+
       if (error instanceof Error) {
         return createErrorResponse('SERVER_ERROR', error.message, 500);
       }

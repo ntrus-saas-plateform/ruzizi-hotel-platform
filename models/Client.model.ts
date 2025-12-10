@@ -91,6 +91,12 @@ const DiscountSchema = new Schema(
  */
 const ClientSchema = new Schema<IClientDocument, IClientModel>(
   {
+    establishmentId: {
+      type: Schema.Types.ObjectId,
+      ref: 'Establishment',
+      required: [true, 'Establishment ID is required'],
+      index: true,
+    },
     personalInfo: {
       type: PersonalInfoSchema,
       required: [true, 'Personal information is required'],
@@ -155,6 +161,7 @@ const ClientSchema = new Schema<IClientDocument, IClientModel>(
 /**
  * Indexes
  */
+ClientSchema.index({ establishmentId: 1, classification: 1 });
 ClientSchema.index({ 'personalInfo.phone': 1 });
 ClientSchema.index({ classification: 1 });
 ClientSchema.index({ totalStays: -1 });

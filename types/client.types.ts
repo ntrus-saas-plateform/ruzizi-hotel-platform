@@ -31,6 +31,7 @@ export interface Discount {
  */
 export interface IClient {
   _id: Types.ObjectId;
+  establishmentId: Types.ObjectId;
   personalInfo: PersonalInfo;
   classification: ClientClassification;
   preferences?: string[];
@@ -48,6 +49,7 @@ export interface IClient {
  * Create client input
  */
 export interface CreateClientInput {
+  establishmentId: string;
   personalInfo: PersonalInfo;
   classification?: ClientClassification;
   preferences?: string[];
@@ -71,6 +73,7 @@ export interface UpdateClientInput {
  */
 export interface ClientResponse {
   id: string;
+  establishmentId: string;
   personalInfo: PersonalInfo;
   classification: ClientClassification;
   preferences?: string[];
@@ -88,6 +91,7 @@ export interface ClientResponse {
  * Client filter options
  */
 export interface ClientFilterOptions {
+  establishmentId?: string;
   classification?: ClientClassification;
   email?: string;
   phone?: string;

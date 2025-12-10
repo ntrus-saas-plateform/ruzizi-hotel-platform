@@ -4,19 +4,16 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { apiClient } from '@/lib/utils/api-client';
 import ImageUpload from '@/components/admin/ImageUpload';
+import EstablishmentSelector from '@/components/admin/EstablishmentSelector';
+import { useAuth } from '@/hooks/useAuth';
 
-interface Establishment {
-  _id?: string;
-  id?: string;
-  name: string;
-  pricingMode: string;
-}
+
 
 export default function CreateAccommodationPage() {
   const router = useRouter();
+  const { user } = useAuth();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-  const [establishments, setEstablishments] = useState<Establishment[]>([]);
   const [activeTab, setActiveTab] = useState('basic');
   
   const [formData, setFormData] = useState({
@@ -59,32 +56,10 @@ export default function CreateAccommodationPage() {
     'Insonorisation', 'Moustiquaire', 'Ventilateur', 'Détecteur de fumée'
   ];
 
-  useEffect(() => {
-    fetchEstablishments();
-  }, []);
-
-  const fetchEstablishments = async () => {
-    try {
-      const data = await apiClient.get('/api/establishments');
-      if (data.success) {
-        // Normalize establishments to ensure they have _id
-        const normalizedEstablishments = (data.data.data || []).map((est: any) => ({
-          ...est,
-          _id: est._id || est.id,
-        }));
-        setEstablishments(normalizedEstablishments);
-      }
-    } catch (err) {
-      console.error('Erreur chargement établissements:', err);
-    }
-  };
-
   const handleEstablishmentChange = (establishmentId: string) => {
-    const establishment = establishments.find(e => (e._id || e.id) === establishmentId);
     setFormData(prev => ({
       ...prev,
-      establishmentId,
-      pricingMode: establishment?.pricingMode || 'nightly'
+      establishmentId
     }));
   };
 
@@ -197,27 +172,14 @@ export default function CreateAccommodationPage() {
             {/* Basic Tab */}
             {activeTab === 'basic' && (
               <div className="space-y-6">
-                <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">
-                    Établissement *
-                  </label>
-                  <select
-                    value={formData.establishmentId}
-                    onChange={(e) => handleEstablishmentChange(e.target.value)}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    required
-                  >
-                    <option value="">Sélectionner un établissement</option>
-                    {establishments.map((est, index) => {
-                      const estId = est._id || est.id || `est-${index}`;
-                      return (
-                        <option key={estId} value={estId}>
-                          {est.name}
-                        </option>
-                      );
-                    })}
-                  </select>
-                </div>
+                <EstablishmentSelector
+                  value={formData.establishmentId}
+                  onChange={handleEstablishmentChange}
+                  required={true}
+                  userRole={user?.role as any}
+                  userEstablishmentId={user?.establishmentId}
+                  label="Établissement"
+                />
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div>

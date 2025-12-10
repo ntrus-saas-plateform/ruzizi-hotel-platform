@@ -3,11 +3,14 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useEstablishments, useAccommodations, useCreateBooking } from '@/hooks/useQueries';
+import { useAuth } from '@/lib/auth/AuthContext';
+import EstablishmentSelector from '@/components/admin/EstablishmentSelector';
 import type { AccommodationResponse } from '@/types/accommodation.types';
 import type { EstablishmentResponse } from '@/types/establishment.types';
 
 export default function CreateBookingPage() {
   const router = useRouter();
+  const { user } = useAuth();
   const [selectedEstablishment, setSelectedEstablishment] = useState('');
   const [selectedAccommodation, setSelectedAccommodation] = useState<AccommodationResponse | null>(
     null
@@ -61,9 +64,23 @@ export default function CreateBookingPage() {
     e.preventDefault();
     setError('');
 
-    if (!selectedEstablishment || !selectedAccommodation) {
-      setError('Please select establishment and accommodation');
+    // Client-side validation for establishment
+    if (!selectedEstablishment) {
+      setError('Veuillez sélectionner un établissement');
       return;
+    }
+
+    if (!selectedAccommodation) {
+      setError('Veuillez sélectionner un hébergement');
+      return;
+    }
+
+    // Validate establishment permissions for non-admin users
+    if (user && user.role !== 'root' && user.role !== 'super_admin') {
+      if (selectedEstablishment !== user.establishmentId) {
+        setError('Vous ne pouvez créer des réservations que pour votre établissement assigné');
+        return;
+      }
     }
 
     const bookingData = {
@@ -124,27 +141,17 @@ export default function CreateBookingPage() {
                     Sélection de l'hébergement
                   </h2>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
-                        Établissement *
-                      </label>
-                      <select
-                        value={selectedEstablishment}
-                        onChange={(e) => {
-                          setSelectedEstablishment(e.target.value);
-                          setSelectedAccommodation(null);
-                        }}
-                        required
-                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                      >
-                        <option value="">Sélectionner un établissement</option>
-                         {establishments.map((est: EstablishmentResponse, index: number) => (
-                           <option key={est.id + '-' + index} value={est.id}>
-                             {est.name}
-                           </option>
-                         ))}
-                      </select>
-                    </div>
+                    <EstablishmentSelector
+                      value={selectedEstablishment}
+                      onChange={(establishmentId) => {
+                        setSelectedEstablishment(establishmentId);
+                        setSelectedAccommodation(null);
+                      }}
+                      required
+                      userRole={user?.role}
+                      userEstablishmentId={user?.establishmentId}
+                      label="Établissement"
+                    />
 
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-1">

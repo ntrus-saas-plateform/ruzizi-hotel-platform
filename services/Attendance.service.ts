@@ -2,6 +2,11 @@ import { AttendanceModel } from '@/models/Attendance.model';
 import { EmployeeModel } from '@/models/Employee.model';
 import { connectDB } from '@/lib/db';
 import { paginate, type PaginationResult, toObjectId } from '@/lib/db/utils';
+import { EstablishmentServiceContext } from '@/lib/services/establishment-context';
+import {
+  EstablishmentAccessDeniedError,
+  CrossEstablishmentRelationshipError,
+} from '@/lib/errors/establishment-errors';
 import type {
   CreateAttendanceInput,
   AttendanceResponse,
@@ -10,8 +15,30 @@ import type {
 } from '@/types/attendance.types';
 
 export class AttendanceService {
-  static async create(data: CreateAttendanceInput): Promise<AttendanceResponse> {
+  static async create(
+    data: CreateAttendanceInput,
+    context: EstablishmentServiceContext
+  ): Promise<AttendanceResponse> {
     await connectDB();
+
+    // Validate employee exists and get their establishment
+    const employee = await EmployeeModel.findById(data.employeeId);
+    if (!employee) {
+      throw new Error('Employee not found');
+    }
+
+    const employeeEstablishmentId = employee.employmentInfo.establishmentId.toString();
+
+    // Validate relationship: employee must belong to the same establishment
+    if (context && !context.canAccessAll()) {
+      const userEstablishmentId = context.getEstablishmentId();
+      if (employeeEstablishmentId !== userEstablishmentId) {
+        throw new CrossEstablishmentRelationshipError({
+          parentResource: { type: 'employee', id: data.employeeId, establishmentId: employeeEstablishmentId },
+          childResource: { type: 'attendance', id: 'new', establishmentId: userEstablishmentId! },
+        });
+      }
+    }
 
     const existingAttendance = await AttendanceModel.findOne({
       employeeId: toObjectId(data.employeeId),
@@ -30,7 +57,10 @@ export class AttendanceService {
     return attendance.toJSON() as unknown as AttendanceResponse;
   }
 
-  static async getById(id: string): Promise<AttendanceResponse | null> {
+  static async getById(
+    id: string,
+    context?: EstablishmentServiceContext
+  ): Promise<AttendanceResponse | null> {
     await connectDB();
 
     const attendance = await AttendanceModel.findById(id).populate(
@@ -42,28 +72,79 @@ export class AttendanceService {
       return null;
     }
 
+    // Validate access if context is provided
+    if (context) {
+      const employee = await EmployeeModel.findById(attendance.employeeId);
+      if (employee) {
+        const hasAccess = await context.validateAccess(
+          { establishmentId: employee.employmentInfo.establishmentId.toString() },
+          'attendance'
+        );
+        if (!hasAccess) {
+          throw new EstablishmentAccessDeniedError({
+            userId: context.getUserId(),
+            resourceType: 'attendance',
+            resourceId: id,
+            userEstablishmentId: context.getEstablishmentId(),
+            resourceEstablishmentId: employee.employmentInfo.establishmentId.toString(),
+          });
+        }
+      }
+    }
+
     return attendance.toJSON() as unknown as AttendanceResponse;
   }
 
   static async getAll(
     filters: AttendanceFilterOptions = {},
     page: number = 1,
-    limit: number = 10
+    limit: number = 10,
+    context?: EstablishmentServiceContext
   ): Promise<PaginationResult<AttendanceResponse>> {
     await connectDB();
 
     const query: any = {};
 
-    if (filters.employeeId) {
-      query.employeeId = toObjectId(filters.employeeId);
+    // Apply establishment filter if context is provided
+    let establishmentIdToFilter: string | undefined;
+    if (context) {
+      const baseFilter = context.applyFilter({});
+      if (baseFilter.establishmentId) {
+        establishmentIdToFilter = baseFilter.establishmentId.toString();
+      }
     }
 
-    if (filters.establishmentId) {
+    // If establishment filter is provided (either from context or filters), use it
+    if (establishmentIdToFilter || filters.establishmentId) {
+      const targetEstablishmentId = establishmentIdToFilter || filters.establishmentId;
       const employees = await EmployeeModel.find({
-        'employmentInfo.establishmentId': toObjectId(filters.establishmentId),
+        'employmentInfo.establishmentId': toObjectId(targetEstablishmentId!),
       });
       const employeeIds = employees.map((emp) => emp._id);
       query.employeeId = { $in: employeeIds };
+    }
+
+    if (filters.employeeId) {
+      // If specific employee is requested, validate access
+      if (context && !context.canAccessAll()) {
+        const employee = await EmployeeModel.findById(filters.employeeId);
+        if (employee) {
+          const hasAccess = await context.validateAccess(
+            { establishmentId: employee.employmentInfo.establishmentId.toString() },
+            'attendance'
+          );
+          if (!hasAccess) {
+            throw new EstablishmentAccessDeniedError({
+              userId: context.getUserId(),
+              resourceType: 'attendance',
+              resourceId: 'list',
+              userEstablishmentId: context.getEstablishmentId(),
+              resourceEstablishmentId: employee.employmentInfo.establishmentId.toString(),
+            });
+          }
+        }
+      }
+      query.employeeId = toObjectId(filters.employeeId);
     }
 
     if (filters.status) {
@@ -95,42 +176,151 @@ export class AttendanceService {
     };
   }
 
-  static async update(id: string, data: Partial<CreateAttendanceInput>): Promise<AttendanceResponse | null> {
+  static async update(
+    id: string,
+    data: Partial<CreateAttendanceInput>,
+    context?: EstablishmentServiceContext
+  ): Promise<AttendanceResponse | null> {
     await connectDB();
 
-    const attendance = await AttendanceModel.findByIdAndUpdate(id, data, { new: true });
+    const attendance = await AttendanceModel.findById(id);
 
     if (!attendance) {
       return null;
     }
 
-    return attendance.toJSON() as unknown as AttendanceResponse;
+    // Validate access if context is provided
+    if (context) {
+      const employee = await EmployeeModel.findById(attendance.employeeId);
+      if (employee) {
+        const hasAccess = await context.validateAccess(
+          { establishmentId: employee.employmentInfo.establishmentId.toString() },
+          'attendance'
+        );
+        if (!hasAccess) {
+          throw new EstablishmentAccessDeniedError({
+            userId: context.getUserId(),
+            resourceType: 'attendance',
+            resourceId: id,
+            userEstablishmentId: context.getEstablishmentId(),
+            resourceEstablishmentId: employee.employmentInfo.establishmentId.toString(),
+          });
+        }
+      }
+    }
+
+    // If employeeId is being changed, validate the new employee
+    if (data.employeeId && data.employeeId !== attendance.employeeId.toString()) {
+      const newEmployee = await EmployeeModel.findById(data.employeeId);
+      if (!newEmployee) {
+        throw new Error('New employee not found');
+      }
+
+      // Validate relationship with new employee
+      if (context && !context.canAccessAll()) {
+        const userEstablishmentId = context.getEstablishmentId();
+        const newEmployeeEstablishmentId = newEmployee.employmentInfo.establishmentId.toString();
+        if (newEmployeeEstablishmentId !== userEstablishmentId) {
+          throw new CrossEstablishmentRelationshipError({
+            parentResource: { type: 'employee', id: data.employeeId, establishmentId: newEmployeeEstablishmentId },
+            childResource: { type: 'attendance', id: id, establishmentId: userEstablishmentId! },
+          });
+        }
+      }
+    }
+
+    const updatedAttendance = await AttendanceModel.findByIdAndUpdate(id, data, { new: true });
+
+    if (!updatedAttendance) {
+      return null;
+    }
+
+    return updatedAttendance.toJSON() as unknown as AttendanceResponse;
   }
 
-  static async delete(id: string): Promise<boolean> {
+  static async delete(id: string, context?: EstablishmentServiceContext): Promise<boolean> {
     await connectDB();
 
-    const result = await AttendanceModel.findByIdAndDelete(id);
+    const attendance = await AttendanceModel.findById(id);
 
-    return !!result;
+    if (!attendance) {
+      return false;
+    }
+
+    // Validate access if context is provided
+    if (context) {
+      const employee = await EmployeeModel.findById(attendance.employeeId);
+      if (employee) {
+        const hasAccess = await context.validateAccess(
+          { establishmentId: employee.employmentInfo.establishmentId.toString() },
+          'attendance'
+        );
+        if (!hasAccess) {
+          throw new EstablishmentAccessDeniedError({
+            userId: context.getUserId(),
+            resourceType: 'attendance',
+            resourceId: id,
+            userEstablishmentId: context.getEstablishmentId(),
+            resourceEstablishmentId: employee.employmentInfo.establishmentId.toString(),
+          });
+        }
+      }
+    }
+
+    await AttendanceModel.findByIdAndDelete(id);
+
+    return true;
   }
 
   static async getByEmployee(
     employeeId: string,
     startDate?: Date,
-    endDate?: Date
+    endDate?: Date,
+    context?: EstablishmentServiceContext
   ): Promise<AttendanceResponse[]> {
     await connectDB();
+
+    // Validate access if context is provided
+    if (context) {
+      const employee = await EmployeeModel.findById(employeeId);
+      if (employee) {
+        const hasAccess = await context.validateAccess(
+          { establishmentId: employee.employmentInfo.establishmentId.toString() },
+          'attendance'
+        );
+        if (!hasAccess) {
+          throw new EstablishmentAccessDeniedError({
+            userId: context.getUserId(),
+            resourceType: 'attendance',
+            resourceId: 'list',
+            userEstablishmentId: context.getEstablishmentId(),
+            resourceEstablishmentId: employee.employmentInfo.establishmentId.toString(),
+          });
+        }
+      }
+    }
 
     const attendances = await AttendanceModel.findByEmployee(employeeId, startDate, endDate);
 
     return attendances.map((attendance) => attendance.toJSON() as unknown as AttendanceResponse);
   }
 
-  static async getByDate(date: Date): Promise<AttendanceResponse[]> {
+  static async getByDate(
+    date: Date,
+    context?: EstablishmentServiceContext
+  ): Promise<AttendanceResponse[]> {
     await connectDB();
 
-    const attendances = await AttendanceModel.findByDate(date);
+    let attendances = await AttendanceModel.findByDate(date);
+
+    // Apply establishment filter if context is provided
+    if (context && !context.canAccessAll()) {
+      const userEstablishmentId = context.getEstablishmentId();
+      attendances = attendances.filter((attendance: any) => {
+        const employee = attendance.employeeId;
+        return employee && employee.employmentInfo.establishmentId.toString() === userEstablishmentId;
+      });
+    }
 
     return attendances.map((attendance) => attendance.toJSON() as unknown as AttendanceResponse);
   }
@@ -138,9 +328,30 @@ export class AttendanceService {
   static async getSummary(
     employeeId: string,
     startDate: Date,
-    endDate: Date
+    endDate: Date,
+    context?: EstablishmentServiceContext
   ): Promise<AttendanceSummary> {
     await connectDB();
+
+    // Validate access if context is provided
+    if (context) {
+      const employee = await EmployeeModel.findById(employeeId);
+      if (employee) {
+        const hasAccess = await context.validateAccess(
+          { establishmentId: employee.employmentInfo.establishmentId.toString() },
+          'attendance'
+        );
+        if (!hasAccess) {
+          throw new EstablishmentAccessDeniedError({
+            userId: context.getUserId(),
+            resourceType: 'attendance',
+            resourceId: 'summary',
+            userEstablishmentId: context.getEstablishmentId(),
+            resourceEstablishmentId: employee.employmentInfo.establishmentId.toString(),
+          });
+        }
+      }
+    }
 
     const attendances = await AttendanceModel.findByEmployee(employeeId, startDate, endDate);
 
@@ -161,8 +372,33 @@ export class AttendanceService {
     };
   }
 
-  static async checkIn(employeeId: string, checkInTime?: Date): Promise<AttendanceResponse> {
+  static async checkIn(
+    employeeId: string,
+    checkInTime?: Date,
+    context?: EstablishmentServiceContext
+  ): Promise<AttendanceResponse> {
     await connectDB();
+
+    // Validate employee exists and access
+    const employee = await EmployeeModel.findById(employeeId);
+    if (!employee) {
+      throw new Error('Employee not found');
+    }
+
+    // Validate access if context is provided
+    if (context && !context.canAccessAll()) {
+      const userEstablishmentId = context.getEstablishmentId();
+      const employeeEstablishmentId = employee.employmentInfo.establishmentId.toString();
+      if (employeeEstablishmentId !== userEstablishmentId) {
+        throw new EstablishmentAccessDeniedError({
+          userId: context.getUserId(),
+          resourceType: 'attendance',
+          resourceId: 'checkIn',
+          userEstablishmentId: userEstablishmentId,
+          resourceEstablishmentId: employeeEstablishmentId,
+        });
+      }
+    }
 
     const today = new Date();
     today.setHours(0, 0, 0, 0);
@@ -190,8 +426,33 @@ export class AttendanceService {
     return attendance.toJSON() as unknown as AttendanceResponse;
   }
 
-  static async checkOut(employeeId: string, checkOutTime?: Date): Promise<AttendanceResponse | null> {
+  static async checkOut(
+    employeeId: string,
+    checkOutTime?: Date,
+    context?: EstablishmentServiceContext
+  ): Promise<AttendanceResponse | null> {
     await connectDB();
+
+    // Validate employee exists and access
+    const employee = await EmployeeModel.findById(employeeId);
+    if (!employee) {
+      throw new Error('Employee not found');
+    }
+
+    // Validate access if context is provided
+    if (context && !context.canAccessAll()) {
+      const userEstablishmentId = context.getEstablishmentId();
+      const employeeEstablishmentId = employee.employmentInfo.establishmentId.toString();
+      if (employeeEstablishmentId !== userEstablishmentId) {
+        throw new EstablishmentAccessDeniedError({
+          userId: context.getUserId(),
+          resourceType: 'attendance',
+          resourceId: 'checkOut',
+          userEstablishmentId: userEstablishmentId,
+          resourceEstablishmentId: employeeEstablishmentId,
+        });
+      }
+    }
 
     const today = new Date();
     today.setHours(0, 0, 0, 0);

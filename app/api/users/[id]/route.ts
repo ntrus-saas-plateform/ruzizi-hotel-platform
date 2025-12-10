@@ -1,5 +1,7 @@
 import { NextRequest } from 'next/server';
-import { requireAuth, createErrorResponse, createSuccessResponse } from '@/lib/auth/middleware';
+import { createErrorResponse, createSuccessResponse } from '@/lib/auth/middleware';
+import { withEstablishmentIsolation } from '@/lib/auth/establishment-isolation.middleware';
+import { EstablishmentAccessDeniedError } from '@/lib/errors/establishment-errors';
 import UserService from '@/services/User.service';
 
 export async function GET(
@@ -7,21 +9,29 @@ export async function GET(
   { params }: { params: Promise<{ id: string }> }
 ) {
   const resolvedParams = await params;
-  return requireAuth(async (req, user) => {
+  return withEstablishmentIsolation(async (req, context) => {
     try {
-      // Les utilisateurs peuvent voir leur propre profil
-      // Les super_admin et manager peuvent voir tous les profils
-      if (user.userId !== resolvedParams.id && user.role === 'staff') {
+      // Users can view their own profile
+      // Admins and managers can view profiles within their establishment scope
+      if (context.userId !== resolvedParams.id && context.role === 'staff') {
         return createErrorResponse('FORBIDDEN', 'Accès refusé', 403);
       }
 
-      const userData = await UserService.getById(resolvedParams.id);
+      const userData = await UserService.getById(resolvedParams.id, context.serviceContext);
       return createSuccessResponse(userData);
-    } catch (error: any) {
-      if (error.message === 'Utilisateur non trouvé') {
-        return createErrorResponse('NOT_FOUND', 'Utilisateur non trouvé', 404);
+    } catch (error) {
+      if (error instanceof EstablishmentAccessDeniedError) {
+        return createErrorResponse('ESTABLISHMENT_ACCESS_DENIED', error.message, 403);
       }
-      return createErrorResponse('DATABASE_ERROR', error.message || 'Erreur serveur', 500);
+
+      if (error instanceof Error) {
+        if (error.message === 'Utilisateur non trouvé') {
+          return createErrorResponse('NOT_FOUND', 'Utilisateur non trouvé', 404);
+        }
+        return createErrorResponse('DATABASE_ERROR', error.message, 500);
+      }
+
+      return createErrorResponse('SERVER_ERROR', 'An unexpected error occurred', 500);
     }
   })(request);
 }
@@ -31,22 +41,30 @@ export async function PATCH(
   { params }: { params: Promise<{ id: string }> }
 ) {
   const resolvedParams = await params;
-  return requireAuth(async (req, user) => {
+  return withEstablishmentIsolation(async (req, context) => {
     try {
-      // Seuls les super_admin peuvent modifier les utilisateurs
-      if (user.role !== 'super_admin') {
+      // Only super_admin can modify users
+      if (context.role !== 'super_admin') {
         return createErrorResponse('FORBIDDEN', 'Accès refusé', 403);
       }
 
-      const data = await request.json();
-      const updatedUser = await UserService.update(resolvedParams.id, data);
+      const data = await req.json();
+      const updatedUser = await UserService.update(resolvedParams.id, data, context.serviceContext);
 
       return createSuccessResponse(updatedUser, 'Utilisateur mis à jour avec succès');
-    } catch (error: any) {
-      if (error.message === 'Utilisateur non trouvé') {
-        return createErrorResponse('NOT_FOUND', 'Utilisateur non trouvé', 404);
+    } catch (error) {
+      if (error instanceof EstablishmentAccessDeniedError) {
+        return createErrorResponse('ESTABLISHMENT_ACCESS_DENIED', error.message, 403);
       }
-      return createErrorResponse('DATABASE_ERROR', error.message || 'Erreur serveur', 500);
+
+      if (error instanceof Error) {
+        if (error.message === 'Utilisateur non trouvé') {
+          return createErrorResponse('NOT_FOUND', 'Utilisateur non trouvé', 404);
+        }
+        return createErrorResponse('DATABASE_ERROR', error.message, 500);
+      }
+
+      return createErrorResponse('SERVER_ERROR', 'An unexpected error occurred', 500);
     }
   })(request);
 }
@@ -56,25 +74,33 @@ export async function DELETE(
   { params }: { params: Promise<{ id: string }> }
 ) {
   const resolvedParams = await params;
-  return requireAuth(async (req, user) => {
+  return withEstablishmentIsolation(async (req, context) => {
     try {
-      // Seuls les super_admin peuvent supprimer des utilisateurs
-      if (user.role !== 'super_admin') {
+      // Only super_admin can delete users
+      if (context.role !== 'super_admin') {
         return createErrorResponse('FORBIDDEN', 'Accès refusé', 403);
       }
 
-      // Empêcher la suppression de son propre compte
-      if (user.userId === resolvedParams.id) {
+      // Prevent deletion of own account
+      if (context.userId === resolvedParams.id) {
         return createErrorResponse('VALIDATION_ERROR', 'Vous ne pouvez pas supprimer votre propre compte', 400);
       }
 
-      await UserService.delete(resolvedParams.id);
+      await UserService.delete(resolvedParams.id, context.serviceContext);
       return createSuccessResponse(null, 'Utilisateur supprimé avec succès');
-    } catch (error: any) {
-      if (error.message === 'Utilisateur non trouvé') {
-        return createErrorResponse('NOT_FOUND', 'Utilisateur non trouvé', 404);
+    } catch (error) {
+      if (error instanceof EstablishmentAccessDeniedError) {
+        return createErrorResponse('ESTABLISHMENT_ACCESS_DENIED', error.message, 403);
       }
-      return createErrorResponse('DATABASE_ERROR', error.message || 'Erreur serveur', 500);
+
+      if (error instanceof Error) {
+        if (error.message === 'Utilisateur non trouvé') {
+          return createErrorResponse('NOT_FOUND', 'Utilisateur non trouvé', 404);
+        }
+        return createErrorResponse('DATABASE_ERROR', error.message, 500);
+      }
+
+      return createErrorResponse('SERVER_ERROR', 'An unexpected error occurred', 500);
     }
   })(request);
 }

@@ -4,6 +4,10 @@ import { EstablishmentModel } from '@/models/Establishment.model';
 import { connectDB } from '@/lib/db';
 import { paginate, type PaginationResult, toObjectId } from '@/lib/db/utils';
 import { cache } from '@/lib/performance/cache';
+import { EstablishmentServiceContext } from '@/lib/services/establishment-context';
+import {
+  EstablishmentAccessDeniedError,
+} from '@/lib/errors/establishment-errors';
 import type {
   CreateAccommodationInput,
   UpdateAccommodationInput,
@@ -20,19 +24,28 @@ export class AccommodationService {
   /**
    * Create a new accommodation
    */
-  static async create(data: CreateAccommodationInput): Promise<AccommodationResponse> {
+  static async create(
+    data: CreateAccommodationInput,
+    context?: EstablishmentServiceContext
+  ): Promise<AccommodationResponse> {
     await connectDB();
 
+    // For non-admin users, enforce their establishment
+    let effectiveEstablishmentId = data.establishmentId;
+    if (context && !context.canAccessAll()) {
+      effectiveEstablishmentId = context.getEstablishmentId()!;
+    }
+
     // Verify establishment exists
-    const establishment = await EstablishmentModel.findById(data.establishmentId);
+    const establishment = await EstablishmentModel.findById(effectiveEstablishmentId);
     if (!establishment) {
       throw new Error('Establishment not found');
     }
 
-    // Create accommodation
+    // Create accommodation with enforced establishmentId
     const accommodation = await AccommodationModel.create({
       ...data,
-      establishmentId: toObjectId(data.establishmentId),
+      establishmentId: toObjectId(effectiveEstablishmentId),
     });
 
     return accommodation.toJSON() as unknown as AccommodationResponse;
@@ -41,7 +54,10 @@ export class AccommodationService {
   /**
    * Get accommodation by ID
    */
-  static async getById(id: string): Promise<AccommodationResponse | null> {
+  static async getById(
+    id: string,
+    context?: EstablishmentServiceContext
+  ): Promise<AccommodationResponse | null> {
     await connectDB();
 
     const accommodation = await AccommodationModel.findById(id).populate(
@@ -51,6 +67,24 @@ export class AccommodationService {
 
     if (!accommodation) {
       return null;
+    }
+
+    // Validate access if context is provided
+    if (context) {
+      const hasAccess = await context.validateAccess(
+        { establishmentId: accommodation.establishmentId },
+        'accommodation'
+      );
+
+      if (!hasAccess) {
+        throw new EstablishmentAccessDeniedError({
+          userId: context.getUserId(),
+          resourceType: 'accommodation',
+          resourceId: id,
+          userEstablishmentId: context.getEstablishmentId(),
+          resourceEstablishmentId: accommodation.establishmentId.toString(),
+        });
+      }
     }
 
     return accommodation.toJSON() as unknown as AccommodationResponse;
@@ -63,7 +97,8 @@ export class AccommodationService {
     filters: AccommodationFilterOptions = {},
     page: number = 1,
     limit: number = 10,
-    includeFullDetails: boolean = false
+    includeFullDetails: boolean = false,
+    context?: EstablishmentServiceContext
   ): Promise<PaginationResult<AccommodationResponse>> {
     await connectDB();
 
@@ -73,7 +108,13 @@ export class AccommodationService {
     // Build query with index hints
     const query: any = {};
 
-    if (filters.establishmentId) {
+    // Apply establishment filter from context
+    if (context) {
+      const filteredConditions = context.applyFilter(filters);
+      if (filteredConditions.establishmentId) {
+        query.establishmentId = toObjectId(filteredConditions.establishmentId);
+      }
+    } else if (filters.establishmentId) {
       query.establishmentId = toObjectId(filters.establishmentId);
     }
 
@@ -143,7 +184,8 @@ export class AccommodationService {
    */
   static async update(
     id: string,
-    data: UpdateAccommodationInput
+    data: UpdateAccommodationInput,
+    context?: EstablishmentServiceContext
   ): Promise<AccommodationResponse | null> {
     await connectDB();
 
@@ -151,6 +193,24 @@ export class AccommodationService {
 
     if (!accommodation) {
       return null;
+    }
+
+    // Validate access if context is provided
+    if (context) {
+      const hasAccess = await context.validateAccess(
+        { establishmentId: accommodation.establishmentId },
+        'accommodation'
+      );
+
+      if (!hasAccess) {
+        throw new EstablishmentAccessDeniedError({
+          userId: context.getUserId(),
+          resourceType: 'accommodation',
+          resourceId: id,
+          userEstablishmentId: context.getEstablishmentId(),
+          resourceEstablishmentId: accommodation.establishmentId.toString(),
+        });
+      }
     }
 
     // Update fields
@@ -164,13 +224,34 @@ export class AccommodationService {
   /**
    * Delete accommodation
    */
-  static async delete(id: string): Promise<boolean> {
+  static async delete(
+    id: string,
+    context?: EstablishmentServiceContext
+  ): Promise<boolean> {
     await connectDB();
 
     const accommodation = await AccommodationModel.findById(id);
 
     if (!accommodation) {
       return false;
+    }
+
+    // Validate access if context is provided
+    if (context) {
+      const hasAccess = await context.validateAccess(
+        { establishmentId: accommodation.establishmentId },
+        'accommodation'
+      );
+
+      if (!hasAccess) {
+        throw new EstablishmentAccessDeniedError({
+          userId: context.getUserId(),
+          resourceType: 'accommodation',
+          resourceId: id,
+          userEstablishmentId: context.getEstablishmentId(),
+          resourceEstablishmentId: accommodation.establishmentId.toString(),
+        });
+      }
     }
 
     await accommodation.deleteOne();

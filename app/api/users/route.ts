@@ -1,5 +1,7 @@
 import { NextRequest } from 'next/server';
-import { withRole, createErrorResponse, createSuccessResponse, createValidationErrorResponse } from '@/lib/auth/middleware';
+import { createErrorResponse, createSuccessResponse, createValidationErrorResponse } from '@/lib/auth/middleware';
+import { withEstablishmentIsolation } from '@/lib/auth/establishment-isolation.middleware';
+import { EstablishmentAccessDeniedError } from '@/lib/errors/establishment-errors';
 import UserService from '@/services/User.service';
 import { UserFilterSchema } from '@/lib/validations/user.validation';
 import { ZodError } from 'zod';
@@ -9,7 +11,7 @@ import { ZodError } from 'zod';
  * Get all users with establishment filtering
  */
 export async function GET(request: NextRequest) {
-  return requireAuth(async (req, user) => {
+  return withEstablishmentIsolation(async (req, context) => {
     try {
       const { searchParams } = new URL(req.url);
 
@@ -24,50 +26,100 @@ export async function GET(request: NextRequest) {
         limit: parseInt(searchParams.get('limit') || '10'),
       });
 
-      // Appliquer le filtre d'établissement selon le rôle utilisateur
-      const establishmentFilters = applyEstablishmentFilter(user, filters);
+      // For admins, allow optional establishment filtering via query param
+      const requestedEstablishmentId = searchParams.get('establishmentId') ?? undefined;
+      if (requestedEstablishmentId && !context.serviceContext.canAccessAll()) {
+        // Non-admin users cannot request a different establishment
+        if (requestedEstablishmentId !== context.establishmentId) {
+          return createErrorResponse('ESTABLISHMENT_ACCESS_DENIED', 'Access to this establishment denied', 403);
+        }
+      }
 
-      // Récupérer tous les utilisateurs avec pagination et filtrage
-      const result = await UserService.getAll(establishmentFilters);
+      // Get all users with establishment context
+      const result = await UserService.getAll(
+        {
+          ...filters,
+          establishmentId: requestedEstablishmentId,
+        },
+        context.serviceContext
+      );
 
-      // Retourner avec métadonnées de pagination
+      // Return with pagination metadata
       return createSuccessResponse({
         users: result.data,
         pagination: result.pagination
       });
-    } catch (error: any) {
+    } catch (error) {
       if (error instanceof ZodError) {
         return createValidationErrorResponse(error, 'Invalid query parameters');
       }
 
-      return createErrorResponse('DATABASE_ERROR', error.message || 'Erreur serveur', 500);
+      if (error instanceof EstablishmentAccessDeniedError) {
+        return createErrorResponse('ESTABLISHMENT_ACCESS_DENIED', error.message, 403);
+      }
+
+      if (error instanceof Error) {
+        return createErrorResponse('DATABASE_ERROR', error.message, 500);
+      }
+
+      return createErrorResponse('SERVER_ERROR', 'An unexpected error occurred', 500);
     }
   })(request);
 }
 
 /**
-  * POST /api/users
-  * Create a new user (Super Admin only)
-  */
-export const POST = withRole(['super_admin'], async (request: NextRequest, user) => {
-  try {
-    const data = await request.json();
-
-    // Validate establishmentId if provided
-    if (data.establishmentId && data.establishmentId !== '') {
-      // Ensure establishmentId is a valid ObjectId string
-      if (typeof data.establishmentId !== 'string' || !/^[0-9a-fA-F]{24}$/.test(data.establishmentId)) {
-        return createErrorResponse('VALIDATION_ERROR', 'establishmentId doit être un ObjectId valide', 400);
+ * POST /api/users
+ * Create a new user (Super Admin only)
+ */
+export async function POST(request: NextRequest) {
+  return withEstablishmentIsolation(async (req, context) => {
+    try {
+      // Only super_admin can create users
+      if (context.role !== 'super_admin') {
+        return createErrorResponse('FORBIDDEN', 'Accès refusé', 403);
       }
-    } else {
-      // Remove establishmentId if empty string
-      delete data.establishmentId;
+
+      const data = await req.json();
+
+      // For non-admin users, enforce their establishment
+      // For admin users, require an establishmentId to be specified for non-admin user creation
+      let establishmentId: string | undefined;
+      
+      if (context.serviceContext.canAccessAll()) {
+        // Admins can create users for any establishment, but must specify one for non-admin users
+        if (data.role !== 'super_admin' && data.role !== 'root') {
+          if (!data.establishmentId) {
+            return createErrorResponse('VALIDATION_ERROR', 'Establishment ID is required for non-admin users', 400);
+          }
+          // Validate establishmentId format
+          if (typeof data.establishmentId !== 'string' || !/^[0-9a-fA-F]{24}$/.test(data.establishmentId)) {
+            return createErrorResponse('VALIDATION_ERROR', 'establishmentId doit être un ObjectId valide', 400);
+          }
+        }
+        establishmentId = data.establishmentId;
+      } else {
+        // Non-admins: automatically use their establishment, ignore any provided value
+        establishmentId = context.establishmentId;
+      }
+
+      const userData = {
+        ...data,
+        establishmentId,
+      };
+
+      const newUser = await UserService.create(userData, context.serviceContext);
+
+      return createSuccessResponse(newUser, 'Utilisateur créé avec succès', 201);
+    } catch (error) {
+      if (error instanceof EstablishmentAccessDeniedError) {
+        return createErrorResponse('ESTABLISHMENT_ACCESS_DENIED', error.message, 403);
+      }
+
+      if (error instanceof Error) {
+        return createErrorResponse('DATABASE_ERROR', error.message, 500);
+      }
+
+      return createErrorResponse('SERVER_ERROR', 'An unexpected error occurred', 500);
     }
-
-    const newUser = await UserService.create(data);
-
-    return createSuccessResponse(newUser, 'Utilisateur créé avec succès', 201);
-  } catch (error: any) {
-    return createErrorResponse('DATABASE_ERROR', error.message || 'Erreur serveur', 500);
-  }
-});
+  })(request);
+}

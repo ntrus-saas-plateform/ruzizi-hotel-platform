@@ -6,6 +6,11 @@ import { EstablishmentModel } from '@/models/Establishment.model';
 import { connectDB } from '@/lib/db';
 import { paginate, type PaginationResult, toObjectId } from '@/lib/db/utils';
 import { cache } from '@/lib/performance/cache';
+import { EstablishmentServiceContext } from '@/lib/services/establishment-context';
+import {
+  EstablishmentAccessDeniedError,
+  CrossEstablishmentRelationshipError,
+} from '@/lib/errors/establishment-errors';
 import type {
   CreateBookingInput,
   UpdateBookingInput,
@@ -80,7 +85,7 @@ export class BookingService {
     let attempts = 0;
 
     while (attempts < maxAttempts) {
-      const code = 'BK' + Date.now().toString() + Math.random().toString(36).substr(2, 9);
+      const code = 'BK' + Date.now().toString() + Math.random().toString(36).substr(2, 4);
       const existingBooking = await BookingModel.findByCode(code);
       if (!existingBooking) {
         return code;
@@ -271,11 +276,20 @@ export class BookingService {
   /**
    * Create a new booking
    */
-  static async create(data: CreateBookingInput): Promise<BookingResponse> {
+  static async create(
+    data: CreateBookingInput,
+    context?: EstablishmentServiceContext
+  ): Promise<BookingResponse> {
     await connectDB();
 
+    // For non-admin users, enforce their establishment
+    let effectiveEstablishmentId = data.establishmentId;
+    if (context && !context.canAccessAll()) {
+      effectiveEstablishmentId = context.getEstablishmentId()!;
+    }
+
     // Verify establishment exists
-    const establishment = await EstablishmentModel.findById(data.establishmentId);
+    const establishment = await EstablishmentModel.findById(effectiveEstablishmentId);
     if (!establishment) {
       throw new Error('Establishment not found');
     }
@@ -286,8 +300,20 @@ export class BookingService {
       throw new Error('Accommodation not found');
     }
 
-    if (accommodation.establishmentId.toString() !== data.establishmentId) {
-      throw new Error('Accommodation does not belong to this establishment');
+    // Validate accommodation-booking relationship (same establishment)
+    if (accommodation.establishmentId.toString() !== effectiveEstablishmentId) {
+      throw new CrossEstablishmentRelationshipError({
+        parentResource: {
+          type: 'accommodation',
+          id: accommodation._id.toString(),
+          establishmentId: accommodation.establishmentId.toString(),
+        },
+        childResource: {
+          type: 'booking',
+          id: 'new',
+          establishmentId: effectiveEstablishmentId,
+        },
+      });
     }
 
     // Check if accommodation is available
@@ -337,11 +363,11 @@ export class BookingService {
     // Get pre-generated booking code
     const bookingCode = await this.getNextBookingCode();
 
-    // Create booking
+    // Create booking with enforced establishmentId
     const booking = await BookingModel.create({
       ...data,
       bookingCode,
-      establishmentId: toObjectId(data.establishmentId),
+      establishmentId: toObjectId(effectiveEstablishmentId),
       accommodationId: toObjectId(data.accommodationId),
       pricingDetails,
       createdBy: data.createdBy ? toObjectId(data.createdBy) : undefined,
@@ -361,7 +387,10 @@ export class BookingService {
   /**
    * Get booking by ID
    */
-  static async getById(id: string): Promise<BookingResponse | null> {
+  static async getById(
+    id: string,
+    context?: EstablishmentServiceContext
+  ): Promise<BookingResponse | null> {
     await connectDB();
 
     const booking = await BookingModel.findById(id)
@@ -370,6 +399,24 @@ export class BookingService {
 
     if (!booking) {
       return null;
+    }
+
+    // Validate access if context is provided
+    if (context) {
+      const hasAccess = await context.validateAccess(
+        { establishmentId: booking.establishmentId },
+        'booking'
+      );
+
+      if (!hasAccess) {
+        throw new EstablishmentAccessDeniedError({
+          userId: context.getUserId(),
+          resourceType: 'booking',
+          resourceId: id,
+          userEstablishmentId: context.getEstablishmentId(),
+          resourceEstablishmentId: booking.establishmentId.toString(),
+        });
+      }
     }
 
     return booking.toJSON() as unknown as BookingResponse;
@@ -400,7 +447,8 @@ export class BookingService {
    static async getAll(
      filters: BookingFilterOptions = {},
      page: number = 1,
-     limit: number = 10
+     limit: number = 10,
+     context?: EstablishmentServiceContext
    ): Promise<PaginationResult<BookingResponse>> {
      await connectDB();
 
@@ -410,7 +458,13 @@ export class BookingService {
      // Build match conditions for aggregation pipeline
      const matchConditions: any = {};
 
-     if (filters.establishmentId) {
+     // Apply establishment filter from context
+     if (context) {
+       const filteredConditions = context.applyFilter(filters);
+       if (filteredConditions.establishmentId) {
+         matchConditions.establishmentId = toObjectId(filteredConditions.establishmentId);
+       }
+     } else if (filters.establishmentId) {
        matchConditions.establishmentId = toObjectId(filters.establishmentId);
      }
 
@@ -578,7 +632,8 @@ export class BookingService {
    */
   static async update(
     id: string,
-    data: UpdateBookingInput
+    data: UpdateBookingInput,
+    context?: EstablishmentServiceContext
   ): Promise<BookingResponse | null> {
     await connectDB();
 
@@ -586,6 +641,24 @@ export class BookingService {
 
     if (!booking) {
       return null;
+    }
+
+    // Validate access if context is provided
+    if (context) {
+      const hasAccess = await context.validateAccess(
+        { establishmentId: booking.establishmentId },
+        'booking'
+      );
+
+      if (!hasAccess) {
+        throw new EstablishmentAccessDeniedError({
+          userId: context.getUserId(),
+          resourceType: 'booking',
+          resourceId: id,
+          userEstablishmentId: context.getEstablishmentId(),
+          resourceEstablishmentId: booking.establishmentId.toString(),
+        });
+      }
     }
 
     // If dates are being changed, check availability
@@ -623,15 +696,81 @@ export class BookingService {
   }
 
   /**
+   * Delete booking
+   */
+  static async delete(
+    id: string,
+    context?: EstablishmentServiceContext
+  ): Promise<boolean> {
+    await connectDB();
+
+    const booking = await BookingModel.findById(id);
+
+    if (!booking) {
+      return false;
+    }
+
+    // Validate access if context is provided
+    if (context) {
+      const hasAccess = await context.validateAccess(
+        { establishmentId: booking.establishmentId },
+        'booking'
+      );
+
+      if (!hasAccess) {
+        throw new EstablishmentAccessDeniedError({
+          userId: context.getUserId(),
+          resourceType: 'booking',
+          resourceId: id,
+          userEstablishmentId: context.getEstablishmentId(),
+          resourceEstablishmentId: booking.establishmentId.toString(),
+        });
+      }
+    }
+
+    await BookingModel.findByIdAndDelete(id);
+
+    // Update accommodation status back to available if it was reserved
+    const accommodation = await AccommodationModel.findById(booking.accommodationId);
+    if (accommodation && accommodation.status === 'reserved') {
+      accommodation.status = 'available';
+      await accommodation.save();
+    }
+
+    return true;
+  }
+
+  /**
    * Cancel booking
    */
-  static async cancel(id: string): Promise<BookingResponse | null> {
+  static async cancel(
+    id: string,
+    context?: EstablishmentServiceContext
+  ): Promise<BookingResponse | null> {
     await connectDB();
 
     const booking = await BookingModel.findById(id);
 
     if (!booking) {
       return null;
+    }
+
+    // Validate access if context is provided
+    if (context) {
+      const hasAccess = await context.validateAccess(
+        { establishmentId: booking.establishmentId },
+        'booking'
+      );
+
+      if (!hasAccess) {
+        throw new EstablishmentAccessDeniedError({
+          userId: context.getUserId(),
+          resourceType: 'booking',
+          resourceId: id,
+          userEstablishmentId: context.getEstablishmentId(),
+          resourceEstablishmentId: booking.establishmentId.toString(),
+        });
+      }
     }
 
     booking.status = 'cancelled';
@@ -1103,7 +1242,8 @@ export class BookingService {
    * Create a walk-in booking with automatic same-day handling
    */
   static async createWalkInBooking(
-    data: Omit<CreateBookingInput, 'bookingType'>
+    data: Omit<CreateBookingInput, 'bookingType'>,
+    context?: EstablishmentServiceContext
   ): Promise<BookingResponse> {
     // Ensure booking type is walk-in
     const walkInData: CreateBookingInput = {
@@ -1128,7 +1268,7 @@ export class BookingService {
       throw new Error('Check-out time must be after check-in time');
     }
 
-    return this.create(walkInData);
+    return this.create(walkInData, context);
   }
 }
 

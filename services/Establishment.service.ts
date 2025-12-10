@@ -11,6 +11,8 @@ import type {
   EstablishmentFilterOptions,
 } from '@/types/establishment.types';
 import { toObjectId } from '@/lib/db/utils';
+import { EstablishmentServiceContext } from '@/lib/services/establishment-context';
+import { EstablishmentAccessDeniedError } from '@/lib/errors/establishment-errors';
 
 /**
  * Establishment Service
@@ -20,7 +22,10 @@ export class EstablishmentService {
   /**
    * Create a new establishment
    */
-  static async create(data: CreateEstablishmentInput): Promise<EstablishmentResponse> {
+  static async create(
+    data: CreateEstablishmentInput,
+    context?: EstablishmentServiceContext
+  ): Promise<EstablishmentResponse> {
     await connectDB();
 
     // Verify manager exists and has correct role
@@ -73,7 +78,10 @@ export class EstablishmentService {
   /**
    * Get establishment by ID
    */
-  static async getById(id: string): Promise<EstablishmentResponse | null> {
+  static async getById(
+    id: string,
+    context?: EstablishmentServiceContext
+  ): Promise<EstablishmentResponse | null> {
     await connectDB();
 
     const establishment = await EstablishmentModel.findById(id)
@@ -84,21 +92,41 @@ export class EstablishmentService {
       return null;
     }
 
+    // For non-admin users, validate access
+    if (context && !context.canAccessAll()) {
+      // For establishments, check if the user's establishmentId matches the establishment's _id
+      const userEstablishmentId = context.getEstablishmentId();
+      if (userEstablishmentId !== establishment._id.toString()) {
+        throw new EstablishmentAccessDeniedError({
+          userId: context.getUserId(),
+          resourceType: 'establishment',
+          resourceId: id,
+          userEstablishmentId: context.getEstablishmentId(),
+          resourceEstablishmentId: establishment._id.toString(),
+        });
+      }
+    }
+
     return establishment.toJSON() as unknown as EstablishmentResponse;
   }
 
   /**
    * Get all establishments with filters and pagination
+   * 
+   * Special handling for establishments:
+   * - Admins can see all establishments (no automatic filtering)
+   * - Managers/staff can only see their own establishment
    */
   static async getAll(
     filters: EstablishmentFilterOptions = {},
     page: number = 1,
-    limit: number = 10
+    limit: number = 10,
+    context?: EstablishmentServiceContext
   ): Promise<PaginationResult<EstablishmentResponse>> {
     await connectDB();
 
     // Build query
-    const query: any = {};
+    let query: any = {};
 
     if (filters.city) {
       query['location.city'] = new RegExp(filters.city, 'i');
@@ -120,6 +148,13 @@ export class EstablishmentService {
       query.$text = { $search: filters.search };
     }
 
+    // Apply establishment filtering based on user role
+    // For managers/staff: only show their establishment
+    // For admins: show all (unless they explicitly filter)
+    if (context && !context.canAccessAll()) {
+      query = context.applyFilter(query);
+    }
+
     // Execute query with pagination
     const result = await paginate(EstablishmentModel.find(query), {
       page,
@@ -139,7 +174,8 @@ export class EstablishmentService {
    */
   static async getAllOptimized(
     filters: EstablishmentFilterOptions = {},
-    useCache: boolean = true
+    useCache: boolean = true,
+    context?: EstablishmentServiceContext
   ): Promise<EstablishmentResponse[]> {
     await connectDB();
 
@@ -149,6 +185,12 @@ export class EstablishmentService {
 
     // Apply basic filters client-side for now
     let filtered = establishments;
+
+    // Apply establishment filtering for non-admin users
+    if (context && !context.canAccessAll()) {
+      const userEstablishmentId = context.getEstablishmentId();
+      filtered = filtered.filter(est => est._id?.toString() === userEstablishmentId);
+    }
 
     if (filters.city) {
       filtered = filtered.filter(est =>
@@ -185,7 +227,8 @@ export class EstablishmentService {
    */
   static async update(
     id: string,
-    data: UpdateEstablishmentInput
+    data: UpdateEstablishmentInput,
+    context?: EstablishmentServiceContext
   ): Promise<EstablishmentResponse | null> {
     await connectDB();
 
@@ -193,6 +236,21 @@ export class EstablishmentService {
 
     if (!establishment) {
       return null;
+    }
+
+    // For non-admin users, validate access
+    if (context && !context.canAccessAll()) {
+      // For establishments, check if the user's establishmentId matches the establishment's _id
+      const userEstablishmentId = context.getEstablishmentId();
+      if (userEstablishmentId !== establishment._id.toString()) {
+        throw new EstablishmentAccessDeniedError({
+          userId: context.getUserId(),
+          resourceType: 'establishment',
+          resourceId: id,
+          userEstablishmentId: context.getEstablishmentId(),
+          resourceEstablishmentId: establishment._id.toString(),
+        });
+      }
     }
 
     // If manager is being changed, verify new manager
@@ -251,13 +309,29 @@ export class EstablishmentService {
   /**
    * Delete establishment
    */
-  static async delete(id: string): Promise<boolean> {
+  static async delete(id: string, context?: EstablishmentServiceContext): Promise<boolean> {
     await connectDB();
 
     const establishment = await EstablishmentModel.findById(id);
 
     if (!establishment) {
       return false;
+    }
+
+    // For non-admin users, validate access
+    if (context && !context.canAccessAll()) {
+      // For establishments, we need to check if the user's establishmentId matches the establishment's _id
+      const resourceForValidation = { establishmentId: establishment._id.toString() };
+      const hasAccess = await context.validateAccess(resourceForValidation, 'establishment');
+      if (!hasAccess) {
+        throw new EstablishmentAccessDeniedError({
+          userId: context.getUserId(),
+          resourceType: 'establishment',
+          resourceId: id,
+          userEstablishmentId: context.getEstablishmentId(),
+          resourceEstablishmentId: establishment._id.toString(),
+        });
+      }
     }
 
     // Remove establishment from manager and staff
@@ -279,13 +353,22 @@ export class EstablishmentService {
   static async getByCity(
     city: string,
     page: number = 1,
-    limit: number = 20
+    limit: number = 20,
+    context?: EstablishmentServiceContext
   ): Promise<PaginationResult<EstablishmentResponse>> {
     await connectDB();
 
+    // Build query with city filter
+    let query: any = { 'location.city': new RegExp(city, 'i') };
+
+    // Apply establishment filtering for non-admin users
+    if (context && !context.canAccessAll()) {
+      query = context.applyFilter(query);
+    }
+
     // Execute query with pagination
     const result = await paginate(
-      EstablishmentModel.find({ 'location.city': new RegExp(city, 'i') })
+      EstablishmentModel.find(query)
         .hint({ 'location.city': 1 })
         .select('name location contacts pricingMode isActive createdAt'),
       {
@@ -307,13 +390,22 @@ export class EstablishmentService {
   static async getByManager(
     managerId: string,
     page: number = 1,
-    limit: number = 20
+    limit: number = 20,
+    context?: EstablishmentServiceContext
   ): Promise<PaginationResult<EstablishmentResponse>> {
     await connectDB();
 
+    // Build query with manager filter
+    let query: any = { managerId: toObjectId(managerId) };
+
+    // Apply establishment filtering for non-admin users
+    if (context && !context.canAccessAll()) {
+      query = context.applyFilter(query);
+    }
+
     // Execute query with pagination
     const result = await paginate(
-      EstablishmentModel.find({ managerId: toObjectId(managerId) })
+      EstablishmentModel.find(query)
         .hint({ managerId: 1 })
         .select('name location contacts pricingMode isActive createdAt'),
       {
@@ -348,12 +440,32 @@ export class EstablishmentService {
   /**
    * Add staff member to establishment
    */
-  static async addStaff(establishmentId: string, staffId: string): Promise<void> {
+  static async addStaff(
+    establishmentId: string,
+    staffId: string,
+    context?: EstablishmentServiceContext
+  ): Promise<void> {
     await connectDB();
 
     const establishment = await EstablishmentModel.findById(establishmentId);
     if (!establishment) {
       throw new Error('Establishment not found');
+    }
+
+    // For non-admin users, validate access
+    if (context && !context.canAccessAll()) {
+      // For establishments, we need to check if the user's establishmentId matches the establishment's _id
+      const resourceForValidation = { establishmentId: establishment._id.toString() };
+      const hasAccess = await context.validateAccess(resourceForValidation, 'establishment');
+      if (!hasAccess) {
+        throw new EstablishmentAccessDeniedError({
+          userId: context.getUserId(),
+          resourceType: 'establishment',
+          resourceId: establishmentId,
+          userEstablishmentId: context.getEstablishmentId(),
+          resourceEstablishmentId: establishment._id.toString(),
+        });
+      }
     }
 
     const staff = await UserModel.findById(staffId);
@@ -379,12 +491,32 @@ export class EstablishmentService {
   /**
    * Remove staff member from establishment
    */
-  static async removeStaff(establishmentId: string, staffId: string): Promise<void> {
+  static async removeStaff(
+    establishmentId: string,
+    staffId: string,
+    context?: EstablishmentServiceContext
+  ): Promise<void> {
     await connectDB();
 
     const establishment = await EstablishmentModel.findById(establishmentId);
     if (!establishment) {
       throw new Error('Establishment not found');
+    }
+
+    // For non-admin users, validate access
+    if (context && !context.canAccessAll()) {
+      // For establishments, we need to check if the user's establishmentId matches the establishment's _id
+      const resourceForValidation = { establishmentId: establishment._id.toString() };
+      const hasAccess = await context.validateAccess(resourceForValidation, 'establishment');
+      if (!hasAccess) {
+        throw new EstablishmentAccessDeniedError({
+          userId: context.getUserId(),
+          resourceType: 'establishment',
+          resourceId: establishmentId,
+          userEstablishmentId: context.getEstablishmentId(),
+          resourceEstablishmentId: establishment._id.toString(),
+        });
+      }
     }
 
     // Remove staff from establishment
@@ -400,13 +532,32 @@ export class EstablishmentService {
   /**
    * Toggle establishment active status
    */
-  static async toggleActive(id: string): Promise<EstablishmentResponse | null> {
+  static async toggleActive(
+    id: string,
+    context?: EstablishmentServiceContext
+  ): Promise<EstablishmentResponse | null> {
     await connectDB();
 
     const establishment = await EstablishmentModel.findById(id);
 
     if (!establishment) {
       return null;
+    }
+
+    // For non-admin users, validate access
+    if (context && !context.canAccessAll()) {
+      // For establishments, we need to check if the user's establishmentId matches the establishment's _id
+      const resourceForValidation = { establishmentId: establishment._id.toString() };
+      const hasAccess = await context.validateAccess(resourceForValidation, 'establishment');
+      if (!hasAccess) {
+        throw new EstablishmentAccessDeniedError({
+          userId: context.getUserId(),
+          resourceType: 'establishment',
+          resourceId: id,
+          userEstablishmentId: context.getEstablishmentId(),
+          resourceEstablishmentId: establishment._id.toString(),
+        });
+      }
     }
 
     establishment.isActive = !establishment.isActive;

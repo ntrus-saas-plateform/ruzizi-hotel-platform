@@ -1,7 +1,9 @@
 import { PipelineStage } from 'mongoose';
-import User, { IUser } from '@/models/User.model';
+import User from '@/models/User.model';
 import connectDB from '@/lib/db/mongodb';
 import crypto from 'crypto';
+import { EstablishmentServiceContext } from '@/lib/services/establishment-context';
+import { EstablishmentAccessDeniedError } from '@/lib/errors/establishment-errors';
 
 interface CreateUserInput {
   name: string;
@@ -21,7 +23,7 @@ interface UpdateUserInput {
 
 class UserService {
   // Créer un utilisateur
-  async create(data: CreateUserInput) {
+  static async create(data: CreateUserInput, context?: EstablishmentServiceContext) {
     try {
       await connectDB();
 
@@ -31,7 +33,14 @@ class UserService {
         throw new Error('Cet email est déjà utilisé');
       }
 
-      const user = await User.create(data);
+      // For non-admin users, enforce establishment assignment
+      let finalData = { ...data };
+      if (context && !context.canAccessAll()) {
+        // Non-admin users can only create users in their establishment
+        finalData.establishmentId = context.getEstablishmentId();
+      }
+
+      const user = await User.create(finalData);
 
       // Retourner sans le mot de passe
       const userObject = user.toObject();
@@ -45,14 +54,14 @@ class UserService {
   }
 
   // Récupérer tous les utilisateurs avec pagination
-  async getAll(filters: {
+  static async getAll(filters: {
     role?: string;
     establishmentId?: string;
     isActive?: boolean;
     search?: string;
     page?: number;
     limit?: number;
-  } = {}) {
+  } = {}, context?: EstablishmentServiceContext) {
     try {
       await connectDB();
 
@@ -60,7 +69,7 @@ class UserService {
       const limit = Math.max(1, Math.min(100, filters.limit || 20));
       const skip = (page - 1) * limit;
 
-      const query: any = {};
+      let query: any = {};
 
       if (filters.role) query.role = filters.role;
       if (filters.establishmentId) query.establishmentId = filters.establishmentId;
@@ -71,6 +80,11 @@ class UserService {
           { name: { $regex: filters.search, $options: 'i' } },
           { email: { $regex: filters.search, $options: 'i' } },
         ];
+      }
+
+      // Apply establishment filtering for non-admin users
+      if (context) {
+        query = context.applyFilter(query);
       }
 
       // Get total count for pagination
@@ -102,7 +116,7 @@ class UserService {
   }
 
   // Récupérer un utilisateur par ID
-  async getById(id: string) {
+  static async getById(id: string, context?: EstablishmentServiceContext) {
     try {
       await connectDB();
 
@@ -114,6 +128,20 @@ class UserService {
         throw new Error('Utilisateur non trouvé');
       }
 
+      // Validate access for non-admin users
+      if (context && !context.canAccessAll()) {
+        const hasAccess = await context.validateAccess(user, 'user');
+        if (!hasAccess) {
+          throw new EstablishmentAccessDeniedError({
+            userId: context.getUserId(),
+            resourceType: 'user',
+            resourceId: id,
+            userEstablishmentId: context.getEstablishmentId(),
+            resourceEstablishmentId: user.establishmentId?.toString() || '',
+          });
+        }
+      }
+
       return user;
     } catch (error) {
       console.error('Erreur lors de la récupération de l\'utilisateur:', error);
@@ -122,7 +150,8 @@ class UserService {
   }
 
   // Récupérer un utilisateur par email
-  async getByEmail(email: string) {
+  // Note: This method is typically used for authentication, so it doesn't apply establishment filtering
+  static async getByEmail(email: string) {
     try {
       await connectDB();
 
@@ -138,17 +167,48 @@ class UserService {
   }
 
   // Mettre à jour un utilisateur
-  async update(id: string, data: UpdateUserInput) {
+  static async update(id: string, data: UpdateUserInput, context?: EstablishmentServiceContext) {
     try {
       await connectDB();
 
+      // First, get the user to validate access
+      const existingUser = await User.findById(id);
+      if (!existingUser) {
+        throw new Error('Utilisateur non trouvé');
+      }
+
+      // Validate access for non-admin users
+      if (context && !context.canAccessAll()) {
+        const hasAccess = await context.validateAccess(existingUser, 'user');
+        if (!hasAccess) {
+          throw new EstablishmentAccessDeniedError({
+            userId: context.getUserId(),
+            resourceType: 'user',
+            resourceId: id,
+            userEstablishmentId: context.getEstablishmentId(),
+            resourceEstablishmentId: existingUser.establishmentId?.toString() || '',
+          });
+        }
+
+        // Non-admin users cannot change establishmentId
+        if (data.establishmentId && data.establishmentId !== context.getEstablishmentId()) {
+          throw new EstablishmentAccessDeniedError({
+            userId: context.getUserId(),
+            resourceType: 'user',
+            resourceId: id,
+            userEstablishmentId: context.getEstablishmentId(),
+            resourceEstablishmentId: data.establishmentId,
+          });
+        }
+      }
+
       // Si l'email est modifié, vérifier qu'il n'existe pas déjà
       if (data.email) {
-        const existingUser = await User.findOne({
+        const existingUserWithEmail = await User.findOne({
           email: data.email,
           _id: { $ne: id },
         });
-        if (existingUser) {
+        if (existingUserWithEmail) {
           throw new Error('Cet email est déjà utilisé');
         }
       }
@@ -173,13 +233,27 @@ class UserService {
   }
 
   // Changer le mot de passe
-  async changePassword(id: string, newPassword: string) {
+  static async changePassword(id: string, newPassword: string, context?: EstablishmentServiceContext) {
     try {
       await connectDB();
 
       const user = await User.findById(id);
       if (!user) {
         throw new Error('Utilisateur non trouvé');
+      }
+
+      // Validate access for non-admin users
+      if (context && !context.canAccessAll()) {
+        const hasAccess = await context.validateAccess(user, 'user');
+        if (!hasAccess) {
+          throw new EstablishmentAccessDeniedError({
+            userId: context.getUserId(),
+            resourceType: 'user',
+            resourceId: id,
+            userEstablishmentId: context.getEstablishmentId(),
+            resourceEstablishmentId: user.establishmentId?.toString() || '',
+          });
+        }
       }
 
       user.password = newPassword;
@@ -193,9 +267,29 @@ class UserService {
   }
 
   // Désactiver un utilisateur
-  async deactivate(id: string) {
+  static async deactivate(id: string, context?: EstablishmentServiceContext) {
     try {
       await connectDB();
+
+      // First, get the user to validate access
+      const existingUser = await User.findById(id);
+      if (!existingUser) {
+        throw new Error('Utilisateur non trouvé');
+      }
+
+      // Validate access for non-admin users
+      if (context && !context.canAccessAll()) {
+        const hasAccess = await context.validateAccess(existingUser, 'user');
+        if (!hasAccess) {
+          throw new EstablishmentAccessDeniedError({
+            userId: context.getUserId(),
+            resourceType: 'user',
+            resourceId: id,
+            userEstablishmentId: context.getEstablishmentId(),
+            resourceEstablishmentId: existingUser.establishmentId?.toString() || '',
+          });
+        }
+      }
 
       const user = await User.findByIdAndUpdate(
         id,
@@ -215,9 +309,29 @@ class UserService {
   }
 
   // Activer un utilisateur
-  async activate(id: string) {
+  static async activate(id: string, context?: EstablishmentServiceContext) {
     try {
       await connectDB();
+
+      // First, get the user to validate access
+      const existingUser = await User.findById(id);
+      if (!existingUser) {
+        throw new Error('Utilisateur non trouvé');
+      }
+
+      // Validate access for non-admin users
+      if (context && !context.canAccessAll()) {
+        const hasAccess = await context.validateAccess(existingUser, 'user');
+        if (!hasAccess) {
+          throw new EstablishmentAccessDeniedError({
+            userId: context.getUserId(),
+            resourceType: 'user',
+            resourceId: id,
+            userEstablishmentId: context.getEstablishmentId(),
+            resourceEstablishmentId: existingUser.establishmentId?.toString() || '',
+          });
+        }
+      }
 
       const user = await User.findByIdAndUpdate(
         id,
@@ -237,9 +351,29 @@ class UserService {
   }
 
   // Supprimer un utilisateur
-  async delete(id: string) {
+  static async delete(id: string, context?: EstablishmentServiceContext) {
     try {
       await connectDB();
+
+      // First, get the user to validate access
+      const existingUser = await User.findById(id);
+      if (!existingUser) {
+        throw new Error('Utilisateur non trouvé');
+      }
+
+      // Validate access for non-admin users
+      if (context && !context.canAccessAll()) {
+        const hasAccess = await context.validateAccess(existingUser, 'user');
+        if (!hasAccess) {
+          throw new EstablishmentAccessDeniedError({
+            userId: context.getUserId(),
+            resourceType: 'user',
+            resourceId: id,
+            userEstablishmentId: context.getEstablishmentId(),
+            resourceEstablishmentId: existingUser.establishmentId?.toString() || '',
+          });
+        }
+      }
 
       const user = await User.findByIdAndDelete(id);
 
@@ -255,7 +389,8 @@ class UserService {
   }
 
   // Enregistrer une connexion
-  async recordLogin(id: string, ipAddress: string, userAgent: string) {
+  // Note: This method doesn't require establishment context as it's used during authentication
+  static async recordLogin(id: string, ipAddress: string, userAgent: string) {
     try {
       await connectDB();
 
@@ -275,7 +410,8 @@ class UserService {
   }
 
   // Générer un token de réinitialisation de mot de passe
-  async generatePasswordResetToken(email: string) {
+  // Note: This method doesn't require establishment context as it's used for password reset
+  static async generatePasswordResetToken(email: string) {
     try {
       await connectDB();
 
@@ -307,7 +443,8 @@ class UserService {
   }
 
   // Réinitialiser le mot de passe avec le token
-  async resetPassword(token: string, newPassword: string) {
+  // Note: This method doesn't require establishment context as it's used for password reset
+  static async resetPassword(token: string, newPassword: string) {
     try {
       await connectDB();
 
@@ -341,24 +478,42 @@ class UserService {
   }
 
   // Obtenir les statistiques des utilisateurs
-  async getStats() {
+  static async getStats(context?: EstablishmentServiceContext) {
     try {
       await connectDB();
 
-      const stats = await User.aggregate([
-        {
-          $group: {
-            _id: '$role',
-            count: { $sum: 1 },
-            active: {
-              $sum: { $cond: ['$isActive', 1, 0] },
-            },
+      // Build match stage for establishment filtering
+      const matchStage: any = {};
+      if (context && !context.canAccessAll()) {
+        matchStage.establishmentId = context.getEstablishmentId();
+      }
+
+      const pipeline: PipelineStage[] = [];
+      
+      // Add match stage if filtering is needed
+      if (Object.keys(matchStage).length > 0) {
+        pipeline.push({ $match: matchStage } as PipelineStage);
+      }
+
+      pipeline.push({
+        $group: {
+          _id: '$role',
+          count: { $sum: 1 },
+          active: {
+            $sum: { $cond: ['$isActive', 1, 0] },
           },
         },
-      ] as PipelineStage[]);
+      } as PipelineStage);
 
-      const total = await User.countDocuments();
-      const active = await User.countDocuments({ isActive: true });
+      const stats = await User.aggregate(pipeline);
+
+      // Apply filtering to count queries as well
+      const countQuery = context && !context.canAccessAll() 
+        ? { establishmentId: context.getEstablishmentId() }
+        : {};
+
+      const total = await User.countDocuments(countQuery);
+      const active = await User.countDocuments({ ...countQuery, isActive: true });
 
       return {
         total,
@@ -373,4 +528,5 @@ class UserService {
   }
 }
 
-export default new UserService();
+// Export as class-based service (no instance)
+export default UserService;

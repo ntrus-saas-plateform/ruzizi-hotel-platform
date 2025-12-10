@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { EmployeeService } from '@/services/Employee.service';
-import { requireAuth, createErrorResponse, createSuccessResponse } from '@/lib/auth/middleware';
+import { createErrorResponse, createSuccessResponse } from '@/lib/auth/middleware';
+import { withEstablishmentIsolation } from '@/lib/auth/establishment-isolation.middleware';
+import { EstablishmentAccessDeniedError, EstablishmentNotFoundError } from '@/lib/errors/establishment-errors';
 import { z } from 'zod';
 
 const CreateEmployeeSchema = z.object({
@@ -29,7 +31,7 @@ const CreateEmployeeSchema = z.object({
 });
 
 export async function GET(request: NextRequest) {
-  return requireAuth(async (req, user) => {
+  return withEstablishmentIsolation(async (req, context) => {
     try {
       const { searchParams } = new URL(req.url);
 
@@ -40,35 +42,89 @@ export async function GET(request: NextRequest) {
         search: searchParams.get('search') || undefined,
       };
 
-      if ((user as any).role === 'manager' && (user as any).establishmentId) {
-        filters.establishmentId = (user as any).establishmentId;
+      // For admins, allow optional establishment filtering via query param
+      const requestedEstablishmentId = searchParams.get('establishmentId') ?? undefined;
+      if (requestedEstablishmentId && !context.serviceContext.canAccessAll()) {
+        // Non-admin users cannot request a different establishment
+        if (requestedEstablishmentId !== context.establishmentId) {
+          return createErrorResponse('ESTABLISHMENT_ACCESS_DENIED', 'Access to this establishment denied', 403);
+        }
       }
 
       const page = parseInt(searchParams.get('page') || '1');
       const limit = parseInt(searchParams.get('limit') || '10');
 
-      const result = await EmployeeService.getAll(filters, page, limit);
+      // Get employees with establishment context
+      // The service context will automatically filter by establishment for non-admins
+      const result = await EmployeeService.getAll(
+        {
+          establishmentId: requestedEstablishmentId,
+          status: filters.status,
+          department: filters.department,
+          search: filters.search,
+        },
+        page,
+        limit,
+        context.serviceContext
+      );
 
       return createSuccessResponse(result);
-    } catch (error) {
-      if (error instanceof Error) {
-        return createErrorResponse('SERVER_ERROR', error.message, 500);
+    } catch (error: any) {
+      console.error('Error fetching employees:', error);
+      
+      if (error instanceof EstablishmentAccessDeniedError) {
+        return createErrorResponse('ESTABLISHMENT_ACCESS_DENIED', error.message, 403);
       }
-      return createErrorResponse('SERVER_ERROR', 'An unexpected error occurred', 500);
+
+      return createErrorResponse('SERVER_ERROR', error.message || 'An unexpected error occurred', 500);
     }
   })(request);
 }
 
 export async function POST(request: NextRequest) {
-  return requireAuth(async (req) => {
+  return withEstablishmentIsolation(async (req, context) => {
     try {
       const body = await req.json();
       const validatedData = CreateEmployeeSchema.parse(body);
 
-      const employee = await EmployeeService.create(validatedData);
+      // For non-admin users, enforce their establishment
+      // For admin users, require an establishmentId to be specified
+      let establishmentId: string;
+      
+      if (context.serviceContext.canAccessAll()) {
+        // Admins must specify an establishment
+        if (!validatedData.employmentInfo.establishmentId) {
+          return createErrorResponse('VALIDATION_ERROR', 'Establishment ID is required', 400);
+        }
+        establishmentId = validatedData.employmentInfo.establishmentId;
+      } else {
+        // Non-admins: automatically use their establishment, ignore any provided value
+        establishmentId = context.establishmentId!;
+      }
+
+      const employeeData = {
+        ...validatedData,
+        employmentInfo: {
+          ...validatedData.employmentInfo,
+          establishmentId,
+        },
+      };
+
+      // Create employee via service with establishment context
+      const employee = await EmployeeService.create(employeeData, context.serviceContext);
 
       return createSuccessResponse(employee, 'Employee created successfully', 201);
-    } catch (error) {
+    } catch (error: any) {
+      console.error('Error creating employee:', error);
+      
+      if (error instanceof EstablishmentAccessDeniedError) {
+        return createErrorResponse('ESTABLISHMENT_ACCESS_DENIED', error.message, 403);
+      }
+      
+      if (error instanceof EstablishmentNotFoundError) {
+        return createErrorResponse('ESTABLISHMENT_NOT_FOUND', error.message, 404);
+      }
+
       if (error instanceof z.ZodError) {
         return NextResponse.json(
           {
@@ -83,11 +139,7 @@ export async function POST(request: NextRequest) {
         );
       }
 
-      if (error instanceof Error) {
-        return createErrorResponse('SERVER_ERROR', error.message, 500);
-      }
-
-      return createErrorResponse('SERVER_ERROR', 'An unexpected error occurred', 500);
+      return createErrorResponse('SERVER_ERROR', error.message || 'An unexpected error occurred', 500);
     }
   })(request);
 }

@@ -4,16 +4,15 @@ import Booking from '@/models/Booking.model';
 import BookingService from '@/services/Booking.service';
 import { CreateBookingSchema, BookingFilterSchema } from '@/lib/validations/booking.validation';
 import {
-    requireAuth,
-    applyEstablishmentFilter,
-    canAccessEstablishment,
     createErrorResponse,
     createSuccessResponse,
     createValidationErrorResponse
 } from '@/lib/auth/middleware';
+import { withEstablishmentIsolation, validateResourceAccess } from '@/lib/auth/establishment-isolation.middleware';
+import { EstablishmentAccessDeniedError, CrossEstablishmentRelationshipError } from '@/lib/errors/establishment-errors';
 
 export async function GET(request: NextRequest) {
-    return requireAuth(async (req, user) => {
+    return withEstablishmentIsolation(async (req, context) => {
         try {
             await connectDB();
 
@@ -37,18 +36,20 @@ export async function GET(request: NextRequest) {
 
             const filters = validationResult.data;
 
-            // Si un établissement spécifique est demandé, vérifier l'accès
-            const requestedEstablishmentId = searchParams.get('establishmentId');
-            if (requestedEstablishmentId) {
-                if (!canAccessEstablishment(user, requestedEstablishmentId)) {
-                    return createErrorResponse('FORBIDDEN', 'Accès à cet établissement refusé', 403);
+            // For admins, allow optional establishment filtering via query param
+            const requestedEstablishmentId = searchParams.get('establishmentId') ?? undefined;
+            if (requestedEstablishmentId && !context.serviceContext.canAccessAll()) {
+                // Non-admin users cannot request a different establishment
+                if (requestedEstablishmentId !== context.establishmentId) {
+                    return createErrorResponse('ESTABLISHMENT_ACCESS_DENIED', 'Accès à cet établissement refusé', 403);
                 }
             }
 
             // Récupérer les réservations avec pagination optimisée
+            // The service context will automatically filter by establishment for non-admins
             const result = await BookingService.getAll(
                 {
-                    establishmentId: requestedEstablishmentId || user.establishmentId,
+                    establishmentId: requestedEstablishmentId,
                     status: filters.status,
                     paymentStatus: filters.paymentStatus,
                     bookingType: filters.bookingType,
@@ -57,7 +58,8 @@ export async function GET(request: NextRequest) {
                     search: filters.search,
                 },
                 filters.page,
-                filters.limit
+                filters.limit,
+                context.serviceContext
             );
 
             return createSuccessResponse({
@@ -66,13 +68,18 @@ export async function GET(request: NextRequest) {
             });
         } catch (error: any) {
             console.error('Error fetching bookings:', error);
+            
+            if (error instanceof EstablishmentAccessDeniedError) {
+                return createErrorResponse('ESTABLISHMENT_ACCESS_DENIED', error.message, 403);
+            }
+            
             return createErrorResponse('DATABASE_ERROR', error.message || 'Erreur lors de la récupération des réservations', 500);
         }
     })(request);
 }
 
 export async function POST(request: NextRequest) {
-    return requireAuth(async (req, user) => {
+    return withEstablishmentIsolation(async (req, context) => {
         try {
             await connectDB();
 
@@ -86,28 +93,43 @@ export async function POST(request: NextRequest) {
 
             const validatedData = validationResult.data;
 
-            // Vérifier que l'établissement de la réservation correspond à celui de l'utilisateur
-            if (validatedData.establishmentId && !canAccessEstablishment(user, validatedData.establishmentId)) {
-                return createErrorResponse('FORBIDDEN', 'Vous ne pouvez créer des réservations que pour votre établissement', 403);
-            }
-
-            // Si pas d'établissement spécifié, utiliser celui de l'utilisateur
-            if (!validatedData.establishmentId && !user.establishmentId) {
-                return createErrorResponse('VALIDATION_ERROR', 'Establishment ID is required', 400);
+            // For non-admin users, enforce their establishment
+            // For admin users, require an establishmentId to be specified
+            let establishmentId: string;
+            
+            if (context.serviceContext.canAccessAll()) {
+                // Admins must specify an establishment
+                if (!validatedData.establishmentId) {
+                    return createErrorResponse('VALIDATION_ERROR', 'Establishment ID is required', 400);
+                }
+                establishmentId = validatedData.establishmentId;
+            } else {
+                // Non-admins: automatically use their establishment, ignore any provided value
+                establishmentId = context.establishmentId!;
             }
 
             const bookingData = {
                 ...validatedData,
-                establishmentId: validatedData.establishmentId || user.establishmentId!,
-                createdBy: user.userId,
+                establishmentId,
+                createdBy: context.userId,
             };
 
             // Créer la réservation via le service
-            const booking = await BookingService.create(bookingData);
+            // The service will validate relationships (e.g., accommodation belongs to same establishment)
+            const booking = await BookingService.create(bookingData, context.serviceContext);
 
             return createSuccessResponse(booking, 'Réservation créée avec succès', 201);
         } catch (error: any) {
             console.error('Error creating booking:', error);
+            
+            if (error instanceof EstablishmentAccessDeniedError) {
+                return createErrorResponse('ESTABLISHMENT_ACCESS_DENIED', error.message, 403);
+            }
+            
+            if (error instanceof CrossEstablishmentRelationshipError) {
+                return createErrorResponse('CROSS_ESTABLISHMENT_RELATIONSHIP', error.message, 400);
+            }
+            
             return createErrorResponse('DATABASE_ERROR', error.message || 'Erreur lors de la création de la réservation', 500);
         }
     })(request);
