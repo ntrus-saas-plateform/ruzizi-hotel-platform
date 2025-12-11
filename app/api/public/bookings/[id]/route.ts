@@ -12,6 +12,34 @@ export async function GET(
   try {
     await connectDB();
 
+    // Validation de l'ID
+    if (!resolvedParams.id || resolvedParams.id === 'undefined' || resolvedParams.id.length !== 24) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: {
+            code: 'INVALID_ID',
+            message: 'ID de réservation invalide',
+          },
+        },
+        { status: 400 }
+      );
+    }
+
+    // Vérification que l'ID est un ObjectId valide
+    if (!/^[0-9a-fA-F]{24}$/.test(resolvedParams.id)) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: {
+            code: 'INVALID_ID',
+            message: 'Format d\'ID invalide',
+          },
+        },
+        { status: 400 }
+      );
+    }
+
     const booking = await BookingModel.findById(resolvedParams.id)
       .populate('accommodationId', 'name type capacity amenities images')
       .populate('establishmentId', 'name location contact')

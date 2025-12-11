@@ -18,6 +18,7 @@ const CreateEmployeeSchema = z.object({
     address: z.string().min(1),
   }),
   employmentInfo: z.object({
+    employeeNumber: z.string().optional(), // Optionnel car généré automatiquement
     position: z.string().min(1),
     department: z.string().min(1),
     establishmentId: z.string().min(1),

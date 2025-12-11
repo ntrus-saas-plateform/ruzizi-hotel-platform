@@ -23,7 +23,8 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    // Retourner les informations de l'utilisateur
+    // Retourner les informations de l'utilisateur depuis le JWT
+    // Pour l'instant, on utilise les données du token pour éviter les problèmes de DB
     return NextResponse.json({
       success: true,
       user: {
@@ -32,6 +33,13 @@ export async function GET(request: NextRequest) {
         email: payload.email,
         role: payload.role,
         establishmentId: payload.establishmentId,
+        firstName: 'Admin', // Valeur temporaire
+        lastName: 'User', // Valeur temporaire
+        permissions: [], // Sera déterminé par le rôle
+        isActive: true,
+        lastLogin: new Date(),
+        createdAt: new Date(),
+        updatedAt: new Date(),
       },
     });
   } catch (error) {

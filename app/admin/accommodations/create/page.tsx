@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { apiClient } from '@/lib/utils/api-client';
 import ImageUpload from '@/components/admin/ImageUpload';
 import EstablishmentSelector from '@/components/admin/EstablishmentSelector';
-import { useAuth } from '@/hooks/useAuth';
+import { useAuth } from '@/lib/auth/AuthContext';
 
 
 

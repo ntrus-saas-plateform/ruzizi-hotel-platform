@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import ImageUpload from '@/components/admin/ImageUpload';
 import EstablishmentSelector from '@/components/admin/EstablishmentSelector';
-import { useAuth } from '@/hooks/useAuth';
+import { useAuth } from '@/lib/auth/AuthContext';
 
 
 

@@ -101,9 +101,17 @@ export default function EstablishmentSelector({
     dedupingInterval: 300000,
   });
 
-  // Data from SWR
-  const establishments = establishmentsData?.data?.data || establishmentsData?.data || [];
-  const accommodations = accommodationsData?.data?.data || accommodationsData?.data || [];
+  // Data from SWR - Ensure we always get arrays
+  const establishments = Array.isArray(establishmentsData?.data?.data) 
+    ? establishmentsData.data.data 
+    : Array.isArray(establishmentsData?.data) 
+    ? establishmentsData.data 
+    : [];
+  const accommodations = Array.isArray(accommodationsData?.data?.data) 
+    ? accommodationsData.data.data 
+    : Array.isArray(accommodationsData?.data) 
+    ? accommodationsData.data 
+    : [];
   const loading = establishmentsLoading;
   const accommodationsLoading = accommodationsLoadingData;
 
@@ -369,7 +377,7 @@ export default function EstablishmentSelector({
               Impossible de charger les établissements. Veuillez réessayer.
             </p>
           </div>
-        ) : establishments.length === 0 ? (
+        ) : !Array.isArray(establishments) || establishments.length === 0 ? (
           <p className="text-luxury-text text-center py-4">{t.noEstablishments}</p>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">

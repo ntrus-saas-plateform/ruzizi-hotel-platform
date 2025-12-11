@@ -26,7 +26,7 @@ const customJestConfig = {
     '!**/.next/**',
   ],
   transformIgnorePatterns: [
-    'node_modules/(?!(bson|mongodb|mongoose|@mongodb-js)/)',
+    'node_modules/(?!(bson|mongodb|mongoose|@mongodb-js|uuid)/)',
   ],
   testEnvironmentOptions: {
     customExportConditions: ['node', 'node-addons'],

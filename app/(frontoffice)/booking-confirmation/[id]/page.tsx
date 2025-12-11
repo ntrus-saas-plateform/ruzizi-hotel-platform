@@ -2,9 +2,11 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import { use } from 'react';
 
-export default function BookingConfirmationPage({ params }: { params: { id: string } }) {
+export default function BookingConfirmationPage({ params }: { params: Promise<{ id: string }> }) {
   const router = useRouter();
+  const resolvedParams = use(params);
   const [booking, setBooking] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -19,11 +21,15 @@ export default function BookingConfirmationPage({ params }: { params: { id: stri
 
   useEffect(() => {
     fetchBooking();
-  }, [params.id]);
+  }, [resolvedParams.id]);
 
   const fetchBooking = async () => {
     try {
-      const response = await fetch(`/api/public/bookings/${params.id}`);
+      if (!resolvedParams.id || resolvedParams.id === 'undefined') {
+        throw new Error('ID de réservation invalide');
+      }
+
+      const response = await fetch(`/api/public/bookings/${resolvedParams.id}`);
       const data = await response.json();
 
       if (!response.ok) {

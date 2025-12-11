@@ -75,11 +75,16 @@ export default function PayrollPage() {
   };
 
   const handleGenerate = async () => {
+    console.log('🚀 Generate button clicked!');
+    console.log('📊 Current filters:', filters);
+    
     if (!filters.year || !filters.month) {
       alert('Veuillez sélectionner une année et un mois');
       return;
     }
+    
     try {
+      console.log('📤 Sending request to /api/payroll/generate');
       const response = await fetch('/api/payroll/generate', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -88,12 +93,21 @@ export default function PayrollPage() {
           month: parseInt(filters.month),
         }),
       });
+      
+      console.log('📥 Response status:', response.status);
+      const data = await response.json();
+      console.log('📋 Response data:', data);
+      
       if (response.ok) {
+        alert('Paie générée avec succès!');
         fetchPayrolls();
         fetchSummary();
+      } else {
+        alert('Erreur lors de la génération: ' + (data.error?.message || 'Erreur inconnue'));
       }
     } catch (err) {
-      console.error(err);
+      console.error('💥 Error in handleGenerate:', err);
+      alert('Erreur de connexion');
     }
   };
 

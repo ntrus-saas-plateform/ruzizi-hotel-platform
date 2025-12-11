@@ -9,6 +9,13 @@ interface ImageUploadProps {
   label?: string;
 }
 
+interface UploadProgress {
+  fileName: string;
+  progress: number;
+  status: 'uploading' | 'processing' | 'complete' | 'error';
+  error?: string;
+}
+
 export default function ImageUpload({ 
   images, 
   onImagesChange, 
@@ -17,6 +24,7 @@ export default function ImageUpload({
 }: ImageUploadProps) {
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState('');
+  const [uploadProgress, setUploadProgress] = useState<UploadProgress[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -31,94 +39,83 @@ export default function ImageUpload({
     setUploading(true);
     setError('');
 
+    // Initialize progress tracking
+    const initialProgress: UploadProgress[] = Array.from(files).map(file => ({
+      fileName: file.name,
+      progress: 0,
+      status: 'uploading'
+    }));
+    setUploadProgress(initialProgress);
+
     try {
-      const newImages: string[] = [];
+      // Create FormData for file upload
+      const formData = new FormData();
+      Array.from(files).forEach(file => {
+        formData.append('files', file);
+      });
 
-      for (let i = 0; i < files.length; i++) {
-        const file = files[i];
-        
-        // Vérifier le type de fichier
-        if (!file.type.startsWith('image/')) {
-          setError(`${file.name} n'est pas une image valide`);
-          continue;
-        }
+      // Update progress to show processing
+      setUploadProgress(prev => prev.map(p => ({ ...p, status: 'processing', progress: 50 })));
 
-        // Vérifier la taille (max 5MB)
-        if (file.size > 5 * 1024 * 1024) {
-          setError(`${file.name} est trop volumineux (max 5MB)`);
-          continue;
-        }
+      // Upload files to API
+      const response = await fetch('/api/images/upload', {
+        method: 'POST',
+        body: formData,
+      });
 
-        // Convertir en base64 pour le stockage temporaire
-        // En production, vous devriez uploader vers un service comme Cloudinary, AWS S3, etc.
-        const base64 = await fileToBase64(file);
-        newImages.push(base64);
+      const result = await response.json();
+
+      if (!response.ok) {
+        throw new Error(result.message || 'Upload failed');
       }
 
-      onImagesChange([...images, ...newImages]);
+      // Extract URLs from successful uploads
+      const newImageUrls: string[] = [];
+      if (result.data?.results) {
+        result.data.results.forEach((uploadResult: any) => {
+          if (uploadResult.url) {
+            newImageUrls.push(uploadResult.url);
+          }
+        });
+      }
+
+      // Update progress to complete
+      setUploadProgress(prev => prev.map(p => ({ ...p, status: 'complete', progress: 100 })));
+
+      // Add new image URLs to existing images
+      onImagesChange([...images, ...newImageUrls]);
+
+      // Show warnings if any
+      if (result.data?.warnings && result.data.warnings.length > 0) {
+        console.warn('Upload warnings:', result.data.warnings);
+      }
+
+      // Show errors for failed uploads
+      if (result.data?.errors && result.data.errors.length > 0) {
+        setError(`Some uploads failed: ${result.data.errors.join(', ')}`);
+      }
+
     } catch (err) {
-      setError('Erreur lors du chargement des images');
+      console.error('Upload error:', err);
+      setError(err instanceof Error ? err.message : 'Erreur lors du chargement des images');
+      
+      // Update progress to show error
+      setUploadProgress(prev => prev.map(p => ({ 
+        ...p, 
+        status: 'error', 
+        error: err instanceof Error ? err.message : 'Upload failed'
+      })));
     } finally {
       setUploading(false);
       if (fileInputRef.current) {
         fileInputRef.current.value = '';
       }
+      
+      // Clear progress after a delay
+      setTimeout(() => {
+        setUploadProgress([]);
+      }, 3000);
     }
-  };
-
-  const compressImage = (file: File): Promise<string> => {
-    return new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.readAsDataURL(file);
-      
-      reader.onload = (e) => {
-        const img = new Image();
-        img.src = e.target?.result as string;
-        
-        img.onload = () => {
-          // Create canvas for compression
-          const canvas = document.createElement('canvas');
-          const ctx = canvas.getContext('2d');
-          
-          if (!ctx) {
-            reject(new Error('Could not get canvas context'));
-            return;
-          }
-          
-          // Calculate new dimensions (max 1920x1080)
-          let width = img.width;
-          let height = img.height;
-          const maxWidth = 1920;
-          const maxHeight = 1080;
-          
-          if (width > maxWidth || height > maxHeight) {
-            const ratio = Math.min(maxWidth / width, maxHeight / height);
-            width = width * ratio;
-            height = height * ratio;
-          }
-          
-          canvas.width = width;
-          canvas.height = height;
-          
-          // Draw and compress
-          ctx.drawImage(img, 0, 0, width, height);
-          
-          // Convert to base64 with quality compression
-          const compressedBase64 = canvas.toDataURL('image/jpeg', 0.85);
-
-          resolve(compressedBase64);
-        };
-        
-        img.onerror = () => reject(new Error('Failed to load image'));
-      };
-      
-      reader.onerror = () => reject(new Error('Failed to read file'));
-    });
-  };
-
-  const fileToBase64 = (file: File): Promise<string> => {
-    // Use compression for better performance and smaller storage
-    return compressImage(file);
   };
 
   const removeImage = (index: number) => {
@@ -134,6 +131,22 @@ export default function ImageUpload({
     
     [newImages[index], newImages[newIndex]] = [newImages[newIndex], newImages[index]];
     onImagesChange(newImages);
+  };
+
+  // Check if an image URL is a base64 string (for backward compatibility)
+  const isBase64Image = (url: string): boolean => {
+    return url.startsWith('data:image/');
+  };
+
+  // Get the appropriate image source for display
+  const getImageSrc = (imageUrl: string): string => {
+    if (isBase64Image(imageUrl)) {
+      // Legacy base64 image - display as is
+      return imageUrl;
+    } else {
+      // New file system image - use the URL directly
+      return imageUrl;
+    }
   };
 
   return (
@@ -183,9 +196,42 @@ export default function ImageUpload({
           )}
         </button>
         <p className="text-xs text-gray-500 mt-2">
-          Formats acceptés: JPG, PNG, GIF. Taille max: 5MB par image.
+          Formats acceptés: JPG, PNG, GIF, WebP. Taille max: 10MB par image.
         </p>
       </div>
+
+      {/* Upload Progress */}
+      {uploadProgress.length > 0 && (
+        <div className="mb-4 space-y-2">
+          {uploadProgress.map((progress, index) => (
+            <div key={index} className="bg-gray-50 rounded-lg p-3">
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-sm font-medium text-gray-700 truncate">
+                  {progress.fileName}
+                </span>
+                <span className="text-xs text-gray-500">
+                  {progress.status === 'uploading' && 'Téléchargement...'}
+                  {progress.status === 'processing' && 'Traitement...'}
+                  {progress.status === 'complete' && 'Terminé'}
+                  {progress.status === 'error' && 'Erreur'}
+                </span>
+              </div>
+              <div className="w-full bg-gray-200 rounded-full h-2">
+                <div 
+                  className={`h-2 rounded-full transition-all duration-300 ${
+                    progress.status === 'error' ? 'bg-red-500' : 
+                    progress.status === 'complete' ? 'bg-green-500' : 'bg-blue-500'
+                  }`}
+                  style={{ width: `${progress.progress}%` }}
+                />
+              </div>
+              {progress.error && (
+                <p className="text-xs text-red-600 mt-1">{progress.error}</p>
+              )}
+            </div>
+          ))}
+        </div>
+      )}
 
       {/* Images Grid */}
       {images.length > 0 && (
@@ -194,9 +240,14 @@ export default function ImageUpload({
             <div key={index} className="relative group">
               <div className="aspect-square rounded-lg overflow-hidden border-2 border-gray-200 bg-gray-100">
                 <img
-                  src={image}
+                  src={getImageSrc(image)}
                   alt={`Image ${index + 1}`}
                   className="w-full h-full object-cover"
+                  onError={(e) => {
+                    // Fallback for broken images
+                    const target = e.target as HTMLImageElement;
+                    target.src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjQiIGhlaWdodD0iMjQiIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHBhdGggZD0iTTQgMTZMMTAuNTg2IDkuNDE0QzExLjM2NyA4LjYzMyAxMi42MzMgOC42MzMgMTMuNDE0IDkuNDE0TDE2IDEyTTE0IDEwTDE1LjU4NiA4LjQxNEMxNi4zNjcgNy42MzMgMTcuNjMzIDcuNjMzIDE4LjQxNCA4LjQxNEwyMCAxME0xOCA4SDZDNC44OTU0MyA4IDQgOC44OTU0MyA0IDEwVjE4QzQgMTkuMTA0NiA0Ljg5NTQzIDIwIDYgMjBIMThDMTkuMTA0NiAyMCAyMCAxOS4xMDQ2IDIwIDE4VjEwQzIwIDguODk1NDMgMTkuMTA0NiA4IDE4IDhaIiBzdHJva2U9IiM5Q0E0QUYiIHN0cm9rZS13aWR0aD0iMiIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIiBzdHJva2UtbGluZWpvaW49InJvdW5kIi8+Cjwvc3ZnPgo=';
+                  }}
                 />
               </div>
 

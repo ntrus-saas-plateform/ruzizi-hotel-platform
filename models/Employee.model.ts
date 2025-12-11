@@ -1,5 +1,5 @@
 import mongoose, { Schema, Document, Model } from 'mongoose';
-import { generateEmployeeNumber } from '@/lib/utils/employee-number';
+import { generateIncrementalEmployeeNumber } from '@/lib/utils/employee-number';
 
 export interface IEmployeePersonalInfo {
   firstName: string;
@@ -14,7 +14,7 @@ export interface IEmployeePersonalInfo {
 }
 
 export interface IEmployeeEmploymentInfo {
-  employeeNumber: string;
+  employeeNumber?: string; // Optionnel lors de la création, généré automatiquement
   position: string;
   department: string;
   establishmentId: mongoose.Types.ObjectId;
@@ -55,7 +55,7 @@ const EmployeePersonalInfoSchema = new Schema<IEmployeePersonalInfo>(
 
 const EmployeeEmploymentInfoSchema = new Schema<IEmployeeEmploymentInfo>(
   {
-    employeeNumber: { type: String, required: true, unique: true },
+    employeeNumber: { type: String, required: false, unique: true }, // Généré automatiquement
     position: { type: String, required: true },
     department: { type: String, required: true },
     establishmentId: { type: Schema.Types.ObjectId, ref: 'Establishment', required: true },
@@ -93,21 +93,36 @@ EmployeeSchema.index({ 'employmentInfo.status': 1 });
 EmployeeSchema.index({ 'personalInfo.email': 1 });
 
 EmployeeSchema.pre('save', async function (next) {
-  if (this.isNew && !this.employmentInfo.employeeNumber) {
-    let isUnique = false;
-    let employeeNumber = '';
+  // Always generate employee number if it's missing (for new documents)
+  if (!this.employmentInfo.employeeNumber) {
+    try {
+      const currentYear = new Date().getFullYear();
+      
+      // Function to find the last employee number for the given year
+      const findLastEmployeeNumber = async (year: number): Promise<string | null> => {
+        const lastEmployee = await mongoose.models.Employee
+          .findOne({
+            'employmentInfo.employeeNumber': new RegExp(`^EMP-${year}-\\d{4}$`)
+          })
+          .sort({ 'employmentInfo.employeeNumber': -1 })
+          .select('employmentInfo.employeeNumber')
+          .lean();
+        
+        return lastEmployee?.employmentInfo?.employeeNumber || null;
+      };
 
-    while (!isUnique) {
-      employeeNumber = generateEmployeeNumber();
-      const existing = await mongoose.models.Employee.findOne({
-        'employmentInfo.employeeNumber': employeeNumber,
-      });
-      if (!existing) {
-        isUnique = true;
-      }
+      // Generate incremental employee number
+      const employeeNumber = await generateIncrementalEmployeeNumber(
+        currentYear,
+        findLastEmployeeNumber
+      );
+      
+      console.log('🔢 Generated employee number:', employeeNumber);
+      this.employmentInfo.employeeNumber = employeeNumber;
+    } catch (error) {
+      console.error('Error generating employee number:', error);
+      return next(error as Error);
     }
-
-    this.employmentInfo.employeeNumber = employeeNumber;
   }
 
   next();

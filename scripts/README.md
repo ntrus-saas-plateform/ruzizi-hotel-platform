@@ -265,8 +265,67 @@ En cas de problème:
 - ✅ Envoi d'email (optionnel)
 - ✅ Documentation complète
 
+### 3. Migration d'Images
+
+```bash
+npm run migrate:images
+```
+
+Outil CLI complet pour migrer les images base64 vers le système de fichiers avec conversion WebP.
+
+**Caractéristiques:**
+- ✅ Migration complète base64 → WebP
+- ✅ Mode dry-run pour tester sans modifications
+- ✅ Rapports de progression détaillés
+- ✅ Traitement par lots configurable
+- ✅ Vérification de complétude
+- ✅ Statistiques de migration
+- ✅ Gestion d'erreurs robuste
+- ✅ Logging détaillé
+
+**Commandes rapides:**
+
+```bash
+# Voir les statistiques de migration
+npm run migrate:images:stats
+
+# Test sans modifications (dry-run)
+npm run migrate:images:dry-run
+
+# Vérifier la complétude de la migration
+npm run migrate:images:verify
+
+# Migration complète
+npm run migrate:images
+```
+
+**Options avancées:**
+
+```bash
+# Migration par type d'entité
+npx ts-node scripts/migrate-images.ts --entity-type establishment
+
+# Migration d'une entité spécifique
+npx ts-node scripts/migrate-images.ts --entity-id 507f1f77bcf86cd799439011
+
+# Traitement par petits lots
+npx ts-node scripts/migrate-images.ts --batch-size 5
+
+# Mode verbeux avec détails
+npx ts-node scripts/migrate-images.ts --verbose --dry-run
+```
+
+**Sécurité:**
+- Toujours tester avec `--dry-run` d'abord
+- Sauvegarder la base de données avant migration
+- Surveiller l'espace disque pendant la migration
+- Utiliser des tailles de lots plus petites pour de gros volumes
+
 ### Prochaines Versions
 - [ ] Interface web pour création d'utilisateurs
 - [ ] Authentification à deux facteurs
 - [ ] Rotation automatique des mots de passe
 - [ ] Audit trail des créations
+- [ ] Interface web pour migration d'images
+- [ ] Rollback automatique en cas d'erreur
+- [ ] Intégration CDN pour les images migrées

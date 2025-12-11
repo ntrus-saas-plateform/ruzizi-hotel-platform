@@ -23,16 +23,38 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [tokens, setTokens] = useState<AuthTokens | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  // Load user and tokens from localStorage on mount
+  // Load user and tokens from localStorage on mount and refresh from API
   useEffect(() => {
-    const loadAuth = () => {
+    const loadAuth = async () => {
       try {
         const storedTokens = localStorage.getItem(TOKEN_STORAGE_KEY);
         const storedUser = localStorage.getItem(USER_STORAGE_KEY);
 
         if (storedTokens && storedUser) {
-          setTokens(JSON.parse(storedTokens));
-          setUser(JSON.parse(storedUser));
+          const parsedTokens = JSON.parse(storedTokens);
+          const parsedUser = JSON.parse(storedUser);
+          
+          setTokens(parsedTokens);
+          setUser(parsedUser);
+
+          // Refresh user data from API to get latest info
+          try {
+            const response = await fetch('/api/auth/me', {
+              headers: {
+                'Authorization': `Bearer ${parsedTokens.accessToken}`,
+              },
+            });
+
+            if (response.ok) {
+              const data = await response.json();
+              if (data.success && data.user) {
+                setUser(data.user);
+              }
+            }
+          } catch (apiError) {
+            console.warn('Failed to refresh user data from API:', apiError);
+            // Continue with stored data if API fails
+          }
         }
       } catch (error) {
         console.error('Failed to load auth data:', error);

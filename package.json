@@ -31,12 +31,18 @@
     "docker:clean": "docker-compose down -v && docker system prune -af",
     "analyze-bundle": "ANALYZE=true next build",
     "migrate": "echo 'Migration placeholder - implement as needed'",
+    "migrate:images": "ts-node scripts/migrate-images.ts",
+    "migrate:images:stats": "ts-node scripts/migrate-images.ts --stats",
+    "migrate:images:verify": "ts-node scripts/migrate-images.ts --verify",
+    "migrate:images:dry-run": "ts-node scripts/migrate-images.ts --dry-run --verbose",
     "seed": "echo 'Seeding placeholder - implement as needed'"
   },
   "dependencies": {
     "@tanstack/react-query": "^5.90.10",
     "@types/bcryptjs": "^2.4.6",
     "@types/jsonwebtoken": "^9.0.10",
+    "@types/sharp": "^0.31.1",
+    "@types/uuid": "^10.0.0",
     "bcryptjs": "^3.0.3",
     "framer-motion": "^12.23.24",
     "jsonwebtoken": "^9.0.2",
@@ -47,7 +53,9 @@
     "nodemailer": "^7.0.10",
     "react": "19.2.0",
     "react-dom": "19.2.0",
+    "sharp": "^0.34.5",
     "swr": "^2.3.6",
+    "uuid": "^13.0.0",
     "zod": "^4.1.12"
   },
   "devDependencies": {

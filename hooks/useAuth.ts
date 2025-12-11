@@ -42,17 +42,24 @@ export function useAuth() {
 
       const response = await apiClient.get<any>('/api/auth/me');
       
-      if (response.success && response.data) {
+      if (response.success && response.user) {
         setAuthState({
-          user: response.data,
+          user: response.user,
           isAuthenticated: true,
           isLoading: false,
         });
       } else {
-        throw new Error('Failed to load user');
+        // Log more details about the response for debugging
+        console.warn('Auth response structure:', response);
+        throw new Error(response.error?.message || 'Failed to load user');
       }
-    } catch (error) {
-      console.error('Error loading user:', error);
+    } catch (error: any) {
+      // Don't log error if it's just a 401 (user not authenticated)
+      if (error.status !== 401) {
+        console.error('Failed to load user', error);
+      }
+      
+      // Clear tokens on any auth error
       apiClient.clearTokens();
       setAuthState({
         user: null,

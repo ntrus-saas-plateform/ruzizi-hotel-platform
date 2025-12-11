@@ -28,16 +28,38 @@ export default function EstablishmentSelector({
   const [establishments, setEstablishments] = useState<EstablishmentResponse[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [actualUserRole, setActualUserRole] = useState<UserRole | undefined>(userRole);
+
+
+
+  // Fetch user role from API if not provided
+  useEffect(() => {
+    if (!userRole) {
+      fetch('/api/auth/me')
+        .then(res => res.json())
+        .then(data => {
+          if (data.success && data.user) {
+            console.log('🔄 Fetched user role from API:', data.user.role);
+            setActualUserRole(data.user.role);
+          }
+        })
+        .catch(err => {
+          console.error('Failed to fetch user role:', err);
+        });
+    } else {
+      setActualUserRole(userRole);
+    }
+  }, [userRole]);
 
   // Determine if user is admin (can access all establishments)
-  const isAdmin = userRole === 'root' || userRole === 'super_admin';
+  const isAdmin = actualUserRole === 'root' || actualUserRole === 'super_admin';
   
   // Auto-disable for non-admin users
   const isDisabled = disabled || !isAdmin;
 
   useEffect(() => {
     fetchEstablishments();
-  }, []);
+  }, [actualUserRole]); // Re-fetch when user role is determined
 
   useEffect(() => {
     // Auto-select user's establishment for non-admin users
@@ -58,18 +80,62 @@ export default function EstablishmentSelector({
       }
 
       const data = await response.json();
-      const establishmentsList = data.data || [];
       
-      setEstablishments(establishmentsList);
+      // Ensure we have a valid data structure
+      if (!data.success) {
+        throw new Error(data.error?.message || 'API returned error');
+      }
+      
+      // Handle paginated response structure: { data: { data: [...], pagination: {...} } }
+      let establishmentsList = [];
+      
+      if (data.data && typeof data.data === 'object') {
+        // If data.data has a 'data' property (paginated response)
+        if (Array.isArray(data.data.data)) {
+          establishmentsList = data.data.data;
+        }
+        // If data.data is directly an array
+        else if (Array.isArray(data.data)) {
+          establishmentsList = data.data;
+        }
+        // If data.data is an object but not the expected structure
+        else {
+          console.warn('Unexpected data structure from establishments API:', data.data);
+          establishmentsList = [];
+        }
+      }
+      
+      // Final safety check
+      if (!Array.isArray(establishmentsList)) {
+        console.error('Establishments data is not an array:', establishmentsList);
+        establishmentsList = [];
+      }
+      
+      // Apply role-based filtering based on actualUserRole
+      const currentIsAdmin = actualUserRole === 'root' || actualUserRole === 'super_admin';
+      
+      if (currentIsAdmin) {
+        // Admins see ALL establishments
 
-      // If user is not admin and has establishment, filter to only their establishment
-      if (!isAdmin && userEstablishmentId) {
+        setEstablishments(establishmentsList);
+        setError(null); // Clear any previous errors
+      } else if (userEstablishmentId) {
+        // Non-admin users only see their assigned establishment
         const userEstablishment = establishmentsList.find(
           (est: EstablishmentResponse) => est.id === userEstablishmentId
         );
         if (userEstablishment) {
           setEstablishments([userEstablishment]);
+          setError(null);
+        } else {
+          // If user's establishment not found in the list, show empty
+          setEstablishments([]);
+          setError('Votre établissement assigné n\'a pas été trouvé');
         }
+      } else {
+        // Non-admin user without establishment assignment
+        setEstablishments([]);
+        setError('Aucun établissement assigné à votre compte');
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to load establishments');
@@ -114,7 +180,7 @@ export default function EstablishmentSelector({
           {loading ? 'Chargement...' : 'Sélectionner un établissement'}
         </option>
         
-        {establishments.map((establishment) => (
+        {Array.isArray(establishments) && establishments.map((establishment) => (
           <option key={establishment.id} value={establishment.id}>
             {establishment.name} - {establishment.location.city}
           </option>
@@ -129,7 +195,13 @@ export default function EstablishmentSelector({
 
       {isAdmin && establishments.length > 0 && (
         <p className="text-xs text-gray-500 mt-1">
-          En tant qu'administrateur, vous pouvez sélectionner n'importe quel établissement.
+          En tant qu'administrateur, vous avez accès à tous les établissements ({establishments.length} disponibles).
+        </p>
+      )}
+
+      {isAdmin && establishments.length === 0 && !loading && (
+        <p className="text-xs text-amber-600 mt-1">
+          Aucun établissement trouvé dans le système.
         </p>
       )}
     </div>
