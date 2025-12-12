@@ -35,6 +35,9 @@
     "migrate:images:stats": "ts-node scripts/migrate-images.ts --stats",
     "migrate:images:verify": "ts-node scripts/migrate-images.ts --verify",
     "migrate:images:dry-run": "ts-node scripts/migrate-images.ts --dry-run --verbose",
+    "migrate:blob": "ts-node scripts/migrate-to-blob.ts",
+    "migrate:blob:dry-run": "ts-node scripts/migrate-to-blob.ts --dry-run --verbose",
+    "generate:icons": "node scripts/generate-icons.js",
     "seed": "echo 'Seeding placeholder - implement as needed'"
   },
   "dependencies": {
@@ -43,6 +46,7 @@
     "@types/jsonwebtoken": "^9.0.10",
     "@types/sharp": "^0.31.1",
     "@types/uuid": "^10.0.0",
+    "@vercel/blob": "^2.0.0",
     "bcryptjs": "^3.0.3",
     "framer-motion": "^12.23.24",
     "jsonwebtoken": "^9.0.2",
