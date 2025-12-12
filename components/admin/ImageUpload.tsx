@@ -71,8 +71,8 @@ export default function ImageUpload({
 
       // Extract URLs from successful uploads
       const newImageUrls: string[] = [];
-      if (result.data?.results) {
-        result.data.results.forEach((uploadResult: any) => {
+      if (result.results) {
+        result.results.forEach((uploadResult: any) => {
           if (uploadResult.url) {
             newImageUrls.push(uploadResult.url);
           }
@@ -86,17 +86,22 @@ export default function ImageUpload({
       onImagesChange([...images, ...newImageUrls]);
 
       // Show warnings if any
-      if (result.data?.warnings && result.data.warnings.length > 0) {
-        console.warn('Upload warnings:', result.data.warnings);
+      if (result.warnings && result.warnings.length > 0) {
+        console.warn('Upload warnings:', result.warnings);
       }
 
       // Show errors for failed uploads
-      if (result.data?.errors && result.data.errors.length > 0) {
-        setError(`Some uploads failed: ${result.data.errors.join(', ')}`);
+      if (result.errors && result.errors.length > 0) {
+        setError(`Some uploads failed: ${result.errors.join(', ')}`);
       }
 
     } catch (err) {
       console.error('Upload error:', err);
+      console.error('Error details:', {
+        message: err instanceof Error ? err.message : 'Unknown error',
+        stack: err instanceof Error ? err.stack : undefined
+      });
+      
       setError(err instanceof Error ? err.message : 'Erreur lors du chargement des images');
       
       // Update progress to show error

@@ -96,7 +96,8 @@ export class ImageMetadataStore {
    */
   async findById(id: string): Promise<IImageMetadataDocument | null> {
     try {
-      return await ImageMetadataModel.findById(id);
+      // Use findOne with the id field instead of findById for UUID compatibility
+      return await ImageMetadataModel.findOne({ id: id });
     } catch (error) {
       throw new Error(`Failed to find image metadata: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }

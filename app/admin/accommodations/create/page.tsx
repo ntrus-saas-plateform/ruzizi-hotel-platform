@@ -15,6 +15,9 @@ export default function CreateAccommodationPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [activeTab, setActiveTab] = useState('basic');
+
+  // Debug: Log user data from context
+  console.log('🔍 User from auth context:', user);
   
   const [formData, setFormData] = useState({
     // Basic

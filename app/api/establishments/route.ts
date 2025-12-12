@@ -77,12 +77,16 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   return requireSuperAdmin(async (req) => {
     try {
+      console.log('🏨 Creating new establishment...');
+      
       // Parse JSON body with error handling
       const body = await parseRequestBody(req);
+      console.log('📝 Request body:', JSON.stringify(body, null, 2));
 
       // Validate request body
       const validationResult = CreateEstablishmentSchema.safeParse(body);
       if (!validationResult.success) {
+        console.log('❌ Validation failed:', validationResult.error.issues);
         return createValidationErrorResponse(validationResult.error, 'Invalid input data');
       }
 

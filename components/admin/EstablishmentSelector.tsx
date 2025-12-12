@@ -28,28 +28,45 @@ export default function EstablishmentSelector({
   const [establishments, setEstablishments] = useState<EstablishmentResponse[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [actualUserRole, setActualUserRole] = useState<UserRole | undefined>(userRole);
 
+  // Debug: Log received props
+  console.log('🔍 EstablishmentSelector props:', {
+    userRole,
+    userEstablishmentId,
+    userEstablishmentIdType: typeof userEstablishmentId
+  });
 
+  // State for fresh user data from API
+  const [freshUserData, setFreshUserData] = useState<{role?: UserRole, establishmentId?: string}>({});
 
-  // Fetch user role from API if not provided
+  // Fetch fresh user data from API
   useEffect(() => {
-    if (!userRole) {
-      fetch('/api/auth/me')
-        .then(res => res.json())
-        .then(data => {
-          if (data.success && data.user) {
-            console.log('🔄 Fetched user role from API:', data.user.role);
-            setActualUserRole(data.user.role);
-          }
-        })
-        .catch(err => {
-          console.error('Failed to fetch user role:', err);
-        });
-    } else {
-      setActualUserRole(userRole);
-    }
-  }, [userRole]);
+    fetch('/api/auth/me')
+      .then(res => res.json())
+      .then(data => {
+        if (data.success && data.user) {
+          console.log('🔄 Fresh user data from API:', data.user);
+          setFreshUserData({
+            role: data.user.role,
+            establishmentId: data.user.establishmentId
+          });
+        }
+      })
+      .catch(err => {
+        console.error('Failed to fetch fresh user data:', err);
+      });
+  }, []);
+
+  // Use fresh data if available, fallback to props
+  const actualUserRole = freshUserData.role || userRole;
+  const actualUserEstablishmentId = freshUserData.establishmentId || userEstablishmentId;
+
+  // Debug: Log actual data being used
+  console.log('🎯 Actual data being used:', {
+    actualUserRole,
+    actualUserEstablishmentId,
+    freshUserData
+  });
 
   // Determine if user is admin (can access all establishments)
   const isAdmin = actualUserRole === 'root' || actualUserRole === 'super_admin';
@@ -59,14 +76,14 @@ export default function EstablishmentSelector({
 
   useEffect(() => {
     fetchEstablishments();
-  }, [actualUserRole]); // Re-fetch when user role is determined
+  }, [actualUserRole, actualUserEstablishmentId]); // Re-fetch when user data changes
 
   useEffect(() => {
     // Auto-select user's establishment for non-admin users
-    if (!isAdmin && userEstablishmentId && !value) {
-      onChange(userEstablishmentId);
+    if (!isAdmin && actualUserEstablishmentId && !value) {
+      onChange(actualUserEstablishmentId);
     }
-  }, [isAdmin, userEstablishmentId, value, onChange]);
+  }, [isAdmin, actualUserEstablishmentId, value, onChange]);
 
   const fetchEstablishments = async () => {
     try {
@@ -111,33 +128,48 @@ export default function EstablishmentSelector({
         establishmentsList = [];
       }
       
-      // Apply role-based filtering based on actualUserRole
-      const currentIsAdmin = actualUserRole === 'root' || actualUserRole === 'super_admin';
-      
-      if (currentIsAdmin) {
+      // Apply role-based filtering
+      if (isAdmin) {
         // Admins see ALL establishments
-
+        console.log('👑 Admin user - showing all establishments:', establishmentsList.length);
         setEstablishments(establishmentsList);
-        setError(null); // Clear any previous errors
-      } else if (userEstablishmentId) {
+        setError(null);
+      } else if (actualUserEstablishmentId) {
         // Non-admin users only see their assigned establishment
+        console.log('👤 Non-admin user - looking for establishment:', actualUserEstablishmentId);
+        console.log('📋 Available establishments:', establishmentsList.map(est => ({ id: est.id, name: est.name })));
+        
+        // Try to find the establishment with detailed logging
+        console.log('🔍 Searching for establishment with ID:', actualUserEstablishmentId);
+        console.log('🔍 Establishment IDs in list:', establishmentsList.map(est => est.id));
+        
         const userEstablishment = establishmentsList.find(
-          (est: EstablishmentResponse) => est.id === userEstablishmentId
+          (est: EstablishmentResponse) => {
+            console.log(`🔍 Comparing "${est.id}" === "${actualUserEstablishmentId}":`, est.id === actualUserEstablishmentId);
+            return est.id === actualUserEstablishmentId;
+          }
         );
+        
+        console.log('🎯 Found user establishment:', userEstablishment);
+        
         if (userEstablishment) {
+          console.log('✅ Setting user establishment:', userEstablishment.name);
           setEstablishments([userEstablishment]);
           setError(null);
         } else {
           // If user's establishment not found in the list, show empty
+          console.log('❌ User establishment not found in list');
           setEstablishments([]);
           setError('Votre établissement assigné n\'a pas été trouvé');
         }
       } else {
         // Non-admin user without establishment assignment
+        console.log('❌ Non-admin user without establishment assignment');
         setEstablishments([]);
         setError('Aucun établissement assigné à votre compte');
       }
     } catch (err) {
+      console.error('Error fetching establishments:', err);
       setError(err instanceof Error ? err.message : 'Failed to load establishments');
     } finally {
       setLoading(false);

@@ -38,7 +38,7 @@ export const CreateEstablishmentSchema = z.object({
   contacts: ContactsSchema,
   services: z.array(z.string()).default([]),
   images: z.array(z.string().url('Invalid image URL')).default([]),
-  managerId: z.string(),
+  managerId: z.string().optional(),
   staffIds: z.array(z.string()).default([]),
   totalCapacity: z.number().int().min(1, 'Total capacity must be at least 1'),
   isActive: z.boolean().default(true),

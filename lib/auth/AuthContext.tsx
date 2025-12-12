@@ -40,15 +40,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           // Refresh user data from API to get latest info
           try {
             const response = await fetch('/api/auth/me', {
-              headers: {
-                'Authorization': `Bearer ${parsedTokens.accessToken}`,
-              },
+              credentials: 'include', // Include cookies
             });
 
             if (response.ok) {
               const data = await response.json();
               if (data.success && data.user) {
+                console.log('🔄 Refreshed user data from API:', data.user);
                 setUser(data.user);
+                // Update localStorage with fresh data
+                localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(data.user));
               }
             }
           } catch (apiError) {

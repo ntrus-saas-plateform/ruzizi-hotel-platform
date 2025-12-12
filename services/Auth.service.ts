@@ -61,8 +61,23 @@ export class AuthService {
 
     const tokens = generateTokens(payload);
 
-    // Return user without password
-    const userResponse = user.toJSON() as unknown as UserResponse;
+    // Return user without password, with properly formatted establishmentId
+    const userResponse: UserResponse = {
+      id: user._id.toString(),
+      userId: user._id.toString(),
+      email: user.email,
+      firstName: user.firstName,
+      lastName: user.lastName,
+      name: user.name, // Virtual field
+      role: user.role,
+      establishmentId: user.establishmentId ? user.establishmentId.toString() : null,
+      permissions: user.permissions,
+      isActive: user.isActive,
+      isEmailVerified: user.isEmailVerified,
+      lastLogin: user.lastLogin,
+      createdAt: user.createdAt,
+      updatedAt: user.updatedAt,
+    };
 
     return {
       user: userResponse,

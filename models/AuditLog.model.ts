@@ -46,7 +46,7 @@ const AuditLogSchema = new Schema<IAuditLog>(
       index: true,
     },
     entityId: {
-      type: Schema.Types.ObjectId,
+      type: String, // Changed from ObjectId to String to support UUIDs
       required: true,
       index: true,
     },

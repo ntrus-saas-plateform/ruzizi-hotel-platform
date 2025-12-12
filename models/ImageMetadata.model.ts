@@ -170,6 +170,7 @@ const ImageMetadataSchema = new Schema<IImageMetadataDocument, IImageMetadataMod
     webpUrl: {
       type: String,
       required: [true, 'WebP URL is required'],
+      // Removed index: true to avoid duplicate with schema.index() below
       trim: true,
       index: true,
     },

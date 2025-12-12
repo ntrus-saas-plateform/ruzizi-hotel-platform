@@ -2,11 +2,12 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { useAuth } from '@/lib/auth/AuthContext';
 import ImageUpload from '@/components/admin/ImageUpload';
-import EstablishmentSelector from '@/components/admin/EstablishmentSelector';
 
 export default function CreateEstablishmentPage() {
   const router = useRouter();
+  const { user } = useAuth();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [activeTab, setActiveTab] = useState('basic');
@@ -60,32 +61,52 @@ export default function CreateEstablishmentPage() {
       const token = localStorage.getItem('accessToken');
       
       // Préparer les données
+      // Validation côté client
+      const phoneNumbers = formData.phone.filter(p => p.trim() !== '');
+      if (phoneNumbers.length === 0) {
+        throw new Error('Au moins un numéro de téléphone est requis');
+      }
+
+      if (!formData.name.trim()) {
+        throw new Error('Le nom de l\'établissement est requis');
+      }
+
+      if (!formData.description.trim() || formData.description.length < 10) {
+        throw new Error('La description doit contenir au moins 10 caractères');
+      }
+
+      if (!formData.email.trim()) {
+        throw new Error('L\'email est requis');
+      }
+
+      if (formData.totalCapacity < 1) {
+        throw new Error('La capacité totale doit être d\'au moins 1');
+      }
+
       const payload = {
-        name: formData.name,
-        description: formData.description,
+        name: formData.name.trim(),
+        description: formData.description.trim(),
         location: {
-          address: formData.address,
-          city: formData.city,
-          country: formData.country,
+          address: formData.address.trim(),
+          city: formData.city.trim(),
           coordinates: {
             lat: formData.latitude,
             lng: formData.longitude,
           },
         },
         contacts: {
-          phone: formData.phone.filter(p => p.trim() !== ''),
-          email: formData.email,
-          website: formData.website,
+          phone: phoneNumbers,
+          email: formData.email.trim(),
         },
-        pricingMode: formData.pricingMode,
+        pricingMode: formData.pricingMode as 'nightly' | 'monthly',
         totalCapacity: formData.totalCapacity,
-        // Fusionner services et amenities en un seul tableau
         services: [...formData.services, ...formData.amenities],
         images: formData.images,
         isActive: formData.isActive,
-        // TODO: Ajouter managerId depuis l'utilisateur connecté ou sélection
-        managerId: localStorage.getItem('userId') || '',
+        // managerId sera assigné côté serveur ou laissé vide
       };
+
+      console.log('🚀 Sending payload:', JSON.stringify(payload, null, 2));
 
       const response = await fetch('/api/establishments', {
         method: 'POST',
@@ -95,6 +116,14 @@ export default function CreateEstablishmentPage() {
         },
         body: JSON.stringify(payload),
       });
+
+      console.log('📥 Response status:', response.status);
+      
+      if (!response.ok) {
+        const errorData = await response.json();
+        console.log('❌ Error response:', errorData);
+        throw new Error(errorData.error?.message || 'Erreur lors de la création');
+      }
 
       const data = await response.json();
 

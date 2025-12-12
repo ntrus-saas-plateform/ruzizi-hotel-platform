@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { verifyAccessToken } from '@/lib/auth/jwt';
+import { connectDB } from '@/lib/db/connection';
+import User from '@/models/User.model';
 
 export async function GET(request: NextRequest) {
   try {
@@ -23,23 +25,45 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    // Retourner les informations de l'utilisateur depuis le JWT
-    // Pour l'instant, on utilise les données du token pour éviter les problèmes de DB
+    // Connecter à la base de données et récupérer les données utilisateur complètes
+    await connectDB();
+    
+    const user = await User.findById(payload.userId)
+      .populate('establishmentId', 'name location')
+      .select('-password -passwordResetToken -emailVerificationToken');
+
+    if (!user) {
+      return NextResponse.json(
+        { error: { message: 'User not found' } },
+        { status: 404 }
+      );
+    }
+
+    // Retourner les informations complètes de l'utilisateur
     return NextResponse.json({
       success: true,
       user: {
-        id: payload.userId,
-        userId: payload.userId, // Ajouter userId pour compatibilité
-        email: payload.email,
-        role: payload.role,
-        establishmentId: payload.establishmentId,
-        firstName: 'Admin', // Valeur temporaire
-        lastName: 'User', // Valeur temporaire
-        permissions: [], // Sera déterminé par le rôle
-        isActive: true,
-        lastLogin: new Date(),
-        createdAt: new Date(),
-        updatedAt: new Date(),
+        id: user._id.toString(),
+        userId: user._id.toString(),
+        email: user.email,
+        firstName: user.firstName,
+        lastName: user.lastName,
+        name: user.name, // Virtual field
+        role: user.role,
+        establishmentId: user.establishmentId ? 
+          (typeof user.establishmentId === 'object' ? (user.establishmentId as any)._id?.toString() : (user.establishmentId as any).toString()) 
+          : null,
+        establishment: user.establishmentId && typeof user.establishmentId === 'object' ? {
+          id: (user.establishmentId as any)._id.toString(),
+          name: (user.establishmentId as any).name,
+          location: (user.establishmentId as any).location
+        } : null,
+        permissions: user.permissions,
+        isActive: user.isActive,
+        isEmailVerified: user.isEmailVerified,
+        lastLogin: user.lastLogin,
+        createdAt: user.createdAt,
+        updatedAt: user.updatedAt,
       },
     });
   } catch (error) {
