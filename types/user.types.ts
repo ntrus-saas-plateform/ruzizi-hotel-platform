@@ -97,12 +97,16 @@ export interface UpdateUserInput {
  */
 export interface UserResponse {
   id: string;
+  userId: string;
   email: string;
+  firstName: string;
+  lastName: string;
+  name: string;
   role: UserRole;
   permissions?: SystemPermission[];
   establishmentId?: string;
-  profile: UserProfile;
   isActive: boolean;
+  isEmailVerified: boolean;
   lastLogin?: Date;
   createdAt: Date;
   updatedAt: Date;

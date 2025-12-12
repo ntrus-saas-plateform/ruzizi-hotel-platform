@@ -1,17 +1,15 @@
 import type { Metadata } from 'next';
-import { Geist, Geist_Mono } from 'next/font/google';
 import ClientLayout from './ClientLayout';
 import './globals.css';
 
-const geistSans = Geist({
+// Temporary fallback to system fonts due to Google Fonts connectivity issues
+const geistSans = {
   variable: '--font-geist-sans',
-  subsets: ['latin'],
-});
+};
 
-const geistMono = Geist_Mono({
+const geistMono = {
   variable: '--font-geist-mono',
-  subsets: ['latin'],
-});
+};
 
 export const metadata: Metadata = {
   title: 'Ruzizi Hôtel',

@@ -31,7 +31,7 @@ export interface IAuditLog {
   userId: Types.ObjectId;
   action: AuditAction;
   entity: AuditEntity;
-  entityId: Types.ObjectId;
+  entityId: string; // Changed to string to support UUIDs
   changes?: {
     field: string;
     oldValue: any;

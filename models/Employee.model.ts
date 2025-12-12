@@ -106,7 +106,7 @@ EmployeeSchema.pre('save', async function (next) {
           })
           .sort({ 'employmentInfo.employeeNumber': -1 })
           .select('employmentInfo.employeeNumber')
-          .lean();
+          .lean() as { employmentInfo?: { employeeNumber?: string } } | null;
         
         return lastEmployee?.employmentInfo?.employeeNumber || null;
       };

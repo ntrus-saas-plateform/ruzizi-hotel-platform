@@ -1,7 +1,7 @@
 import mongoose, { Schema, Model } from 'mongoose';
 import { IAuditLog } from '@/types/audit.types';
 
-const AuditLogSchema = new Schema<IAuditLog>(
+const AuditLogSchema = new Schema(
   {
     userId: {
       type: Schema.Types.ObjectId,

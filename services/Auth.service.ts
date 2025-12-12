@@ -68,10 +68,10 @@ export class AuthService {
       email: user.email,
       firstName: user.firstName,
       lastName: user.lastName,
-      name: user.name, // Virtual field
+      name: user.name || `${user.firstName} ${user.lastName}`, // Virtual field fallback
       role: user.role,
-      establishmentId: user.establishmentId ? user.establishmentId.toString() : null,
-      permissions: user.permissions,
+      ...(user.establishmentId && { establishmentId: user.establishmentId.toString() }),
+      permissions: user.permissions as SystemPermission[],
       isActive: user.isActive,
       isEmailVerified: user.isEmailVerified,
       lastLogin: user.lastLogin,
