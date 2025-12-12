@@ -2,6 +2,8 @@
 
 import { Building2, MapPin, Plane, ShoppingCart, Waves } from 'lucide-react';
 import { useState, useEffect } from 'react';
+import SimpleMap from '@/components/maps/SimpleMap';
+import { getNearbyPlaces } from '@/components/maps/LocationUtils';
 
 interface ContactFormProps {
   title?: string;
@@ -61,12 +63,6 @@ export default function ContactForm({
       invalidEmail: 'Adresse email invalide',
       directions: "Obtenir l'itinéraire",
       nearby: 'À proximité',
-      nearbyPlaces: [
-        { name: 'Aéroport de Bujumbura', distance: '12 km', icon: Plane },
-        { name: 'Centre-ville', distance: '2 km', icon: Building2 },
-        { name: 'Lac Tanganyika', distance: '5 km', icon: Waves },
-        { name: 'Marché central', distance: '3 km', icon: ShoppingCart },
-      ],
       subjects: [
         'Réservation',
         'Information générale',
@@ -102,12 +98,6 @@ export default function ContactForm({
       invalidEmail: 'Invalid email address',
       directions: 'Get Directions',
       nearby: 'Nearby',
-      nearbyPlaces: [
-        { name: 'Bujumbura Airport', distance: '12 km', icon: Plane },
-        { name: 'City Center', distance: '2 km', icon: Building2 },
-        { name: 'Lake Tanganyika', distance: '5 km', icon: Waves },
-        { name: 'Central Market', distance: '3 km', icon: ShoppingCart },
-      ],
       subjects: [
         'Booking',
         'General information',
@@ -127,6 +117,16 @@ export default function ContactForm({
   };
 
   const t = content[language as keyof typeof content];
+  
+  // Obtenir les lieux d'intérêt proches dynamiquement
+  const nearbyPlaces = getNearbyPlaces('bujumbura').map(place => ({
+    ...place,
+    icon: place.name.includes('Aéroport') ? Plane :
+          place.name.includes('Centre') ? Building2 :
+          place.name.includes('Lac') ? Waves :
+          place.name.includes('Marché') ? ShoppingCart :
+          MapPin
+  }));
 
   const handleInputChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
@@ -214,97 +214,23 @@ export default function ContactForm({
         <div className="grid grid-cols-1 lg:grid-cols-5 gap-8">
           {/* Map Container */}
           <div className="lg:col-span-2 space-y-4">
-            <div className="bg-white rounded-2xl shadow-card-luxury overflow-hidden border border-gray-100">
-              {/* Interactive Map Placeholder */}
-              <div className="relative h-96 bg-gradient-to-br from-blue-100 to-green-100">
-                {/* Map Background Pattern */}
-                <div className="absolute inset-0 opacity-20">
-                  <div className="grid grid-cols-8 grid-rows-6 h-full">
-                    {Array.from({ length: 48 }).map((_, i) => (
-                      <div key={i} className="border border-gray-300"></div>
-                    ))}
-                  </div>
-                </div>
-
-                {/* Hotel Marker */}
-                <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2">
-                  <div className="relative">
-                    <div className="w-12 h-12 bg-gradient-luxury text-luxury-cream rounded-full flex items-center justify-center shadow-lg animate-bounce">
-                      <MapPin />
-                    </div>
-                    <div className="absolute -bottom-8 left-1/2 transform -translate-x-1/2 bg-white px-3 py-1 rounded-lg shadow-md border">
-                      <p className="text-sm font-semibold text-luxury-dark whitespace-nowrap">
-                        Ruzizi Hôtel
-                      </p>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Interactive Elements */}
-                <div className="absolute top-4 right-4 space-y-2">
-                  <button className="w-10 h-10 bg-white rounded-lg shadow-md flex items-center justify-center hover:bg-gray-50 transition">
-                    <svg
-                      className="w-5 h-5 text-luxury-text"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M12 6v6m0 0v6m0-6h6m-6 0H6"
-                      />
-                    </svg>
-                  </button>
-                  <button className="w-10 h-10 bg-white rounded-lg shadow-md flex items-center justify-center hover:bg-gray-50 transition">
-                    <svg
-                      className="w-5 h-5 text-luxury-text"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M20 12H4"
-                      />
-                    </svg>
-                  </button>
-                </div>
-
-                {/* Click to open full map */}
-                <button
-                  onClick={openGoogleMaps}
-                  className="absolute inset-0 w-full h-full flex items-center justify-center bg-black/0 hover:bg-black/10 transition-all duration-300 group"
-                >
-                  <div className="bg-white/90 backdrop-blur-sm px-6 py-3 rounded-xl shadow-lg opacity-0 group-hover:opacity-100 transition-all duration-300 transform scale-95 group-hover:scale-100">
-                    <p className="text-gray-800 font-medium flex items-center">
-                      <svg
-                        className="w-5 h-5 mr-2"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"
-                        />
-                      </svg>
-                      Ouvrir dans Google Maps
-                    </p>
-                  </div>
-                </button>
-              </div>
-            </div>
+            <SimpleMap
+              location={{
+                lat: coordinates.lat,
+                lng: coordinates.lng,
+                name: 'Ruzizi Hôtel',
+                address: "Avenue de l'Université, Bujumbura, Burundi",
+                city: 'bujumbura'
+              }}
+              height="384px"
+              showNearbyPlaces={true}
+              className="border border-gray-100"
+            />
             {/* Nearby Places */}
             <div className="bg-white rounded-2xl shadow-card-luxury p-6 border border-gray-100">
               <h3 className="text-xl font-bold text-luxury-dark mb-2">{t.nearby}</h3>
               <div className="space-y-2">
-                {t.nearbyPlaces.map((place, index) => (
+                {nearbyPlaces.map((place, index) => (
                   <div
                     key={index}
                     className="flex items-center justify-between p-3 bg-luxury-cream rounded-lg"

@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import Navigation from '@/components/frontoffice/Navigation';
 import Footer from '@/components/frontoffice/Footer';
 import EstablishmentCard from '@/components/frontoffice/EstablishmentCard';
+import EstablishmentsMap from '@/components/maps/EstablishmentsMap';
 
 export default function EstablishmentsPage() {
   const router = useRouter();
@@ -16,6 +17,7 @@ export default function EstablishmentsPage() {
     type: '',
     amenities: [] as string[],
   });
+  const [viewMode, setViewMode] = useState<'list' | 'map'>('list');
 
   useEffect(() => {
     const savedLanguage = localStorage.getItem('language') as 'fr' | 'en' | null;
@@ -57,6 +59,8 @@ export default function EstablishmentsPage() {
       noResults: 'Aucun établissement trouvé',
       noResultsDesc: 'Essayez de modifier vos critères de recherche',
       clearFilters: 'Effacer les filtres',
+      mapView: 'Vue carte',
+      listView: 'Vue liste',
     },
     en: {
       title: 'Our Establishments',
@@ -71,6 +75,8 @@ export default function EstablishmentsPage() {
       noResults: 'No establishments found',
       noResultsDesc: 'Try modifying your search criteria',
       clearFilters: 'Clear filters',
+      mapView: 'Map view',
+      listView: 'List view',
     },
   };
 
@@ -230,6 +236,37 @@ export default function EstablishmentsPage() {
                 </span>{' '}
                 {t.results}
               </p>
+              
+              {/* View Mode Toggle */}
+              <div className="flex items-center space-x-2 bg-gray-100 rounded-lg p-1">
+                <button
+                  onClick={() => setViewMode('list')}
+                  className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+                    viewMode === 'list'
+                      ? 'bg-white text-luxury-dark shadow-sm'
+                      : 'text-gray-600 hover:text-luxury-dark'
+                  }`}
+                >
+                  <svg className="w-4 h-4 inline mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 10h16M4 14h16M4 18h16" />
+                  </svg>
+                  {t.listView}
+                </button>
+                <button
+                  onClick={() => setViewMode('map')}
+                  className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+                    viewMode === 'map'
+                      ? 'bg-white text-luxury-dark shadow-sm'
+                      : 'text-gray-600 hover:text-luxury-dark'
+                  }`}
+                >
+                  <svg className="w-4 h-4 inline mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                  </svg>
+                  {t.mapView}
+                </button>
+              </div>
             </div>
 
             {loading ? (
@@ -326,6 +363,12 @@ export default function EstablishmentsPage() {
                   {t.clearFilters}
                 </button>
               </div>
+            ) : viewMode === 'map' ? (
+              <EstablishmentsMap
+                establishments={filteredEstablishments}
+                showAll={true}
+                height="400px"
+              />
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 {filteredEstablishments.map((establishment) => (

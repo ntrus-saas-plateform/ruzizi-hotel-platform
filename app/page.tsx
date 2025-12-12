@@ -29,6 +29,36 @@ export default function HomePage() {
   const [loading, setLoading] = useState(true);
   const [language, setLanguage] = useState('fr');
 
+  // Schema.org JSON-LD pour la page d'accueil
+  const homePageJsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'WebPage',
+    name: 'Ruzizi Hôtel - Hébergement de Luxe au Burundi',
+    description: 'Découvrez l\'excellence de l\'hospitalité burundaise au Ruzizi Hôtel',
+    url: 'https://ruzizihotel.com',
+    mainEntity: {
+      '@type': 'Hotel',
+      name: 'Ruzizi Hôtel',
+      description: 'Hébergement de luxe au Burundi',
+      address: {
+        '@type': 'PostalAddress',
+        addressCountry: 'BI',
+        addressLocality: 'Bujumbura',
+      },
+    },
+    breadcrumb: {
+      '@type': 'BreadcrumbList',
+      itemListElement: [
+        {
+          '@type': 'ListItem',
+          position: 1,
+          name: 'Accueil',
+          item: 'https://ruzizihotel.com'
+        }
+      ]
+    }
+  };
+
   useEffect(() => {
     const savedLanguage = localStorage.getItem('language') || 'fr';
     setLanguage(savedLanguage);
@@ -37,7 +67,7 @@ export default function HomePage() {
 
   const fetchEstablishments = async () => {
     try {
-      const response = await fetch('/api/public/establishments?limit=3');
+      const response = await fetch('/api/public/establishments?limit=6');
       const data = await response.json();
       if (data.success) {
         const establishments = data.data.data || [];
@@ -144,9 +174,14 @@ export default function HomePage() {
   const t = content[language as keyof typeof content];
 
   return (
-    <div className="min-h-screen bg-luxury-cream">
-      {/* Navigation Header */}
-      <Navigation bg={false} />
+    <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(homePageJsonLd) }}
+      />
+      <div className="min-h-screen bg-luxury-cream">
+        {/* Navigation Header */}
+        <Navigation bg={false} />
 
       {/* Hero Section */}
       <HeroSection />
@@ -408,14 +443,15 @@ export default function HomePage() {
 
       {/* Map Section */}
       <div id="map-section">
-        <MapSection />
+        <MapSection establishments={establishments} />
       </div>
 
       {/* Contact Section */}
       <ContactForm />
 
-      {/* Footer */}
-      <Footer />
-    </div>
+        {/* Footer */}
+        <Footer />
+      </div>
+    </>
   );
 }

@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import type { EstablishmentResponse } from '@/types/establishment.types';
 import type { AccommodationResponse } from '@/types/accommodation.types';
+import InteractiveMap from '@/components/maps/InteractiveMap';
 import {
   CalendarDays,
   CircleParking,
@@ -592,41 +593,18 @@ export default function EstablishmentDetailPage() {
             {/* Map Section */}
             <div id="map-section" className="bg-luxury-cream rounded-2xl p-6">
               <h2 className="text-2xl font-bold text-luxury-dark mb-4">Localisation</h2>
-              <div className="aspect-video bg-gray-200 rounded-xl overflow-hidden mb-4">
-                <iframe
-                  src={`https://www.google.com/maps?q=${establishment.location.coordinates.lat},${establishment.location.coordinates.lng}&hl=fr&z=15&output=embed`}
-                  width="100%"
-                  height="100%"
-                  style={{ border: 0 }}
-                  allowFullScreen
-                  loading="lazy"
-                  referrerPolicy="no-referrer-when-downgrade"
-                ></iframe>
-              </div>
-              <p className="text-luxury-text flex items-start">
-                <svg
-                  className="w-5 h-5 mr-2 mt-0.5 text-luxury-gold flex-shrink-0"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"
-                  />
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"
-                  />
-                </svg>
-                <span>
-                  {establishment.location.address}, {establishment.location.city}
-                </span>
-              </p>
+              <InteractiveMap
+                location={{
+                  lat: establishment.location.coordinates.lat,
+                  lng: establishment.location.coordinates.lng,
+                  name: establishment.name,
+                  address: `${establishment.location.address}, ${establishment.location.city}`
+                }}
+                height="400px"
+                showControls={true}
+                showDirections={true}
+                className="mb-4"
+              />
             </div>
 
             {/* Accommodations */}

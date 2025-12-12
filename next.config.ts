@@ -14,6 +14,10 @@ const nextConfig: NextConfig = {
     optimizeCss: true,
   },
 
+  // SEO optimizations
+  trailingSlash: false,
+  generateEtags: true,
+
   // Bundle optimization
   webpack: (config, { buildId, dev, isServer, defaultLoaders, webpack }) => {
     // Code splitting optimizations

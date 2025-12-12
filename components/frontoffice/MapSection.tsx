@@ -2,6 +2,7 @@
 
 import { CircleParking, Dumbbell, HeartHandshake, Utensils, Waves, Wifi } from 'lucide-react';
 import { useState, useEffect } from 'react';
+import SimpleMap from '@/components/maps/SimpleMap';
 
 interface MapSectionProps {
   title?: string;
@@ -11,6 +12,7 @@ interface MapSectionProps {
     lat: number;
     lng: number;
   };
+  establishments?: any[];
 }
 
 export default function MapSection({
@@ -18,6 +20,7 @@ export default function MapSection({
   subtitle = 'Situé au cœur de Bujumbura',
   address = "Avenue de l'Université, Bujumbura, Burundi",
   coordinates = { lat: -3.3614, lng: 29.3599 },
+  establishments = [],
 }: MapSectionProps) {
   const [language, setLanguage] = useState('fr');
 
@@ -75,9 +78,22 @@ export default function MapSection({
 
   const t = content[language as keyof typeof content];
 
-  const openGoogleMaps = () => {
-    const url = `https://www.google.com/maps/search/?api=1&query=${coordinates.lat},${coordinates.lng}`;
-    window.open(url, '_blank');
+  // Utiliser les coordonnées du premier établissement s'il existe
+  const primaryEstablishment = establishments.length > 0 ? establishments[0] : null;
+  const mapLocation = primaryEstablishment ? {
+    lat: primaryEstablishment.location?.coordinates?.lat || coordinates.lat,
+    lng: primaryEstablishment.location?.coordinates?.lng || coordinates.lng,
+    name: primaryEstablishment.name || 'Ruzizi Hôtel',
+    address: primaryEstablishment.location?.address ? 
+      `${primaryEstablishment.location.address}, ${primaryEstablishment.location.city}` : 
+      address,
+    city: primaryEstablishment.location?.city?.toLowerCase() || 'bujumbura'
+  } : {
+    lat: coordinates.lat,
+    lng: coordinates.lng,
+    name: 'Ruzizi Hôtel',
+    address: address,
+    city: 'bujumbura'
   };
 
   const features = [
@@ -90,18 +106,39 @@ export default function MapSection({
   ];
 
   return (
-    <section className="pt-20 ">
-      <div className="bg-gradient-luxury py-10 flex justify-center">
-        <div className="grid grid-cols-2 lg:grid-cols-6 justify-items-center gap-3 max-w-7xl">
-          {features.map((feature, index) => (
-            <div
-              key={index}
-              className="flex items-center p-3 text-luxury-dark rounded-lg  transition-colors duration-200"
-            >
-              <feature.icon className="text-2xl mr-3" />
-              <span className="text-sm font-medium text-luxury-cream">{feature.name}</span>
-            </div>
-          ))}
+    <section className="py-20 bg-[hsl(var(--color-luxury-gold-light))]/8">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        {/* Header */}
+        <div className="text-center mb-12">
+          <h2 className="text-4xl font-bold bg-luxury-dark bg-clip-text text-transparent mb-4">
+            {t.title}
+          </h2>
+          <p className="text-lg text-luxury-text">{t.subtitle}</p>
+        </div>
+
+        {/* Map */}
+        <div className="mb-12">
+          <SimpleMap
+            location={mapLocation}
+            height="500px"
+            showNearbyPlaces={true}
+            className="max-w-4xl mx-auto"
+          />
+        </div>
+
+        {/* Features */}
+        <div className="bg-gradient-luxury py-10 rounded-3xl">
+          <div className="grid grid-cols-2 lg:grid-cols-6 justify-items-center gap-3 max-w-6xl mx-auto">
+            {features.map((feature, index) => (
+              <div
+                key={index}
+                className="flex items-center p-3 text-luxury-dark rounded-lg transition-colors duration-200"
+              >
+                <feature.icon className="text-2xl mr-3" />
+                <span className="text-sm font-medium text-luxury-cream">{feature.name}</span>
+              </div>
+            ))}
+          </div>
         </div>
       </div>
     </section>
