@@ -9,6 +9,7 @@ import React, { useState, useEffect } from 'react';
 import { AlertCircle, Cloud, HardDrive, Settings } from 'lucide-react';
 import ImageUpload from './ImageUpload';
 import ImageUploadBlob from './ImageUploadBlob';
+import UploadDiagnostic from './UploadDiagnostic';
 
 interface ImageUploadWrapperProps {
   images: string[];
@@ -97,6 +98,9 @@ export default function ImageUploadWrapper({
 
   const useBlob = config?.blobConfigured && !forceLocal;
   const isProduction = process.env.NODE_ENV === 'production';
+  
+  // Force Blob usage in production, even if not configured (will show error)
+  const shouldUseBlob = useBlob || isProduction;
 
   return (
     <div className={className}>
@@ -104,15 +108,21 @@ export default function ImageUploadWrapper({
       <div className="mb-4 p-3 bg-gray-50 rounded-lg border">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
-            {useBlob ? (
+            {shouldUseBlob ? (
               <>
                 <Cloud className="w-4 h-4 text-blue-500" />
                 <span className="text-sm font-medium text-gray-700">
                   Vercel Blob Storage
                 </span>
-                <span className="px-2 py-1 bg-green-100 text-green-700 text-xs rounded-full">
-                  Optimized
-                </span>
+                {useBlob ? (
+                  <span className="px-2 py-1 bg-green-100 text-green-700 text-xs rounded-full">
+                    Configured
+                  </span>
+                ) : (
+                  <span className="px-2 py-1 bg-red-100 text-red-700 text-xs rounded-full">
+                    Token Required
+                  </span>
+                )}
               </>
             ) : (
               <>
@@ -120,11 +130,9 @@ export default function ImageUploadWrapper({
                 <span className="text-sm font-medium text-gray-700">
                   Local Storage
                 </span>
-                {isProduction && (
-                  <span className="px-2 py-1 bg-yellow-100 text-yellow-700 text-xs rounded-full">
-                    Not Recommended
-                  </span>
-                )}
+                <span className="px-2 py-1 bg-yellow-100 text-yellow-700 text-xs rounded-full">
+                  Development Only
+                </span>
               </>
             )}
           </div>
@@ -149,14 +157,14 @@ export default function ImageUploadWrapper({
         </div>
 
         {isProduction && !useBlob && (
-          <div className="mt-2 p-2 bg-yellow-50 border border-yellow-200 rounded text-xs text-yellow-800">
-            ⚠️ For production deployment, configure Vercel Blob Storage for better performance and reliability.
+          <div className="mt-2 p-2 bg-red-50 border border-red-200 rounded text-xs text-red-800">
+            🚨 PRODUCTION: Vercel Blob Token required. Add BLOB_READ_WRITE_TOKEN to environment variables.
           </div>
         )}
       </div>
 
       {/* Upload Component */}
-      {useBlob ? (
+      {shouldUseBlob ? (
         <ImageUploadBlob
           images={images}
           onImagesChange={onImagesChange}
@@ -172,8 +180,15 @@ export default function ImageUploadWrapper({
         />
       )}
 
+      {/* Diagnostic Panel for Production Issues */}
+      {isProduction && !useBlob && (
+        <div className="mb-4">
+          <UploadDiagnostic />
+        </div>
+      )}
+
       {/* Migration Notice */}
-      {!useBlob && images.length > 0 && (
+      {!shouldUseBlob && images.length > 0 && (
         <div className="mt-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
           <div className="flex items-center gap-2 mb-1">
             <Cloud className="w-4 h-4 text-blue-500" />

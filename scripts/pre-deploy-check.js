@@ -3,6 +3,9 @@
  * Vérifie que tout est prêt pour le déploiement Vercel
  */
 
+// Load environment variables from .env.local
+require('dotenv').config({ path: '.env.local' });
+
 const { execSync } = require('child_process');
 const fs = require('fs');
 const path = require('path');

@@ -185,8 +185,9 @@ export function useImageUpload(options: UseImageUploadOptions = {}): UseImageUpl
       throw new Error(validationError);
     }
 
-    // Check if blob is configured
-    if (validateBeforeUpload && !isConfigured) {
+    // Check if blob is configured (skip in production to show better error)
+    const isProduction = typeof window !== 'undefined' && window.location.hostname !== 'localhost';
+    if (validateBeforeUpload && !isConfigured && !isProduction) {
       const configError = 'Vercel Blob is not configured. Please set BLOB_READ_WRITE_TOKEN.';
       setError(configError);
       onError?.(configError);
