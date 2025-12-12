@@ -38,6 +38,8 @@
     "migrate:blob": "ts-node scripts/migrate-to-blob.ts",
     "migrate:blob:dry-run": "ts-node scripts/migrate-to-blob.ts --dry-run --verbose",
     "generate:icons": "node scripts/generate-icons.js",
+    "pre-deploy": "node scripts/pre-deploy-check.js",
+    "pre-deploy:build": "node scripts/pre-deploy-check.js --build",
     "seed": "echo 'Seeding placeholder - implement as needed'"
   },
   "dependencies": {

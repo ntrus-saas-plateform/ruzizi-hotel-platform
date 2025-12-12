@@ -3,7 +3,7 @@
  * Helper functions for optimal Vercel Blob usage
  */
 
-import { put, del, list, head, copy } from '@vercel/blob';
+import { put, del, list, head, copy, type PutBlobResult } from '@vercel/blob';
 
 export interface BlobMetadata {
   url: string;
@@ -19,7 +19,7 @@ export interface BlobUploadOptions {
   cacheControlMaxAge?: number;
   addRandomSuffix?: boolean;
   multipart?: boolean;
-  access?: 'public' | 'private';
+  access?: 'public';
 }
 
 export interface BlobListOptions {
@@ -33,7 +33,7 @@ export interface BlobListOptions {
  */
 export async function uploadBlob(
   pathname: string,
-  body: Buffer | Uint8Array | string,
+  body: Buffer | string,
   options: BlobUploadOptions = {}
 ): Promise<BlobMetadata> {
   const {
@@ -56,9 +56,9 @@ export async function uploadBlob(
     return {
       url: result.url,
       pathname: result.pathname,
-      size: result.size,
-      contentType: result.contentType || contentType || 'application/octet-stream',
-      uploadedAt: result.uploadedAt,
+      size: 0, // Size not available in PutBlobResult
+      contentType: contentType || 'application/octet-stream',
+      uploadedAt: new Date(), // Current date as fallback
       cacheControl: `max-age=${cacheControlMaxAge}`,
     };
   } catch (error) {
@@ -128,7 +128,7 @@ export async function listBlobs(options: BlobListOptions = {}): Promise<{
       url: blob.url,
       pathname: blob.pathname,
       size: blob.size,
-      contentType: blob.contentType || 'application/octet-stream',
+      contentType: ('contentType' in blob && typeof blob.contentType === 'string') ? blob.contentType : 'application/octet-stream',
       uploadedAt: blob.uploadedAt,
     }));
 
@@ -174,16 +174,16 @@ export async function copyBlob(
 ): Promise<BlobMetadata> {
   try {
     const result = await copy(fromUrl, toPathname, {
-      access: options.access || 'public',
+      access: 'public',
       addRandomSuffix: options.addRandomSuffix || false,
     });
 
     return {
       url: result.url,
       pathname: result.pathname,
-      size: result.size,
-      contentType: result.contentType || 'application/octet-stream',
-      uploadedAt: result.uploadedAt,
+      size: 0, // Size not available in CopyBlobResult
+      contentType: 'application/octet-stream',
+      uploadedAt: new Date(), // Current date as fallback
     };
   } catch (error) {
     console.error('Failed to copy blob:', error);
