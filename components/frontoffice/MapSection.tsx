@@ -47,8 +47,8 @@ export default function MapSection({
       nearbyPlaces: [
         { name: 'Aéroport de Bujumbura', distance: '12 km', icon: '✈️' },
         { name: 'Centre-ville', distance: '2 km', icon: '🏢' },
-        { name: 'Lac Tanganyika', distance: '5 km', icon: '🏖️' },
-        { name: 'Marché central', distance: '3 km', icon: '🛒' },
+        { name: 'Lac Tanganyika', distance: '1-5 km', icon: '🏖️' },
+        //{ name: 'Marché central', distance: '3 km', icon: '🛒' },
       ],
     },
     en: {
@@ -72,7 +72,7 @@ export default function MapSection({
       nearbyPlaces: [
         { name: 'Bujumbura Airport', distance: '12 km', icon: '✈️' },
         { name: 'City Center', distance: '2 km', icon: '🏢' },
-        { name: 'Lake Tanganyika', distance: '5 km', icon: '🏖️' },
+        { name: 'Lake Tanganyika', distance: '1-5 km', icon: '🏖️' },
         { name: 'Central Market', distance: '3 km', icon: '🛒' },
       ],
     },
@@ -86,8 +86,8 @@ export default function MapSection({
     lat: primaryEstablishment.location?.coordinates?.lat || coordinates.lat,
     lng: primaryEstablishment.location?.coordinates?.lng || coordinates.lng,
     name: primaryEstablishment.name || 'Ruzizi Hôtel',
-    address: primaryEstablishment.location?.address ? 
-      `${primaryEstablishment.location.address}, ${primaryEstablishment.location.city}` : 
+    address: primaryEstablishment.location?.address ?
+      `${primaryEstablishment.location.address}, ${primaryEstablishment.location.city}` :
       address,
     city: primaryEstablishment.location?.city?.toLowerCase() || 'bujumbura'
   } : {
@@ -155,7 +155,7 @@ export default function MapSection({
                   {t.contactSubtitle}
                 </p>
               </div>
-              
+
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-6 max-w-4xl mx-auto">
                 {/* Téléphone */}
                 <div className="text-center">
@@ -165,8 +165,8 @@ export default function MapSection({
                   <h4 className="font-semibold text-luxury-cream mb-1 text-sm sm:text-base">
                     {t.phone}
                   </h4>
-                  <a 
-                    href="tel:+25769657554" 
+                  <a
+                    href="tel:+25769657554"
                     className="text-xs sm:text-sm text-luxury-cream/80 hover:text-luxury-cream transition-colors"
                   >
                     +257 69 65 75 54
@@ -181,8 +181,8 @@ export default function MapSection({
                   <h4 className="font-semibold text-luxury-cream mb-1 text-sm sm:text-base">
                     {t.email}
                   </h4>
-                  <a 
-                    href="mailto:contact@ruzizihotel.com" 
+                  <a
+                    href="mailto:contact@ruzizihotel.com"
                     className="text-xs sm:text-sm text-luxury-cream/80 hover:text-luxury-cream transition-colors"
                   >
                     contact@ruzizihotel.com
