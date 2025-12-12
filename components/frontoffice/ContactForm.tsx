@@ -1,9 +1,6 @@
 'use client';
 
-import { Building2, MapPin, Plane, ShoppingCart, Waves } from 'lucide-react';
 import { useState, useEffect } from 'react';
-import SimpleMap from '@/components/maps/SimpleMap';
-import { getNearbyPlaces } from '@/components/maps/LocationUtils';
 
 interface ContactFormProps {
   title?: string;
@@ -61,8 +58,7 @@ export default function ContactForm({
       error: 'Une erreur est survenue. Veuillez réessayer.',
       required: 'Ce champ est requis',
       invalidEmail: 'Adresse email invalide',
-      directions: "Obtenir l'itinéraire",
-      nearby: 'À proximité',
+
       subjects: [
         'Réservation',
         'Information générale',
@@ -96,8 +92,7 @@ export default function ContactForm({
       error: 'An error occurred. Please try again.',
       required: 'This field is required',
       invalidEmail: 'Invalid email address',
-      directions: 'Get Directions',
-      nearby: 'Nearby',
+
       subjects: [
         'Booking',
         'General information',
@@ -117,16 +112,6 @@ export default function ContactForm({
   };
 
   const t = content[language as keyof typeof content];
-  
-  // Obtenir les lieux d'intérêt proches dynamiquement
-  const nearbyPlaces = getNearbyPlaces('bujumbura').map(place => ({
-    ...place,
-    icon: place.name.includes('Aéroport') ? Plane :
-          place.name.includes('Centre') ? Building2 :
-          place.name.includes('Lac') ? Waves :
-          place.name.includes('Marché') ? ShoppingCart :
-          MapPin
-  }));
 
   const handleInputChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
@@ -193,60 +178,22 @@ export default function ContactForm({
       setLoading(false);
     }
   };
-  const coordinates = { lat: -3.3614, lng: 29.3599 };
-  const openGoogleMaps = () => {
-    const url = `https://www.google.com/maps/search/?api=1&query=${coordinates.lat},${coordinates.lng}`;
-    window.open(url, '_blank');
-  };
 
   return (
-    <section className="py-20 bg-[hsl(var(--color-luxury-gold-light))]/8">
+    <section className="py-12 sm:py-16 lg:py-20 bg-[hsl(var(--color-luxury-gold-light))]/8">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Header */}
         {title && (
-          <div className="text-center mb-12">
-            <h2 className="text-4xl font-bold bg-luxury-dark bg-clip-text text-transparent mb-4">
+          <div className="text-center mb-8 sm:mb-12">
+            <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold bg-luxury-dark bg-clip-text text-transparent mb-3 sm:mb-4">
               {title}
             </h2>
-            <p className="text-lg text-luxury-text">{subtitle}</p>
+            <p className="text-base sm:text-lg text-luxury-text px-4 sm:px-0">{subtitle}</p>
           </div>
         )}
-        <div className="grid grid-cols-1 lg:grid-cols-5 gap-8">
-          {/* Map Container */}
-          <div className="lg:col-span-2 space-y-4">
-            <SimpleMap
-              location={{
-                lat: coordinates.lat,
-                lng: coordinates.lng,
-                name: 'Ruzizi Hôtel',
-                address: "Avenue de l'Université, Bujumbura, Burundi",
-                city: 'bujumbura'
-              }}
-              height="384px"
-              showNearbyPlaces={true}
-              className="border border-gray-100"
-            />
-            {/* Nearby Places */}
-            <div className="bg-white rounded-2xl shadow-card-luxury p-6 border border-gray-100">
-              <h3 className="text-xl font-bold text-luxury-dark mb-2">{t.nearby}</h3>
-              <div className="space-y-2">
-                {nearbyPlaces.map((place, index) => (
-                  <div
-                    key={index}
-                    className="flex items-center justify-between p-3 bg-luxury-cream rounded-lg"
-                  >
-                    <div className="flex items-center">
-                      <place.icon className="text-xl mr-3 text-luxury-gold-light" />
-                      <span className="font-medium text-luxury-dark">{place.name}</span>
-                    </div>
-                    <span className="text-sm text-luxury-text font-medium">{place.distance}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-          {/* Form */}
-          <div className="lg:col-span-3 bg-white backdrop-blur-sm rounded-4xl shadow-luxury  border border-white/20 p-8 lg:p-12">
+        {/* Form Container */}
+        <div className="max-w-2xl mx-auto">
+          <div className="bg-white backdrop-blur-sm rounded-2xl sm:rounded-3xl shadow-luxury border border-white/20 p-6 sm:p-8 lg:p-10">
             {/* Success Message */}
             {success && (
               <div className="mb-8 p-6 bg-gradient-to-r from-green-50 to-emerald-100 border border-green-200 rounded-xl shadow-sm">

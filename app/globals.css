@@ -244,3 +244,26 @@
     @apply bg-luxury-gold hover:bg-luxury-gold-light text-white font-semibold px-8 py-3 rounded-xl shadow-luxury transition-all duration-300;
   }
 }
+/* Styles responsifs pour les cartes */
+.responsive-map-height {
+  height: 280px;
+}
+
+@media (min-width: 640px) {
+  .responsive-map-height {
+    height: 350px;
+  }
+}
+
+@media (min-width: 1024px) {
+  .responsive-map-height {
+    height: 450px;
+  }
+}
+
+/* Amélioration de la responsivité pour les petits écrans */
+@media (max-width: 480px) {
+  .responsive-map-height {
+    height: 260px;
+  }
+}

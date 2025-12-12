@@ -114,7 +114,6 @@ export default function EstablishmentsMap({
                   address: `${establishment.location.address}, ${establishment.location.city}`,
                   city: establishment.location.city.toLowerCase()
                 }}
-                height={height}
                 showNearbyPlaces={true}
               />
             </div>
@@ -170,7 +169,6 @@ export default function EstablishmentsMap({
             address: `${selectedEst.location.address}, ${selectedEst.location.city}`,
             city: selectedEst.location.city.toLowerCase()
           }}
-          height={height}
           showNearbyPlaces={true}
         />
       </div>
