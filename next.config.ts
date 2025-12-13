@@ -100,6 +100,19 @@ const nextConfig: NextConfig = {
         port: '',
         pathname: '/**',
       },
+      // Vercel Blob Storage
+      {
+        protocol: 'https',
+        hostname: '*.blob.vercel-storage.com',
+        port: '',
+        pathname: '/**',
+      },
+      {
+        protocol: 'https',
+        hostname: '*.public.blob.vercel-storage.com',
+        port: '',
+        pathname: '/**',
+      },
     ],
 
     // Sécurité supplémentaire
@@ -110,6 +123,28 @@ const nextConfig: NextConfig = {
   // Security headers
   async headers() {
     const headers = [
+      {
+        // Special headers for API routes (more permissive for CORS)
+        source: '/api/(.*)',
+        headers: [
+          {
+            key: 'Cross-Origin-Resource-Policy',
+            value: 'cross-origin',
+          },
+          {
+            key: 'Access-Control-Allow-Origin',
+            value: '*',
+          },
+          {
+            key: 'Access-Control-Allow-Methods',
+            value: 'GET, POST, PUT, DELETE, OPTIONS',
+          },
+          {
+            key: 'Access-Control-Allow-Headers',
+            value: 'Content-Type, Authorization',
+          },
+        ],
+      },
       {
         // Apply to all routes
         source: '/(.*)',
@@ -134,16 +169,16 @@ const nextConfig: NextConfig = {
             key: 'Referrer-Policy',
             value: 'strict-origin-when-cross-origin',
           },
-          // Content Security Policy
+          // Content Security Policy (updated for Vercel Blob)
           {
             key: 'Content-Security-Policy',
             value: [
               "default-src 'self'",
               "script-src 'self' 'unsafe-inline' 'unsafe-eval'",
               "style-src 'self' 'unsafe-inline'",
-              "img-src 'self' data: https:",
+              "img-src 'self' data: https: *.blob.vercel-storage.com *.public.blob.vercel-storage.com",
               "font-src 'self' data:",
-              "connect-src 'self'",
+              "connect-src 'self' *.blob.vercel-storage.com *.public.blob.vercel-storage.com",
               "frame-ancestors 'none'",
               "base-uri 'self'",
               "form-action 'self'",
@@ -154,20 +189,20 @@ const nextConfig: NextConfig = {
             key: 'Permissions-Policy',
             value: 'camera=(), microphone=(), geolocation=(), payment=()',
           },
-          // Cross-Origin Embedder Policy
+          // Cross-Origin Embedder Policy (relaxed for Vercel Blob)
           {
             key: 'Cross-Origin-Embedder-Policy',
-            value: 'require-corp',
+            value: 'credentialless',
           },
           // Cross-Origin Opener Policy
           {
             key: 'Cross-Origin-Opener-Policy',
             value: 'same-origin',
           },
-          // Cross-Origin Resource Policy
+          // Cross-Origin Resource Policy (relaxed for images)
           {
             key: 'Cross-Origin-Resource-Policy',
-            value: 'same-origin',
+            value: 'cross-origin',
           },
         ],
       },
