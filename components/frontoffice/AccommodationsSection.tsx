@@ -82,7 +82,7 @@ export default function AccommodationsSection() {
 
   const fetchData = async () => {
     try {
-      const [accomResponse] = await Promise.all([fetch('/api/public/accommodations?limit=3')]);
+      const [accomResponse] = await Promise.all([fetch('/api/public/accommodations?limit=18')]);
 
       const accomData = await accomResponse.json();
 
