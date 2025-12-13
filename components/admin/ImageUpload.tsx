@@ -57,8 +57,8 @@ export default function ImageUpload({
       // Update progress to show processing
       setUploadProgress(prev => prev.map(p => ({ ...p, status: 'processing', progress: 50 })));
 
-      // Upload files to API
-      const response = await fetch('/api/images/upload', {
+      // Upload files to Vercel Blob API
+      const response = await fetch('/api/images/upload-blob', {
         method: 'POST',
         body: formData,
       });

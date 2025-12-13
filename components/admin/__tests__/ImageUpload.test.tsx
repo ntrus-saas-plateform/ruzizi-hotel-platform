@@ -106,7 +106,7 @@ describe('ImageUpload Component', () => {
 
     // Wait for upload to complete
     await waitFor(() => {
-      expect(global.fetch).toHaveBeenCalledWith('/api/images/upload', {
+      expect(global.fetch).toHaveBeenCalledWith('/api/images/upload-blob', {
         method: 'POST',
         body: expect.any(FormData)
       });
