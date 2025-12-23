@@ -12,8 +12,19 @@ interface HRKPIs {
   averagePerformance: number;
 }
 
+interface PredictiveAlerts {
+  alerts: Array<{
+    type: string;
+    severity: 'high' | 'medium' | 'low';
+    message: string;
+    data?: any;
+  }>;
+  totalAlerts: number;
+}
+
 export default function HRAnalyticsPage() {
   const [kpis, setKpis] = useState<HRKPIs | null>(null);
+  const [predictiveAlerts, setPredictiveAlerts] = useState<PredictiveAlerts | null>(null);
   const [loading, setLoading] = useState(true);
   const [selectedPeriod, setSelectedPeriod] = useState('6');
 
@@ -23,10 +34,19 @@ export default function HRAnalyticsPage() {
 
   const fetchKPIs = async () => {
     try {
-      const response = await fetch('/api/hr/analytics/kpis');
-      if (response.ok) {
-        const data = await response.json();
-        setKpis(data);
+      const [kpisResponse, alertsResponse] = await Promise.all([
+        fetch('/api/hr/analytics/kpis'),
+        fetch('/api/hr/analytics/predictive?type=alerts')
+      ]);
+
+      if (kpisResponse.ok) {
+        const kpisData = await kpisResponse.json();
+        setKpis(kpisData);
+      }
+
+      if (alertsResponse.ok) {
+        const alertsData = await alertsResponse.json();
+        setPredictiveAlerts(alertsData);
       }
     } catch (error) {
       console.error('Erreur:', error);
@@ -56,6 +76,47 @@ export default function HRAnalyticsPage() {
           Tableau de bord des indicateurs de performance RH
         </p>
       </div>
+
+      {/* Predictive Alerts */}
+      {predictiveAlerts && predictiveAlerts.alerts.length > 0 && (
+        <div className="mb-6">
+          <h2 className="text-xl font-bold text-luxury-dark mb-4">Alertes Prédictives</h2>
+          <div className="space-y-3">
+            {predictiveAlerts.alerts.slice(0, 3).map((alert, index) => (
+              <div
+                key={index}
+                className={`p-4 rounded-lg border-l-4 ${
+                  alert.severity === 'high'
+                    ? 'border-red-500 bg-red-50'
+                    : alert.severity === 'medium'
+                      ? 'border-yellow-500 bg-yellow-50'
+                      : 'border-blue-500 bg-blue-50'
+                }`}
+              >
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="font-medium text-gray-900">{alert.message}</p>
+                    <p className="text-sm text-gray-600 mt-1">
+                      Type: {alert.type.replace('_', ' ').toUpperCase()}
+                    </p>
+                  </div>
+                  <span
+                    className={`px-2 py-1 text-xs font-medium rounded-full ${
+                      alert.severity === 'high'
+                        ? 'bg-red-100 text-red-800'
+                        : alert.severity === 'medium'
+                          ? 'bg-yellow-100 text-yellow-800'
+                          : 'bg-blue-100 text-blue-800'
+                    }`}
+                  >
+                    {alert.severity.toUpperCase()}
+                  </span>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* KPIs Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
@@ -172,13 +233,26 @@ export default function HRAnalyticsPage() {
       </div>
 
       {/* Actions */}
-      <div className="mt-6 flex justify-end space-x-4">
-        <button className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition">
-          Exporter en PDF
-        </button>
-        <button className="px-4 py-2 bg-luxury-gold text-luxury-cream rounded-lg  transition">
-          Générer Rapport Complet
-        </button>
+      <div className="mt-6 flex justify-between items-center">
+        <div className="flex space-x-4">
+          <button className="px-4 py-2 border border-blue-300 text-blue-600 rounded-lg hover:bg-blue-50 transition">
+            Analyse Turnover
+          </button>
+          <button className="px-4 py-2 border border-green-300 text-green-600 rounded-lg hover:bg-green-50 transition">
+            Prévision Recrutement
+          </button>
+          <button className="px-4 py-2 border border-purple-300 text-purple-600 rounded-lg hover:bg-purple-50 transition">
+            Projection Coûts
+          </button>
+        </div>
+        <div className="flex space-x-4">
+          <button className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition">
+            Exporter en PDF
+          </button>
+          <button className="px-4 py-2 bg-luxury-gold text-luxury-cream rounded-lg  transition">
+            Générer Rapport Complet
+          </button>
+        </div>
       </div>
     </div>
   );

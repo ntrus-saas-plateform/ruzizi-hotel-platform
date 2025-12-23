@@ -5,8 +5,16 @@ import User from '@/models/User.model';
 
 export async function GET(request: NextRequest) {
   try {
-    // Récupérer le token depuis les cookies
-    const token = request.cookies.get('auth-token')?.value;
+    // Récupérer le token depuis les cookies ou le header Authorization
+    let token = request.cookies.get('auth-token')?.value;
+
+    // Si pas de token dans les cookies, vérifier le header Authorization
+    if (!token) {
+      const authHeader = request.headers.get('authorization');
+      if (authHeader?.startsWith('Bearer ')) {
+        token = authHeader.substring(7); // Remove 'Bearer ' prefix
+      }
+    }
 
     if (!token) {
       return NextResponse.json(

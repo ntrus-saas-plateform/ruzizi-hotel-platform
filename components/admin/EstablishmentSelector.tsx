@@ -29,44 +29,9 @@ export default function EstablishmentSelector({
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // Debug: Log received props
-  console.log('🔍 EstablishmentSelector props:', {
-    userRole,
-    userEstablishmentId,
-    userEstablishmentIdType: typeof userEstablishmentId
-  });
-
-  // State for fresh user data from API
-  const [freshUserData, setFreshUserData] = useState<{role?: UserRole, establishmentId?: string}>({});
-
-  // Fetch fresh user data from API
-  useEffect(() => {
-    fetch('/api/auth/me')
-      .then(res => res.json())
-      .then(data => {
-        if (data.success && data.user) {
-          console.log('🔄 Fresh user data from API:', data.user);
-          setFreshUserData({
-            role: data.user.role,
-            establishmentId: data.user.establishmentId
-          });
-        }
-      })
-      .catch(err => {
-        console.error('Failed to fetch fresh user data:', err);
-      });
-  }, []);
-
-  // Use fresh data if available, fallback to props
-  const actualUserRole = freshUserData.role || userRole;
-  const actualUserEstablishmentId = freshUserData.establishmentId || userEstablishmentId;
-
-  // Debug: Log actual data being used
-  console.log('🎯 Actual data being used:', {
-    actualUserRole,
-    actualUserEstablishmentId,
-    freshUserData
-  });
+  // Use props directly
+  const actualUserRole = userRole;
+  const actualUserEstablishmentId = userEstablishmentId;
 
   // Determine if user is admin (can access all establishments)
   const isAdmin = actualUserRole === 'root' || actualUserRole === 'super_admin';
@@ -76,7 +41,7 @@ export default function EstablishmentSelector({
 
   useEffect(() => {
     fetchEstablishments();
-  }, [actualUserRole, actualUserEstablishmentId]); // Re-fetch when user data changes
+  }, [actualUserRole, actualUserEstablishmentId]);
 
   useEffect(() => {
     // Auto-select user's establishment for non-admin users
@@ -90,7 +55,9 @@ export default function EstablishmentSelector({
       setLoading(true);
       setError(null);
 
-      const response = await fetch('/api/establishments');
+      const response = await fetch('/api/establishments', {
+        credentials: 'include', // Include cookies for authentication
+      });
       
       if (!response.ok) {
         throw new Error('Failed to fetch establishments');

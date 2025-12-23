@@ -137,6 +137,61 @@ export default function PayrollPage() {
     }
   };
 
+  const handleDownloadSlip = async (id: string) => {
+    try {
+      const response = await fetch(`/api/payroll/${id}/pdf`);
+      if (response.ok) {
+        const blob = await response.blob();
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `bulletin-paie-${id}.pdf`;
+        document.body.appendChild(a);
+        a.click();
+        window.URL.revokeObjectURL(url);
+        document.body.removeChild(a);
+      } else {
+        alert('Erreur lors du téléchargement du bulletin');
+      }
+    } catch (err) {
+      console.error('Error downloading payroll slip:', err);
+      alert('Erreur de téléchargement');
+    }
+  };
+
+  const handleDownloadReport = async (type: 'monthly' | 'annual') => {
+    try {
+      const params = new URLSearchParams({
+        type,
+        year: filters.year,
+      });
+      if (type === 'monthly' && filters.month) {
+        params.append('month', filters.month);
+      }
+
+      const response = await fetch(`/api/payroll/report/pdf?${params}`);
+      if (response.ok) {
+        const blob = await response.blob();
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        const filename = type === 'monthly'
+          ? `rapport-paie-${filters.year}-${filters.month}.pdf`
+          : `rapport-paie-annuel-${filters.year}.pdf`;
+        a.download = filename;
+        document.body.appendChild(a);
+        a.click();
+        window.URL.revokeObjectURL(url);
+        document.body.removeChild(a);
+      } else {
+        alert('Erreur lors du téléchargement du rapport');
+      }
+    } catch (err) {
+      console.error('Error downloading payroll report:', err);
+      alert('Erreur de téléchargement');
+    }
+  };
+
   const getStatusBadge = (status: string) => {
     const styles = {
       draft: 'bg-gray-100 text-gray-800',
@@ -155,12 +210,26 @@ export default function PayrollPage() {
             <h1 className="text-3xl font-bold text-luxury-dark">Gestion de la Paie</h1>
             <p className="text-luxury-text mt-2">Gérer les salaires des employés</p>
           </div>
-          <button
-            onClick={handleGenerate}
-            className="px-4 py-2 bg-luxury-gold text-luxury-cream rounded-md "
-          >
-            Générer la paie
-          </button>
+          <div className="flex gap-3">
+            <button
+              onClick={handleGenerate}
+              className="px-4 py-2 bg-luxury-gold text-luxury-cream rounded-md hover:bg-luxury-gold/90"
+            >
+              Générer la paie
+            </button>
+            <button
+              onClick={() => handleDownloadReport('monthly')}
+              className="px-4 py-2 border border-luxury-gold text-luxury-gold rounded-md hover:bg-luxury-gold hover:text-luxury-cream"
+            >
+              Rapport Mensuel PDF
+            </button>
+            <button
+              onClick={() => handleDownloadReport('annual')}
+              className="px-4 py-2 border border-luxury-gold text-luxury-gold rounded-md hover:bg-luxury-gold hover:text-luxury-cream"
+            >
+              Rapport Annuel PDF
+            </button>
+          </div>
         </div>
 
         {summary && (
@@ -306,22 +375,35 @@ export default function PayrollPage() {
                         </span>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm">
-                        {payroll.status === 'draft' && (
-                          <button
-                            onClick={() => handleApprove(payroll.id)}
-                            className="text-luxury-gold hover:text-blue-900 mr-2"
-                          >
-                            Approuver
-                          </button>
-                        )}
-                        {payroll.status === 'approved' && (
-                          <button
-                            onClick={() => handlePay(payroll.id)}
-                            className="text-green-600 hover:text-green-900"
-                          >
-                            Marquer payé
-                          </button>
-                        )}
+                        <div className="flex items-center gap-2">
+                          {payroll.status === 'draft' && (
+                            <button
+                              onClick={() => handleApprove(payroll.id)}
+                              className="text-luxury-gold hover:text-blue-900"
+                            >
+                              Approuver
+                            </button>
+                          )}
+                          {payroll.status === 'approved' && (
+                            <button
+                              onClick={() => handlePay(payroll.id)}
+                              className="text-green-600 hover:text-green-900"
+                            >
+                              Marquer payé
+                            </button>
+                          )}
+                          {(payroll.status === 'approved' || payroll.status === 'paid') && (
+                            <button
+                              onClick={() => handleDownloadSlip(payroll.id)}
+                              className="text-blue-600 hover:text-blue-900"
+                              title="Télécharger le bulletin PDF"
+                            >
+                              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                              </svg>
+                            </button>
+                          )}
+                        </div>
                       </td>
                     </tr>
                   ))}
