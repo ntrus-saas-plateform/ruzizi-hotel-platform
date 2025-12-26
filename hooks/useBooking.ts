@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { apiClient } from '@/lib/api/client';
 import type { CompleteClientInfo, GuestInfo } from '@/types/guest.types';
 import type { AccommodationResponse } from '@/types/accommodation.types';
 
@@ -45,36 +46,24 @@ export function useBooking(): UseBookingReturn {
     setSuccess(false);
 
     try {
-      const response = await fetch('/api/public/bookings', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          establishmentId: data.establishmentId,
-          accommodationId: data.accommodationId,
-          checkInDate: data.checkInDate,
-          checkOutDate: data.checkOutDate,
-          numberOfNights: data.numberOfNights,
-          arrivalTime: data.arrivalTime,
-          numberOfGuests: data.numberOfGuests,
-          mainClient: data.mainClient,
-          guests: data.guests,
-          specialRequests: data.specialRequests,
-          totalAmount: data.totalAmount,
-          pricingDetails: data.pricingDetails,
-          status: 'pending'
-        }),
-      });
-
-      const result = await response.json();
-
-      if (!response.ok) {
-        throw new Error(result.error?.message || 'Erreur lors de la réservation');
-      }
+      const result = await apiClient.post('/api/public/bookings', {
+        establishmentId: data.establishmentId,
+        accommodationId: data.accommodationId,
+        checkInDate: data.checkInDate,
+        checkOutDate: data.checkOutDate,
+        numberOfNights: data.numberOfNights,
+        arrivalTime: data.arrivalTime,
+        numberOfGuests: data.numberOfGuests,
+        mainClient: data.mainClient,
+        guests: data.guests,
+        specialRequests: data.specialRequests,
+        totalAmount: data.totalAmount,
+        pricingDetails: data.pricingDetails,
+        status: 'pending'
+      }, { skipAuth: true }); // Public endpoint doesn't need auth
 
       setSuccess(true);
-      return result.data;
+      return (result as any).data || result;
 
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Une erreur est survenue';
@@ -118,17 +107,12 @@ export function useBookingSearch(): UseBookingSearchReturn {
     setBooking(null);
 
     try {
-      const response = await fetch(
-        `/api/public/bookings/by-code?code=${encodeURIComponent(code)}&email=${encodeURIComponent(email)}`
+      const result = await apiClient.get(
+        `/api/public/bookings/by-code?code=${encodeURIComponent(code)}&email=${encodeURIComponent(email)}`,
+        { skipAuth: true } // Public endpoint doesn't need auth
       );
 
-      const result = await response.json();
-
-      if (!response.ok) {
-        throw new Error(result.error?.message || 'Erreur lors de la recherche');
-      }
-
-      setBooking(result.data);
+      setBooking((result as any).data || result);
 
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Une erreur est survenue';

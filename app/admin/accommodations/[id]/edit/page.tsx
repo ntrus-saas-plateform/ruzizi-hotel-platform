@@ -239,8 +239,6 @@ export default function EditAccommodationPage() {
                   value={formData.establishmentId}
                   onChange={(establishmentId) => setFormData({ ...formData, establishmentId })}
                   required={true}
-                  userRole={user?.role as any}
-                  userEstablishmentId={user?.establishmentId}
                   label="Établissement"
                 />
 

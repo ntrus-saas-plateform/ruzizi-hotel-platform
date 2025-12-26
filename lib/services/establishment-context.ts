@@ -11,15 +11,14 @@ export class EstablishmentServiceContext {
     private role: UserRole,
     private establishmentId?: string
   ) {
-    // Validate that non-admin users have an establishmentId
-    if (!this.canAccessAll() && !this.establishmentId) {
-      throw new Error('Non-admin users must have an establishmentId');
-    }
+    // Note: establishmentId can be undefined for non-admin users in some contexts
+    // (e.g., when listing establishments to assign to a user)
   }
 
   /**
    * Apply establishment filter to a query filter object
-   * For non-admin users, adds establishmentId to the filter
+   * For non-admin users with establishmentId, adds establishmentId to the filter
+   * For non-admin users without establishmentId, returns filter unchanged (can see all)
    * For admin users, returns the filter unchanged (unless they want to filter by establishment)
    */
   applyFilter<T extends Record<string, any>>(baseFilter: T): T & { establishmentId?: string | Types.ObjectId } {
@@ -28,11 +27,17 @@ export class EstablishmentServiceContext {
       return baseFilter;
     }
 
-    // For non-admin users, enforce establishment filter
-    return {
-      ...baseFilter,
-      establishmentId: this.establishmentId,
-    };
+    // For non-admin users with establishmentId, enforce establishment filter
+    if (this.establishmentId) {
+      return {
+        ...baseFilter,
+        establishmentId: this.establishmentId,
+      };
+    }
+
+    // For non-admin users without establishmentId, return filter unchanged
+    // (they can see all establishments to select one)
+    return baseFilter;
   }
 
   /**
@@ -45,6 +50,12 @@ export class EstablishmentServiceContext {
   ): Promise<boolean> {
     // Admins can access everything
     if (this.canAccessAll()) {
+      return true;
+    }
+
+    // If user has no establishmentId, they can access all resources
+    // (useful when assigning establishments to users)
+    if (!this.establishmentId) {
       return true;
     }
 

@@ -148,8 +148,6 @@ export default function CreateBookingPage() {
                         setSelectedAccommodation(null);
                       }}
                       required
-                      userRole={user?.role}
-                      userEstablishmentId={user?.establishmentId}
                       label="Établissement"
                     />
 

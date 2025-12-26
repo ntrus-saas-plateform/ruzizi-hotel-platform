@@ -192,8 +192,6 @@ export default function CreateUserPage() {
                             value={formData.establishmentId}
                             onChange={(establishmentId) => setFormData({ ...formData, establishmentId })}
                             required={formData.role !== 'super_admin' && formData.role !== 'root'}
-                            userRole={user?.role}
-                            userEstablishmentId={user?.establishmentId}
                             label="Établissement"
                         />
                         <p className="text-xs text-gray-500 mt-1">

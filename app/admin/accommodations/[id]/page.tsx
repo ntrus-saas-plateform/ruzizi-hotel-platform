@@ -26,9 +26,9 @@ export default function AccommodationDetailsPage() {
 
   const fetchAccommodation = async () => {
     try {
-      const { apiClient } = await import('@/lib/utils/api-client');
-      const data = await apiClient.get(`/api/accommodations/${id}`);
-      setAccommodation(data.data);
+      const { apiClient } = await import('@/lib/api/client');
+      const data = await apiClient.get(`/api/accommodations/${id}`) as any;
+      setAccommodation(data.data || data);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Erreur inconnue');
     } finally {
@@ -42,7 +42,7 @@ export default function AccommodationDetailsPage() {
     }
 
     try {
-      const { apiClient } = await import('@/lib/utils/api-client');
+      const { apiClient } = await import('@/lib/api/client');
       await apiClient.delete(`/api/accommodations/${id}`);
       router.push('/admin/accommodations');
     } catch (err) {

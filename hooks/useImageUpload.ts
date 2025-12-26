@@ -5,6 +5,7 @@
  */
 
 import { useState, useCallback, useEffect } from 'react';
+import { apiClient } from '@/lib/api/client';
 
 interface UploadResult {
   url: string;
@@ -79,8 +80,7 @@ export function useImageUpload(options: UseImageUploadOptions = {}): UseImageUpl
   useEffect(() => {
     async function checkConfiguration() {
       try {
-        const response = await fetch('/api/images/upload-blob');
-        const data = await response.json();
+        const data = await apiClient.get('/api/images/upload-blob') as any;
         setIsConfigured(data.success && data.data?.blobConfigured);
       } catch (error) {
         setIsConfigured(false);
@@ -91,8 +91,7 @@ export function useImageUpload(options: UseImageUploadOptions = {}): UseImageUpl
 
   const checkBlobExists = useCallback(async (url: string): Promise<boolean> => {
     try {
-      const response = await fetch(`/api/images/blob-info?action=check&url=${encodeURIComponent(url)}`);
-      const data = await response.json();
+      const data = await apiClient.get(`/api/images/blob-info?action=check&url=${encodeURIComponent(url)}`) as any;
       return data.success && data.data?.exists;
     } catch (error) {
       console.error('Failed to check blob existence:', error);
@@ -102,8 +101,7 @@ export function useImageUpload(options: UseImageUploadOptions = {}): UseImageUpl
 
   const getBlobInfo = useCallback(async (url: string) => {
     try {
-      const response = await fetch(`/api/images/blob-info?action=check&url=${encodeURIComponent(url)}`);
-      const data = await response.json();
+      const data = await apiClient.get(`/api/images/blob-info?action=check&url=${encodeURIComponent(url)}`) as any;
       return data.success ? data.data : null;
     } catch (error) {
       console.error('Failed to get blob info:', error);
@@ -148,12 +146,12 @@ export function useImageUpload(options: UseImageUploadOptions = {}): UseImageUpl
       }
 
       // Upload with progress tracking
-      const response = await fetch('/api/images/upload-blob', {
+      const data: UploadResponse = await apiClient.request('/api/images/upload-blob', {
         method: 'POST',
         body: formData,
+        // Don't set Content-Type header for FormData - let browser set it with boundary
+        headers: {},
       });
-
-      const data: UploadResponse = await response.json();
 
       if (!data.success) {
         // Use the first error from errors array, or a generic message
@@ -243,11 +241,7 @@ export function useImageUpload(options: UseImageUploadOptions = {}): UseImageUpl
       const searchParams = new URLSearchParams();
       urls.forEach(url => searchParams.append('url', url));
 
-      const response = await fetch(`/api/images/upload-blob?${searchParams.toString()}`, {
-        method: 'DELETE',
-      });
-
-      const data = await response.json();
+      const data = await apiClient.delete(`/api/images/upload-blob?${searchParams.toString()}`) as any;
       return data.success;
 
     } catch (err) {

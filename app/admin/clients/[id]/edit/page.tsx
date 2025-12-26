@@ -166,8 +166,6 @@ export default function EditClientPage() {
             value={formData.establishmentId}
             onChange={(establishmentId) => setFormData({ ...formData, establishmentId })}
             required
-            userRole={user?.role}
-            userEstablishmentId={user?.establishmentId}
             label="Établissement"
           />
         </div>

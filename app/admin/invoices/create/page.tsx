@@ -229,8 +229,6 @@ export default function CreateInvoicePage() {
                   setFormData(prev => ({ ...prev, bookingId: '' }));
                 }}
                 required
-                userRole={user?.role}
-                userEstablishmentId={user?.establishmentId}
                 label="Établissement"
               />
 

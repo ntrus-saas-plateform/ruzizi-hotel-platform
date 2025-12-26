@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { apiClient } from '@/lib/utils/api-client';
+import { apiClient } from '@/lib/api/client';
 import ImageUpload from '@/components/admin/ImageUpload';
 import EstablishmentSelector from '@/components/admin/EstablishmentSelector';
 import { useAuth } from '@/lib/auth/AuthContext';
@@ -179,8 +179,6 @@ export default function CreateAccommodationPage() {
                   value={formData.establishmentId}
                   onChange={handleEstablishmentChange}
                   required={true}
-                  userRole={user?.role as any}
-                  userEstablishmentId={user?.establishmentId}
                   label="Établissement"
                 />
 

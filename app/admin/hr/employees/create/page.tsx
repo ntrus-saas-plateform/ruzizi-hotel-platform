@@ -293,8 +293,6 @@ export default function CreateEmployeePage() {
                                 value={formData.establishmentId}
                                 onChange={(establishmentId) => setFormData({ ...formData, establishmentId })}
                                 required={true}
-                                userRole={user?.role}
-                                userEstablishmentId={user?.establishmentId}
                                 label="Établissement"
                             />
                         </div>
