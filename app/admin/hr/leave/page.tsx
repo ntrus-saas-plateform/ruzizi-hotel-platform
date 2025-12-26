@@ -157,6 +157,25 @@ export default function LeavePage() {
           </button>
         </div>
 
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+          <div className="bg-white rounded-lg shadow p-4">
+            <p className="text-sm text-luxury-text">Total demandes</p>
+            <p className="mt-1 text-2xl font-bold text-luxury-dark">{leaves.length}</p>
+          </div>
+          <div className="bg-white rounded-lg shadow p-4">
+            <p className="text-sm text-luxury-text">En attente</p>
+            <p className="mt-1 text-2xl font-bold text-amber-600">
+              {leaves.filter((l) => l.status === 'pending').length}
+            </p>
+          </div>
+          <div className="bg-white rounded-lg shadow p-4">
+            <p className="text-sm text-luxury-text">Approuvées</p>
+            <p className="mt-1 text-2xl font-bold text-green-600">
+              {leaves.filter((l) => l.status === 'approved').length}
+            </p>
+          </div>
+        </div>
+
         {showForm && (
           <div className="bg-white rounded-lg shadow p-6 mb-6">
             <h2 className="text-xl font-semibold mb-4">Nouvelle demande de congé</h2>

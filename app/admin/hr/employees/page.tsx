@@ -83,6 +83,25 @@ export default function EmployeesPage() {
           </button>
         </div>
 
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+          <div className="bg-white rounded-lg shadow p-4">
+            <p className="text-sm text-luxury-text">Total employés</p>
+            <p className="mt-1 text-2xl font-bold text-luxury-dark">{employees.length}</p>
+          </div>
+          <div className="bg-white rounded-lg shadow p-4">
+            <p className="text-sm text-luxury-text">Employés actifs</p>
+            <p className="mt-1 text-2xl font-bold text-green-600">
+              {employees.filter((e) => e.employmentInfo.status === 'active').length}
+            </p>
+          </div>
+          <div className="bg-white rounded-lg shadow p-4">
+            <p className="text-sm text-luxury-text">Inactifs / Terminés</p>
+            <p className="mt-1 text-2xl font-bold text-amber-600">
+              {employees.filter((e) => e.employmentInfo.status !== 'active').length}
+            </p>
+          </div>
+        </div>
+
         <div className="bg-white rounded-lg shadow p-6 mb-6">
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
             <input

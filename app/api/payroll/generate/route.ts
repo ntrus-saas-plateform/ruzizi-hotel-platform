@@ -1,75 +1,36 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { connectDB } from '@/lib/db/connection';
-import { EmployeeModel } from '@/models/Employee.model';
+import { NextRequest } from 'next/server';
+import { PayrollService } from '@/services/Payroll.service';
+import { requireAuth, createErrorResponse, createSuccessResponse } from '@/lib/auth/middleware';
 
 export async function POST(request: NextRequest) {
-  try {
-    console.log('🔍 Payroll generate API called');
-    
-    const body = await request.json();
-    console.log('📝 Request body:', body);
-    
-    const { year, month, establishmentId } = body;
+  return requireAuth(async () => {
+    try {
+      const body = await request.json();
+      const { year, month, establishmentId } = body as {
+        year?: number;
+        month?: number;
+        establishmentId?: string;
+      };
 
-    if (!year || !month) {
-      console.log('❌ Missing year or month');
-      return NextResponse.json(
-        { success: false, error: { message: 'Year and month are required' } },
-        { status: 400 }
-      );
-    }
-
-    console.log('✅ Basic validation passed');
-    
-    // Connect to database
-    await connectDB();
-    console.log('🔗 Database connected');
-
-    // Find active employees
-    const query: any = { 'employmentInfo.status': 'active' };
-    
-    // If establishmentId is provided, filter by establishment
-    if (establishmentId) {
-      query['employmentInfo.establishmentId'] = establishmentId;
-    }
-
-    console.log('🔍 Searching employees with query:', query);
-    const employees = await EmployeeModel.find(query);
-    console.log(`👥 Found ${employees.length} active employees`);
-
-    // For now, just return the employee information without creating payroll records
-    const employeeInfo = employees.map(emp => ({
-      id: emp._id,
-      name: `${emp.personalInfo.firstName} ${emp.personalInfo.lastName}`,
-      employeeNumber: emp.employmentInfo.employeeNumber,
-      position: emp.employmentInfo.position,
-      salary: emp.employmentInfo.salary
-    }));
-
-    console.log('👤 Employee details:', employeeInfo);
-    
-    return NextResponse.json({
-      success: true,
-      data: {
-        count: employees.length,
-        employees: employeeInfo,
-        message: `Found ${employees.length} active employees ready for payroll generation`
+      if (!year || !month) {
+        return createErrorResponse('VALIDATION_ERROR', 'Year and month are required', 400);
       }
-    });
 
-  } catch (error: any) {
-    console.error('💥 Error in payroll generate API:', error);
-    console.error('Stack trace:', error.stack);
-    
-    return NextResponse.json(
-      { 
-        success: false, 
-        error: { 
-          message: error.message || 'An unexpected error occurred',
-          details: error.stack
-        } 
-      },
-      { status: 500 }
-    );
-  }
+      // Génère la paie pour tous les employés actifs sur la période (année + mois)
+      // Les enregistrements sont créés avec le statut "pending" dans PayrollService.generateForAllEmployees,
+      // ce qui les place automatiquement dans la vue "en attente" jusqu'à approbation / paiement.
+      const payrolls = await PayrollService.generateForAllEmployees(year, month, establishmentId);
+
+      return createSuccessResponse(
+        {
+          count: payrolls.length,
+          payrolls,
+        },
+        `Payroll generated for ${payrolls.length} employees for ${month}/${year}`
+      );
+    } catch (error: any) {
+      console.error('💥 Error in payroll generate API:', error);
+      return createErrorResponse('SERVER_ERROR', error.message || 'An unexpected error occurred', 500);
+    }
+  })(request);
 }

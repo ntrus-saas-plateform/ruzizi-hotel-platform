@@ -1,6 +1,17 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import {
+  ResponsiveContainer,
+  LineChart,
+  Line,
+  CartesianGrid,
+  XAxis,
+  YAxis,
+  Tooltip,
+  BarChart,
+  Bar,
+} from 'recharts';
 
 interface HRKPIs {
   totalEmployees: number;
@@ -27,16 +38,43 @@ export default function HRAnalyticsPage() {
   const [predictiveAlerts, setPredictiveAlerts] = useState<PredictiveAlerts | null>(null);
   const [loading, setLoading] = useState(true);
   const [selectedPeriod, setSelectedPeriod] = useState('6');
+  const [salaryCost, setSalaryCost] = useState<
+    | {
+        costByMonth: {
+          _id: { year: number; month: number };
+          totalGross: number;
+          totalNet: number;
+          totalDeductions: number;
+          employeeCount: number;
+        }[];
+      }
+    | null
+  >(null);
+  const [turnover, setTurnover] = useState<
+    | {
+        hired: number;
+        left: number;
+        averageHeadcount: number;
+        turnoverRate: number;
+        turnoverByMonth: {
+          _id: { year: number; month: number; type: 'hired' | 'left' };
+          count: number;
+        }[];
+      }
+    | null
+  >(null);
 
   useEffect(() => {
-    fetchKPIs();
+    fetchAnalytics();
   }, []);
 
-  const fetchKPIs = async () => {
+  const fetchAnalytics = async () => {
     try {
-      const [kpisResponse, alertsResponse] = await Promise.all([
+      const [kpisResponse, alertsResponse, salaryCostResponse, turnoverResponse] = await Promise.all([
         fetch('/api/hr/analytics/kpis'),
-        fetch('/api/hr/analytics/predictive?type=alerts')
+        fetch('/api/hr/analytics/predictive?type=alerts'),
+        fetch('/api/hr/analytics/salary-cost?months=6'),
+        fetch('/api/hr/analytics/turnover?months=6'),
       ]);
 
       if (kpisResponse.ok) {
@@ -48,12 +86,62 @@ export default function HRAnalyticsPage() {
         const alertsData = await alertsResponse.json();
         setPredictiveAlerts(alertsData);
       }
+
+      if (salaryCostResponse.ok) {
+        const salaryData = await salaryCostResponse.json();
+        setSalaryCost(salaryData);
+      }
+
+      if (turnoverResponse.ok) {
+        const turnoverData = await turnoverResponse.json();
+        setTurnover(turnoverData);
+      }
     } catch (error) {
       console.error('Erreur:', error);
     } finally {
       setLoading(false);
     }
   };
+
+  const monthLabels = ['Jan', 'Fév', 'Mar', 'Avr', 'Mai', 'Juin', 'Juil', 'Août', 'Sep', 'Oct', 'Nov', 'Déc'];
+
+  const payrollTrendData = (salaryCost?.costByMonth || []).map((item) => {
+    const label = `${monthLabels[item._id.month - 1] ?? item._id.month}/${String(item._id.year).slice(2)}`;
+    return {
+      month: label,
+      cost: item.totalNet,
+    };
+  });
+
+  const turnoverTrendData = (() => {
+    if (!turnover || !turnover.turnoverByMonth) return [];
+
+    const avgHeadcount = turnover.averageHeadcount || 0;
+    const grouped: Record<string, { month: string; movements: number; rate: number }> = {};
+
+    for (const entry of turnover.turnoverByMonth) {
+      const labelKey = `${entry._id.year}-${entry._id.month}`;
+      if (!grouped[labelKey]) {
+        grouped[labelKey] = {
+          month: `${monthLabels[entry._id.month - 1] ?? entry._id.month}/${String(entry._id.year).slice(2)}`,
+          movements: 0,
+          rate: 0,
+        };
+      }
+      grouped[labelKey].movements += entry.count;
+    }
+
+    // Convert movements to a simple monthly turnover % based on average headcount
+    Object.values(grouped).forEach((item) => {
+      if (avgHeadcount > 0) {
+        item.rate = (item.movements / avgHeadcount) * 100;
+      } else {
+        item.rate = 0;
+      }
+    });
+
+    return Object.values(grouped);
+  })();
 
   if (loading) {
     return (
@@ -199,18 +287,61 @@ export default function HRAnalyticsPage() {
           <h2 className="text-xl font-bold text-luxury-dark  mb-4">
             Évolution des Coûts Salariaux
           </h2>
-          <div className="h-64 flex items-center justify-center text-gray-500 ">
-            Graphique à implémenter avec une bibliothèque de charts
+          <div className="h-64">
+            <ResponsiveContainer width="100%" height="100%">
+              <LineChart data={payrollTrendData} margin={{ top: 10, right: 20, left: 0, bottom: 0 }}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#E5E7EB" />
+                <XAxis dataKey="month" tick={{ fontSize: 12 }} />
+                <YAxis tickFormatter={(value) => `${(value / 1_000_000).toFixed(1)}M`} tick={{ fontSize: 12 }} />
+                <Tooltip
+                  formatter={(value: number | undefined) =>
+                    value === undefined ? ['N/A', 'Coût salarial'] : [`${value.toLocaleString()} BIF`, 'Coût salarial']
+                  }
+                  labelFormatter={(label) => `Mois : ${label}`}
+                />
+                <Line type="monotone" dataKey="cost" stroke="#B45309" strokeWidth={2} dot={{ r: 3 }} />
+              </LineChart>
+            </ResponsiveContainer>
           </div>
         </div>
 
         <div className="bg-white  rounded-lg shadow p-6">
-          <h2 className="text-xl font-bold text-luxury-dark  mb-4">
-            Taux de Turnover
-          </h2>
-          <div className="h-64 flex items-center justify-center text-gray-500 ">
-            Graphique à implémenter avec une bibliothèque de charts
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-xl font-bold text-luxury-dark ">Taux de Turnover</h2>
+            <select
+              value={selectedPeriod}
+              onChange={(e) => setSelectedPeriod(e.target.value)}
+              className="px-2 py-1 text-sm border border-gray-200 rounded-md bg-gray-50"
+            >
+              <option value="3">3 derniers mois</option>
+              <option value="6">6 derniers mois</option>
+              <option value="12">12 derniers mois</option>
+            </select>
           </div>
+          <div className="h-64">
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={turnoverTrendData} margin={{ top: 10, right: 20, left: 0, bottom: 0 }}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#E5E7EB" />
+                <XAxis dataKey="month" tick={{ fontSize: 12 }} />
+                <YAxis tickFormatter={(value) => `${value}%`} tick={{ fontSize: 12 }} />
+                <Tooltip
+                  formatter={(value: number | undefined) =>
+                    value === undefined ? ['N/A', 'Taux de turnover'] : [`${value.toFixed(1)}%`, 'Taux de turnover']
+                  }
+                  labelFormatter={(label) => `Mois : ${label}`}
+                />
+                <Bar dataKey="rate" fill="#047857" radius={[4, 4, 0, 0]} />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+          {turnover && (
+            <p className="mt-3 text-sm text-gray-600">
+              Taux de turnover global sur la période :
+              <span className="font-semibold text-luxury-dark ml-1">
+                {turnover.turnoverRate.toFixed(1)}%
+              </span>
+            </p>
+          )}
         </div>
 
         <div className="bg-white  rounded-lg shadow p-6">

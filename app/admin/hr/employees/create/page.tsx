@@ -31,6 +31,10 @@ export default function CreateEmployeePage() {
         contractType: 'permanent' as 'permanent' | 'temporary' | 'contract',
         salary: '',
         status: 'active' as 'active' | 'inactive' | 'terminated',
+        // Emergency contact
+        emergencyContactName: '',
+        emergencyContactRelationship: '',
+        emergencyContactPhone: '',
     });
 
     const handleSubmit = async (e: React.FormEvent) => {
@@ -76,6 +80,11 @@ export default function CreateEmployeePage() {
                     contractType: formData.contractType,
                     salary: parseFloat(formData.salary),
                     status: formData.status,
+                    emergencyContact: {
+                        name: formData.emergencyContactName,
+                        relationship: formData.emergencyContactRelationship,
+                        phone: formData.emergencyContactPhone,
+                    },
                 },
             };
 
@@ -355,6 +364,51 @@ export default function CreateEmployeePage() {
                                 <option value="inactive">Inactif</option>
                                 <option value="terminated">Terminé</option>
                             </select>
+                        </div>
+                    </div>
+                </div>
+
+                {/* Emergency Contact Section */}
+                <div>
+                    <h2 className="text-xl font-semibold text-gray-800 mb-4 border-b pb-2">
+                        Contact d'urgence
+                    </h2>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                        <div>
+                            <label className="block text-sm font-semibold text-gray-700 mb-2">
+                                Nom du contact *
+                            </label>
+                            <input
+                                type="text"
+                                value={formData.emergencyContactName}
+                                onChange={(e) => setFormData({ ...formData, emergencyContactName: e.target.value })}
+                                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-luxury-gold focus:border-luxury-gold"
+                                required
+                            />
+                        </div>
+                        <div>
+                            <label className="block text-sm font-semibold text-gray-700 mb-2">
+                                Relation *
+                            </label>
+                            <input
+                                type="text"
+                                value={formData.emergencyContactRelationship}
+                                onChange={(e) => setFormData({ ...formData, emergencyContactRelationship: e.target.value })}
+                                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-luxury-gold focus:border-luxury-gold"
+                                required
+                            />
+                        </div>
+                        <div>
+                            <label className="block text-sm font-semibold text-gray-700 mb-2">
+                                Téléphone du contact *
+                            </label>
+                            <input
+                                type="tel"
+                                value={formData.emergencyContactPhone}
+                                onChange={(e) => setFormData({ ...formData, emergencyContactPhone: e.target.value })}
+                                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-luxury-gold focus:border-luxury-gold"
+                                required
+                            />
                         </div>
                     </div>
                 </div>

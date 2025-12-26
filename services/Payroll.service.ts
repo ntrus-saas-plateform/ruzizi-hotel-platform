@@ -494,6 +494,7 @@ export class PayrollService {
           bonuses: [],
           overtimeHours: 0,
           overtimeRate: 0,
+          status: 'pending',
         });
 
         payrolls.push(payroll.toJSON() as unknown as PayrollResponse);
