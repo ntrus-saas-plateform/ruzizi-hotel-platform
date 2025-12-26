@@ -42,7 +42,7 @@ class RetryMechanism {
   ): Promise<T> {
     const config = { ...this.defaultOptions, ...options };
     const startTime = Date.now();
-    let lastError: Error;
+    let lastError: Error | undefined;
 
     for (let attempt = 1; attempt <= config.maxAttempts; attempt++) {
       try {
@@ -75,16 +75,16 @@ class RetryMechanism {
 
     // All attempts failed
     const totalTime = Date.now() - startTime;
-    errorLogger.logError('RETRY', 'MAX_ATTEMPTS_EXCEEDED', 
+    errorLogger.logError('RETRY', 'MAX_ATTEMPTS_EXCEEDED',
       `Operation failed after ${config.maxAttempts} attempts in ${totalTime}ms`, {
         operation: operation.name || 'anonymous',
         attempts: config.maxAttempts,
         totalTime,
-        finalError: lastError.message,
+        finalError: lastError!.message,
       }
     );
 
-    throw lastError;
+    throw lastError!;
   }
 
   /**
@@ -96,7 +96,7 @@ class RetryMechanism {
   ): Promise<RetryResult<T>> {
     const config = { ...this.defaultOptions, ...options };
     const startTime = Date.now();
-    let lastError: Error;
+    let lastError: Error | undefined;
 
     for (let attempt = 1; attempt <= config.maxAttempts; attempt++) {
       try {
@@ -127,7 +127,7 @@ class RetryMechanism {
 
     return {
       success: false,
-      error: lastError,
+      error: lastError!,
       attempts: config.maxAttempts,
       totalTime: Date.now() - startTime,
     };
@@ -159,7 +159,7 @@ class RetryMechanism {
       onRetry: (error, attempt) => {
         errorLogger.logAuthError(error, {
           operation: operationName,
-          retryAttempt: attempt,
+          attempt: attempt,
         });
       },
     });
@@ -189,7 +189,7 @@ class RetryMechanism {
       onRetry: (error, attempt) => {
         errorLogger.logNetworkError(error, {
           endpoint,
-          retryAttempt: attempt,
+          attempt: attempt,
         });
       },
     });
@@ -214,9 +214,9 @@ class RetryMechanism {
    * Default retry callback
    */
   private defaultOnRetry(error: Error, attempt: number): void {
-    errorLogger.logError('RETRY', 'RETRY_ATTEMPT', 
+    errorLogger.logError('RETRY', 'RETRY_ATTEMPT',
       `Retrying operation (attempt ${attempt})`, {
-        error: error.message,
+        errorMessage: error.message,
         attempt,
       }
     );

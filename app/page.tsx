@@ -86,7 +86,7 @@ export default function HomePage() {
       aboutTitle: 'Notre Excellence',
       aboutSubtitle: "Une tradition d'hospitalité burundaise",
       aboutDescription:
-        "Ruzizi Hôtel incarne l'excellence de l'hospitalité burundaise depuis plus d'une décennie. Nous combinons le charme traditionnel avec le confort moderne pour créer des expériences inoubliables.",
+        "Ruzizi Hôtel incarne l'excellence de l'hospitalité burundaise depuis plus de 4 ans. Nous combinons le charme traditionnel avec le confort moderne pour créer des expériences inoubliables.",
       establishmentsTitle: 'Nos Établissements',
       establishmentsSubtitle: "Découvrez nos hébergements d'exception",
       featuresTitle: 'Pourquoi Choisir Ruzizi Hôtel ?',
@@ -131,7 +131,7 @@ export default function HomePage() {
       aboutTitle: 'Our Excellence',
       aboutSubtitle: 'A tradition of Burundian hospitality',
       aboutDescription:
-        'Ruzizi Hotel embodies the excellence of Burundian hospitality for over a decade. We combine traditional charm with modern comfort to create unforgettable experiences.',
+        'Ruzizi Hotel embodies the excellence of Burundian hospitality for over 4 years. We combine traditional charm with modern comfort to create unforgettable experiences.',
       establishmentsTitle: 'Our Establishments',
       establishmentsSubtitle: 'Discover our exceptional accommodations',
       featuresTitle: 'Why Choose Ruzizi Hotel?',
@@ -194,7 +194,7 @@ export default function HomePage() {
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 order-2 lg:order-1">
               {[
                 {
-                  number: '10+',
+                  number: '4+',
                   label: language === 'fr' ? "Années d'expérience" : 'Years of experience',
                   Icon: Trophy,
                   gradient: 'bg-gradient-hero',

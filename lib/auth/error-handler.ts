@@ -355,7 +355,7 @@ export class AuthErrorHandler {
       showUserMessage: false, 
       logError: false 
     });
-    return result.actionRequired;
+    return result.actionRequired ?? 'none';
   }
 }
 

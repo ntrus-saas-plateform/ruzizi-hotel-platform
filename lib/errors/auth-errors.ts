@@ -6,7 +6,7 @@
 /**
  * Base class for authentication-related errors
  */
-abstract class AuthError extends Error {
+export abstract class AuthError extends Error {
   abstract code: string;
   abstract statusCode: number;
   details?: Record<string, any>;

@@ -12,6 +12,18 @@ export interface LogContext {
   timestamp?: string;
   requestId?: string;
   establishmentId?: string;
+  timeout?: number;
+  contentType?: string | null;
+  status?: number;
+  errorCode?: string;
+  errorMessage?: string;
+  errorName?: string;
+  retryCount?: number;
+  // Retry / timing context
+  attempt?: number;
+  attempts?: number;
+  totalTime?: number;
+  finalError?: string;
 }
 
 export interface SecurityEvent {
