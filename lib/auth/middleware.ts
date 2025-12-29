@@ -36,13 +36,11 @@ export async function authenticateUser(request: NextRequest): Promise<{
 
     if (authHeader && authHeader.startsWith('Bearer ')) {
       token = authHeader.substring(7);
-      }
+    }
 
     // If no token in header, try cookies
     if (!token) {
       token = request.cookies.get('auth-token')?.value || null;
-      if (token) {
-        }
     }
 
     if (!token) {

@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { useEstablishments, useAccommodations, useCreateBooking } from '@/hooks/useQueries';
+import { useCreateBooking, useAccommodations } from '@/hooks/useQueries';
 import { useAuth } from '@/lib/auth/AuthContext';
 import EstablishmentSelector from '@/components/admin/EstablishmentSelector';
 import type { AccommodationResponse } from '@/types/accommodation.types';
@@ -18,13 +18,19 @@ export default function CreateBookingPage() {
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
 
+  // Auto-select establishment for non-admin users
+  useEffect(() => {
+    if (user && user.role !== 'root' && user.role !== 'super_admin' && user.role !== 'admin' && user.establishmentId) {
+      console.log('🏢 Auto-selecting establishment for booking creation:', user.establishmentId);
+      setSelectedEstablishment(user.establishmentId);
+    }
+  }, [user]);
+
   // React Query hooks
-  const { data: establishmentsData } = useEstablishments();
   const { data: accommodationsData, isLoading: loading } = useAccommodations(
     selectedEstablishment ? { establishmentId: selectedEstablishment, status: 'available' } : undefined
   );
 
-  const establishments = establishmentsData?.data || [];
   const accommodations = accommodationsData?.data || [];
 
   const createBookingMutation = useCreateBooking();
@@ -40,6 +46,7 @@ export default function CreateBookingPage() {
     checkOut: '',
     numberOfGuests: 1,
     notes: '',
+    bookingType: 'onsite', // 'onsite' pour réservation normale, 'walkin' pour walk-in
   });
 
 
@@ -76,7 +83,7 @@ export default function CreateBookingPage() {
     }
 
     // Validate establishment permissions for non-admin users
-    if (user && user.role !== 'root' && user.role !== 'super_admin') {
+    if (user && user.role !== 'root' && user.role !== 'super_admin' && user.role !== 'admin') {
       if (selectedEstablishment !== user.establishmentId) {
         setError('Vous ne pouvez créer des réservations que pour votre établissement assigné');
         return;
@@ -93,7 +100,7 @@ export default function CreateBookingPage() {
         phone: formData.phone,
         idNumber: formData.idNumber || undefined,
       },
-      bookingType: 'onsite',
+      bookingType: formData.bookingType, // Utiliser le type choisi dans le formulaire
       checkIn: new Date(formData.checkIn),
       checkOut: new Date(formData.checkOut),
       numberOfGuests: formData.numberOfGuests,
@@ -120,7 +127,7 @@ export default function CreateBookingPage() {
             ← Retour aux réservations
           </button>
           <h1 className="text-3xl font-bold text-luxury-dark">Nouvelle Réservation</h1>
-          <p className="text-luxury-text mt-2">Créer une réservation sur place</p>
+          <p className="text-luxury-text mt-2">Créer une réservation (normale ou walk-in)</p>
         </div>
 
         {/* Error */}
@@ -170,6 +177,31 @@ export default function CreateBookingPage() {
                          ))}
                       </select>
                     </div>
+                  </div>
+                </div>
+
+                {/* Booking Type Selection */}
+                <div className="mt-4">
+                  <h2 className="text-lg font-semibold text-luxury-dark mb-4">
+                    Type de réservation
+                  </h2>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Type de réservation *
+                    </label>
+                    <select
+                      name="bookingType"
+                      value={formData.bookingType}
+                      onChange={handleInputChange}
+                      required
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    >
+                      <option value="onsite">Réservation normale</option>
+                      <option value="walkin">Walk-in (même jour)</option>
+                    </select>
+                    <p className="text-xs text-gray-500 mt-1">
+                      Walk-in: pour les réservations du même jour uniquement
+                    </p>
                   </div>
                 </div>
 

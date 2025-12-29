@@ -7,6 +7,7 @@ import { unifiedTokenManager } from '@/lib/auth/unified-token-manager';
 import { useErrorHandler } from '@/hooks/useErrorHandler';
 import { useRenderMonitor } from '@/lib/performance/render-monitor';
 import { CompactErrorDisplay } from '@/components/ui/ErrorDisplay';
+import { apiClient, ApiResponse } from '@/lib/api/client';
 
 // Cache for establishment data to avoid repeated API calls
 interface EstablishmentCache {
@@ -47,13 +48,29 @@ export default function EstablishmentSelector({
   });
 
   // Memoize loading state to prevent unnecessary re-renders
-  const isLoading = useMemo(() => loading || authLoading, [loading, authLoading]);
+  const isLoading = useMemo(() => !!(loading || authLoading), [loading, authLoading]);
 
   // Memoize user role and admin status to prevent unnecessary re-renders
-  const isAdmin = useMemo(() => user?.role === 'root' || user?.role === 'super_admin', [user?.role]);
+  const isAdmin = useMemo(() => {
+    if (!user) return false;
+    const userRole = user.role;
+    const adminStatus = userRole === 'root' || userRole === 'super_admin' || userRole === 'admin';
+    console.log('🔐 User role check:', {
+      userRole,
+      email: user.email,
+      isAdmin: adminStatus,
+      establishmentId: user.establishmentId
+    });
+    return adminStatus;
+  }, [user]);
 
   // Memoize disabled state to prevent unnecessary re-renders
-  const isDisabled = useMemo(() => disabled || (!isAdmin && !!user?.establishmentId), [disabled, isAdmin, user?.establishmentId]);
+  const isDisabled = useMemo(() => {
+    // For admins, never disable unless explicitly disabled via props
+    if (isAdmin) return !!disabled;
+    // For non-admins, disable if they have an assigned establishment
+    return !!disabled || (!isAdmin && user && !!user.establishmentId);
+  }, [disabled, isAdmin, user]);
 
   // Check if cached data is valid for current user
   const isCacheValid = useCallback(() => {
@@ -107,34 +124,14 @@ export default function EstablishmentSelector({
       }
 
       console.log('🌐 Fetching establishment data from API');
-      const response = await fetch('/api/establishments', {
-        headers: {
-          'Authorization': `Bearer ${currentToken}`,
-        },
-      });
+      const response = await apiClient.get('/api/establishments') as ApiResponse<{ data: EstablishmentResponse[]; pagination: any }>;
 
-      if (!response.ok) {
-        // Handle specific HTTP status codes
-        if (response.status === 401) {
-          throw new Error('Session expirée. Veuillez vous reconnecter.');
-        } else if (response.status === 403) {
-          throw new Error('Accès non autorisé aux établissements.');
-        } else if (response.status >= 500) {
-          throw new Error('Erreur serveur. Veuillez réessayer plus tard.');
-        } else {
-          throw new Error(`Erreur lors du chargement des établissements (${response.status})`);
-        }
-      }
-
-      const data = await response.json();
-
-      // Ensure we have a valid data structure
-      if (!data.success) {
-        throw new Error(data.error?.message || 'API returned error');
+      if (!response.success) {
+        throw new Error(response.error?.message || 'API returned error');
       }
 
       // API returns: { success: true, data: { data: [...], pagination: {...} } }
-      const establishmentsList = data.data?.data || [];
+      const establishmentsList = response.data?.data || [];
 
       // Update cache
       if (user) {
@@ -172,8 +169,12 @@ export default function EstablishmentSelector({
     // Auto-select user's establishment for non-admin users who have one assigned
     // Only when auth is loaded and user data is available
     if (!authLoading && !isAdmin && user?.establishmentId && (!value || value === '')) {
+      console.log('🏢 Auto-selecting establishment for non-admin user:', user.establishmentId);
       onChange(user.establishmentId);
     }
+    
+    // For admins (root, super_admin), don't auto-select - let them choose
+    // For non-admins without establishmentId, also don't auto-select
   }, [authLoading, isAdmin, user?.establishmentId, value, onChange]);
 
   const handleChange = useCallback((e: React.ChangeEvent<HTMLSelectElement>) => {

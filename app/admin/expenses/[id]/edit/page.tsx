@@ -72,7 +72,7 @@ export default function EditExpensePage() {
         }
 
         // Validate establishment permissions for non-admin users
-        if (user && user.role !== 'root' && user.role !== 'super_admin') {
+        if (user && user.role !== 'root' && user.role !== 'super_admin' && user.role !== 'admin') {
             if (formData.establishmentId !== user.establishmentId) {
                 setError('Vous ne pouvez modifier des dépenses que pour votre établissement assigné');
                 setSaving(false);

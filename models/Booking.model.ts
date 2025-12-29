@@ -150,12 +150,12 @@ const BookingSchema = new Schema<IBookingDocument, IBookingModel>(
     },
     pricingDetails: {
       type: PricingDetailsSchema,
-      required: [true, 'Pricing details are required'],
+      required: false, // Rendu optionnel pour permettre la création sans calcul préalable
     },
     status: {
       type: String,
       enum: {
-        values: ['pending', 'confirmed', 'cancelled', 'completed'],
+        values: ['pending', 'accepted', 'confirmed', 'cancelled', 'completed'],
         message: '{VALUE} is not a valid status',
       },
       default: 'pending',

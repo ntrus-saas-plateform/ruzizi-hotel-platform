@@ -8,7 +8,7 @@ export type BookingType = 'online' | 'onsite' | 'walkin';
 /**
  * Booking status
  */
-export type BookingStatus = 'pending' | 'confirmed' | 'cancelled' | 'completed';
+export type BookingStatus = 'pending' | 'accepted' | 'confirmed' | 'cancelled' | 'completed';
 
 /**
  * Payment status

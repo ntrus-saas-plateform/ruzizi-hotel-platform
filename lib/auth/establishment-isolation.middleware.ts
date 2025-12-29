@@ -80,7 +80,7 @@ export function withEstablishmentIsolation(
     const { userId, email, role, establishmentId } = authResult.user;
 
     // Step 2: Validate establishment requirements
-    const isAdmin = role === 'root' || role === 'super_admin';
+    const isAdmin = role === 'root' || role === 'super_admin' || role === 'admin';
     const requiresEstablishment = opts.requireEstablishment && !isAdmin;
 
     if (requiresEstablishment && !establishmentId) {

@@ -1,14 +1,36 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import { useAuth } from '@/lib/auth/AuthContext';
 
 export default function BackOfficeLoginPage() {
   const router = useRouter();
+  const { login, user, isLoading } = useAuth();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+
+  // Redirect if already authenticated
+  useEffect(() => {
+    if (!isLoading && user) {
+      console.log('🔄 User already authenticated, redirecting to dashboard...');
+      router.replace('/admin/dashboard');
+    }
+  }, [user, isLoading, router]);
+
+  // Show loading while checking authentication
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-gradient-subtle flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-luxury-gold mx-auto"></div>
+          <p className="mt-4 text-luxury-text">Vérification de l'authentification...</p>
+        </div>
+      </div>
+    );
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -16,34 +38,12 @@ export default function BackOfficeLoginPage() {
     setLoading(true);
 
     try {
-      const response = await fetch('/api/auth/login', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password }),
-      });
-
-      const data = await response.json();
-      if (!response.ok) {
-        throw new Error(data.error?.message || 'Erreur de connexion');
-      }
-
-      if (!data.data?.tokens) {
-        throw new Error('Tokens manquants');
-      }
-
-      // Stocker les tokens
-      localStorage.setItem('accessToken', data.data.tokens.accessToken);
-      localStorage.setItem('refreshToken', data.data.tokens.refreshToken);
-      document.cookie = `auth-token=${data.data.tokens.accessToken}; path=/; max-age=${15 * 60}`;
-
-      if (data.data.user) {
-        localStorage.setItem('user', JSON.stringify(data.data.user));
-      }
-
+      await login(email, password);
       window.location.href = '/admin/dashboard';
     } catch (err) {
       console.error('❌ Erreur:', err);
       setError(err instanceof Error ? err.message : 'Erreur de connexion');
+    } finally {
       setLoading(false);
     }
   };

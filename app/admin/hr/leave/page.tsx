@@ -33,25 +33,45 @@ export default function LeavePage() {
 
   const fetchEmployees = async () => {
     try {
-      const response = await fetch('/api/employees?limit=100');
+      const token = localStorage.getItem('accessToken');
+      if (!token) {
+        throw new Error('Token d\'authentification manquant');
+      }
+
+      const response = await fetch('/api/employees?limit=100', {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+      });
       const data = await response.json();
       if (data.success) {
         setEmployees(data.data.data || []);
       }
     } catch (err) {
-      console.error(err);
+      console.error('Failed to fetch employees:', err);
     }
   };
 
   const fetchLeaves = async () => {
     try {
       setLoading(true);
+      
+      const token = localStorage.getItem('accessToken');
+      if (!token) {
+        throw new Error('Token d\'authentification manquant');
+      }
+
       const params = new URLSearchParams({
         page: currentPage.toString(),
         limit: '10',
         ...Object.fromEntries(Object.entries(filters).filter(([_, v]) => v !== '')),
       });
-      const response = await fetch(`/api/leave?${params}`);
+      
+      const response = await fetch(`/api/leave?${params}`, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+      });
       const data = await response.json();
       if (data.success) {
         setLeaves(data.data.data || []);
@@ -67,9 +87,17 @@ export default function LeavePage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
+      const token = localStorage.getItem('accessToken');
+      if (!token) {
+        throw new Error('Token d\'authentification manquant');
+      }
+
       const response = await fetch('/api/leave', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
         body: JSON.stringify(formData),
       });
       if (response.ok) {

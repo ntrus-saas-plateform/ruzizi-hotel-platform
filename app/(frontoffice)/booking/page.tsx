@@ -920,7 +920,7 @@ function BookingPageContent() {
                   <div className="flex justify-between">
                     <span className="text-luxury-text">Établissement:</span>
                     <span className="font-medium">
-                      {establishmentName || selectedAccommodationData?.establishmentId}
+                      {establishmentName}
                     </span>
                   </div>
                   <div className="flex justify-between">

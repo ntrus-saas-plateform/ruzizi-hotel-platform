@@ -112,10 +112,10 @@ export class EstablishmentServiceContext {
 
   /**
    * Check if user can access all establishments
-   * Returns true for root and super_admin roles
+   * Returns true for root, super_admin, and admin roles
    */
   canAccessAll(): boolean {
-    return this.role === 'root' || this.role === 'super_admin';
+    return this.role === 'root' || this.role === 'super_admin' || this.role === 'admin';
   }
 
   /**

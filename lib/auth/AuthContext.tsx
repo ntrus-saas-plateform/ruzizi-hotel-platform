@@ -45,6 +45,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         // Get tokens from unified token manager
         const storedTokens = unifiedTokenManager.getTokens();
         const storedUser = localStorage.getItem(USER_STORAGE_KEY);
+        
+        // Clean up old 'user' key to avoid confusion
+        localStorage.removeItem('user');
 
         console.log('🔄 Session restoration - storedTokens:', !!storedTokens, 'storedUser:', !!storedUser);
         console.log('🔄 Session restoration - storedTokens details:', storedTokens ? 'HAS_TOKENS' : 'NO_TOKENS');
@@ -90,7 +93,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
                 if (updatedTokens) {
                   setTokens(updatedTokens);
                   setUser(parsedUser);
-                  console.log('� Senssion restoration - tokens refreshed and state set');
+                  console.log('🔄 Session restoration - tokens refreshed and state set');
                 } else {
                   // Refresh failed, clear everything
                   console.log('🚨 Token refresh failed, clearing auth state');

@@ -19,6 +19,14 @@ export default function CreateAccommodationPage() {
   // Debug: Log user data from context
   console.log('🔍 User from auth context:', user);
   
+  // Auto-select establishment for non-admin users
+  useEffect(() => {
+    if (user && user.role !== 'root' && user.role !== 'super_admin' && user.role !== 'admin' && user.establishmentId) {
+      console.log('🏢 Auto-selecting establishment for accommodation creation:', user.establishmentId);
+      setFormData(prev => ({ ...prev, establishmentId: user.establishmentId || '' }));
+    }
+  }, [user]);
+  
   const [formData, setFormData] = useState({
     // Basic
     establishmentId: '',

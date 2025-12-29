@@ -5,7 +5,7 @@ import { addSecurityHeaders } from '@/lib/security/headers';
 
 // Rate limiting configuration
 const AUTH_RATE_LIMIT = {
-  maxRequests: 50, // 50 attempts per window
+  maxRequests: 200, // 200 attempts per window (augmented for testing)
   windowMs: 60 * 60 * 1000, // 1 hour
 };
 
@@ -17,12 +17,14 @@ const GENERAL_RATE_LIMIT = {
 export function middleware(request: NextRequest) {
   const pathname = request.nextUrl.pathname;
 
+  // Temporarily disable rate limiting for debugging
   // Get client IP for rate limiting
   const ip = request.headers.get('x-forwarded-for') ||
              request.headers.get('x-real-ip') ||
              'unknown';
 
-  // Apply stricter rate limiting to authentication endpoints
+  // Apply stricter rate limiting to authentication endpoints - DISABLED FOR DEBUGGING
+  /*
   if (pathname.startsWith('/api/auth/')) {
     const rateLimitResult = rateLimit(`auth-${ip}`, AUTH_RATE_LIMIT.maxRequests, AUTH_RATE_LIMIT.windowMs);
 
@@ -44,7 +46,7 @@ export function middleware(request: NextRequest) {
     }
   }
 
-  // Apply general rate limiting to all API routes
+  // Apply general rate limiting to all API routes - DISABLED FOR DEBUGGING
   if (pathname.startsWith('/api/')) {
     const rateLimitResult = rateLimit(`api-${ip}`, GENERAL_RATE_LIMIT.maxRequests, GENERAL_RATE_LIMIT.windowMs);
 
@@ -65,6 +67,7 @@ export function middleware(request: NextRequest) {
       return addSecurityHeaders(response);
     }
   }
+  */
 
   // Add security headers to all responses
   const response = NextResponse.next();

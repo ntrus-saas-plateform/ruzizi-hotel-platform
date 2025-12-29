@@ -3,7 +3,7 @@ import { Types } from 'mongoose';
 /**
  * User roles in the system
  */
-export type UserRole = 'root' | 'super_admin' | 'manager' | 'staff';
+export type UserRole = 'root' | 'super_admin' | 'admin' | 'manager' | 'staff';
 
 /**
  * System permissions

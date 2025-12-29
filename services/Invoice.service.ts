@@ -74,7 +74,7 @@ export class InvoiceService {
   /**
    * Create invoice automatically from booking
    */
-  static async createFromBooking(bookingId: string): Promise<InvoiceResponse> {
+  static async createFromBooking(bookingId: string, context?: EstablishmentServiceContext): Promise<InvoiceResponse> {
     await connectDB();
 
     const booking = await BookingModel.findById(bookingId);
@@ -119,7 +119,7 @@ export class InvoiceService {
       tax: booking.pricingDetails.tax ? { rate: 0, amount: booking.pricingDetails.tax } : undefined,
     };
 
-    return this.create(invoiceData);
+    return this.create(invoiceData, context);
   }
 
   /**

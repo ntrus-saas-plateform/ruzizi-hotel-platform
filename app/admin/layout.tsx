@@ -2,52 +2,43 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
+import { useAuth } from '@/lib/auth/AuthContext';
+import { AuthProvider } from '@/lib/auth/AuthContext';
 import NotificationBell from '@/components/backoffice/NotificationBell';
+import SafeRender from '@/components/SafeRender';
 
-export default function AdminLayout({ children }: { children: React.ReactNode }) {
+function AdminLayoutContent({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const pathname = usePathname();
+  const { user, isLoading: authLoading, logout } = useAuth();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [isLoading, setIsLoading] = useState(true);
 
-  // Vérifier l'authentification une seule fois au montage
+  // Helper function pour logger les objets potentiellement problématiques
+  const safeRender = (value: any, context: string) => {
+    if (typeof value === 'object' && value !== null && !Array.isArray(value)) {
+      console.error(`🚨 LAYOUT CRITICAL: Object being rendered in ${context}:`, value);
+      console.trace(`📍 Stack trace for ${context}`);
+      return `[Object: ${JSON.stringify(value)}]`;
+    }
+    return value;
+  };
+
+  // Redirect to login if not authenticated
   useEffect(() => {
-    const checkAuth = async () => {
-      try {
-        const token = localStorage.getItem('accessToken');
-
-        if (!token) {
-          window.location.href = '/backoffice/login';
-          return;
-        }
-
-        const response = await fetch('/api/auth/me', {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-
-        if (!response.ok) {
-          localStorage.clear();
-          window.location.href = '/backoffice/login';
-          return;
-        }
-
-        setIsAuthenticated(true);
-      } catch (error) {
-        console.error('❌ Auth error:', error);
+    if (!authLoading) {
+      if (!user) {
+        console.log('🔐 No user found, redirecting to login...');
         window.location.href = '/backoffice/login';
-      } finally {
-        setIsLoading(false);
+        return;
       }
-    };
-
-    checkAuth();
-  }, []);
+      console.log('✅ User authenticated, accessing admin layout');
+    }
+  }, [user, authLoading]);
 
   // Close sidebar when clicking outside on mobile
   useEffect(() => {
-    if (!isAuthenticated) return; // Ne pas exécuter si pas authentifié
+    if (!user) return; // Ne pas exécuter si pas authentifié
 
     const handleClickOutside = (event: MouseEvent) => {
       const sidebar = document.getElementById('mobile-sidebar');
@@ -66,22 +57,15 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, [sidebarOpen, isAuthenticated]);
+  }, [sidebarOpen, user]);
 
   // Fonction de déconnexion
-  const handleLogout = async () => {
-    try {
-      await fetch('/api/auth/logout', { method: 'POST' });
-    } catch (error) {
-      console.error('Logout error:', error);
-    } finally {
-      localStorage.clear();
-      window.location.href = '/backoffice/login';
-    }
+  const handleLogout = () => {
+    logout();
   };
 
   // Show loading state while checking authentication
-  if (isLoading) {
+  if (authLoading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
@@ -93,7 +77,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   }
 
   // Don't render admin content if not authenticated
-  if (!isAuthenticated) {
+  if (!user) {
     return null;
   }
 
@@ -156,20 +140,6 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
             strokeLinejoin="round"
             strokeWidth={2}
             d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
-          />
-        </svg>
-      ),
-    },
-    {
-      name: 'Walk-in',
-      href: '/admin/bookings/walkin',
-      icon: (
-        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            strokeWidth={2}
-            d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
           />
         </svg>
       ),
@@ -459,11 +429,12 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           </div>
         </div>
         <div className="h-auto px-3 pb-4 pt-3 overflow-y-auto">
+          <SafeRender context="admin-layout-navigation">
           <ul className="space-y-2 font-medium">
             {navigation.map((item) => {
               const isActive = pathname === item.href;
               return (
-                <li key={item.name}>
+                <li key={safeRender(item.name, 'navigation.item.name')}>
                   <button
                     onClick={() => {
                       router.push(item.href);
@@ -484,18 +455,21 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                     >
                       {item.icon}
                     </span>
-                    <span className="ml-3">{item.name}</span>
+                    <span className="ml-3">{safeRender(item.name, 'navigation.item.name.display')}</span>
                   </button>
                 </li>
               );
             })}
           </ul>
+        </SafeRender>
         </div>
       </aside>
 
       {/* Main Content */}
       <div className="p-4 lg:ml-64 mt-14 bg-gradient-subtle">
-        <div className="rounded-lg">{children}</div>
+        <SafeRender context="admin-layout-main-content">
+          <div className="rounded-lg">{children}</div>
+        </SafeRender>
       </div>
 
       {/* Mobile Sidebar Overlay */}
@@ -506,5 +480,14 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         />
       )}
     </div>
+  );
+}
+
+// Wrapper component with AuthProvider
+export default function AdminLayout({ children }: { children: React.ReactNode }) {
+  return (
+    <AuthProvider>
+      <AdminLayoutContent>{children}</AdminLayoutContent>
+    </AuthProvider>
   );
 }

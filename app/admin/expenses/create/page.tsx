@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/auth/AuthContext';
 import EstablishmentSelector from '@/components/admin/EstablishmentSelector';
@@ -10,6 +10,14 @@ export default function CreateExpensePage() {
   const { user } = useAuth();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  
+  // Auto-select establishment for non-admin users
+  useEffect(() => {
+    if (user && user.role !== 'root' && user.role !== 'super_admin' && user.role !== 'admin' && user.establishmentId) {
+      console.log('🏢 Auto-selecting establishment for expense creation:', user.establishmentId);
+      setFormData(prev => ({ ...prev, establishmentId: user.establishmentId || '' }));
+    }
+  }, [user]);
   
   const [formData, setFormData] = useState({
     title: '',
@@ -34,7 +42,7 @@ export default function CreateExpensePage() {
     }
 
     // Validate establishment permissions for non-admin users
-    if (user && user.role !== 'root' && user.role !== 'super_admin') {
+    if (user && user.role !== 'root' && user.role !== 'super_admin' && user.role !== 'admin') {
       if (formData.establishmentId !== user.establishmentId) {
         setError('Vous ne pouvez créer des dépenses que pour votre établissement assigné');
         setLoading(false);

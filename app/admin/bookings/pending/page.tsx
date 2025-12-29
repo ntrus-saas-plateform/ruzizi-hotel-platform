@@ -36,8 +36,8 @@ export default function PendingBookingsPage() {
   const fetchPendingBookings = async () => {
     try {
       setLoading(true);
-      const token = localStorage.getItem('accessToken');
-      const response = await fetch('/api/bookings?status=pending', {
+      const token = localStorage.getItem('ruzizi_access_token');
+      const response = await fetch('/api/bookings?status=pending,accepted', {
         headers: { 'Authorization': `Bearer ${token}` },
       });
 
@@ -60,7 +60,7 @@ export default function PendingBookingsPage() {
 
     try {
       setActionLoading(bookingId);
-      const token = localStorage.getItem('accessToken');
+      const token = localStorage.getItem('ruzizi_access_token');
       
       const response = await fetch(`/api/bookings/${bookingId}/confirm`, {
         method: 'POST',
@@ -94,7 +94,7 @@ export default function PendingBookingsPage() {
 
     try {
       setActionLoading(bookingId);
-      const token = localStorage.getItem('accessToken');
+      const token = localStorage.getItem('ruzizi_access_token');
       const response = await fetch(`/api/bookings/${bookingId}`, {
         method: 'PUT',
         headers: {
@@ -141,7 +141,7 @@ export default function PendingBookingsPage() {
         </button>
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-3xl font-bold text-luxury-dark">Réservations en attente</h1>
+            <h1 className="text-3xl font-bold text-luxury-dark">Réservations à confirmer</h1>
             <p className="text-luxury-text mt-2">
               {bookings.length} réservation(s) en attente de confirmation
             </p>
@@ -176,8 +176,12 @@ export default function PendingBookingsPage() {
                     <h3 className="text-lg font-bold text-luxury-dark">
                       {booking.bookingCode}
                     </h3>
-                    <span className="px-3 py-1 bg-yellow-100 text-yellow-800 text-xs font-medium rounded-full">
-                      En attente
+                    <span className={`px-3 py-1 text-xs font-medium rounded-full ${
+                      booking.status === 'accepted' 
+                        ? 'bg-blue-100 text-blue-800' 
+                        : 'bg-yellow-100 text-yellow-800'
+                    }`}>
+                      {booking.status === 'accepted' ? 'Acceptée' : 'En attente'}
                     </span>
                   </div>
 

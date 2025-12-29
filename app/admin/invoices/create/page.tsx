@@ -16,6 +16,14 @@ export default function CreateInvoicePage() {
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
 
+  // Auto-select establishment for non-admin users
+  useEffect(() => {
+    if (user && user.role !== 'root' && user.role !== 'super_admin' && user.role !== 'admin' && user.establishmentId) {
+      console.log('🏢 Auto-selecting establishment for invoice creation:', user.establishmentId);
+      setSelectedEstablishment(user.establishmentId);
+    }
+  }, [user]);
+
   // Form data
   const [formData, setFormData] = useState({
     bookingId: '',
@@ -135,7 +143,7 @@ export default function CreateInvoicePage() {
       }
 
       // Validate establishment permissions for non-admin users
-      if (user && user.role !== 'root' && user.role !== 'super_admin') {
+      if (user && user.role !== 'root' && user.role !== 'super_admin' && user.role !== 'admin') {
         if (selectedEstablishment !== user.establishmentId) {
           throw new Error('Vous ne pouvez créer des factures que pour votre établissement assigné');
         }

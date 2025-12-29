@@ -60,9 +60,10 @@ export default function BookingsPage() {
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'confirmed': return 'bg-green-100 text-green-800 border-green-200';
+      case 'accepted': return 'bg-blue-100 text-blue-800 border-blue-200';
       case 'pending': return 'bg-yellow-100 text-yellow-800 border-yellow-200';
       case 'cancelled': return 'bg-red-100 text-red-800 border-red-200';
-      case 'completed': return 'bg-blue-100 text-blue-800 border-blue-200';
+      case 'completed': return 'bg-purple-100 text-purple-800 border-purple-200';
       default: return 'bg-gray-100 text-gray-800 border-gray-200';
     }
   };
@@ -70,6 +71,7 @@ export default function BookingsPage() {
   const getStatusLabel = (status: string) => {
     const labels: Record<string, string> = {
       confirmed: 'Confirmée',
+      accepted: 'Acceptée',
       pending: 'En attente',
       cancelled: 'Annulée',
       completed: 'Terminée',
@@ -95,6 +97,143 @@ export default function BookingsPage() {
     return labels[status] || status;
   };
 
+  // New functions for booking management
+  const handleAcceptBooking = async (bookingId: string) => {
+    try {
+      const token = localStorage.getItem('ruzizi_access_token');
+      if (!token) {
+        throw new Error('Token d\'authentification manquant');
+      }
+
+      const response = await fetch(`/api/bookings/${bookingId}/accept`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+      });
+
+      if (response.ok) {
+        // Refresh bookings data
+        window.location.reload();
+      } else {
+        const error = await response.json();
+        alert(error.error || 'Erreur lors de l\'acceptation');
+      }
+    } catch (error) {
+      console.error('Error accepting booking:', error);
+      alert('Erreur lors de l\'acceptation de la réservation');
+    }
+  };
+
+  const handleGenerateInvoice = async (bookingId: string) => {
+    try {
+      const token = localStorage.getItem('ruzizi_access_token');
+      if (!token) {
+        throw new Error('Token d\'authentification manquant');
+      }
+
+      const response = await fetch(`/api/bookings/${bookingId}/invoice`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+      });
+
+      if (response.ok) {
+        const blob = await response.blob();
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `facture-reservation-${bookingId}.pdf`;
+        document.body.appendChild(a);
+        a.click();
+        window.URL.revokeObjectURL(url);
+        document.body.removeChild(a);
+      } else {
+        const error = await response.json();
+        alert(error.error || 'Erreur lors de la génération');
+      }
+    } catch (error) {
+      console.error('Error generating invoice:', error);
+      alert('Erreur lors de la génération de la facture');
+    }
+  };
+
+  const handleGenerateClientsList = async (includeFullInfo: boolean = true) => {
+    console.log('=== handleGenerateClientsList called ===');
+    console.log('includeFullInfo:', includeFullInfo);
+    
+    try {
+      const requestBody = {
+        includeFullInfo,
+        establishmentId: filters.establishmentId || undefined,
+        dateFrom: filters.checkInFrom || undefined,
+        dateTo: filters.checkInTo || undefined,
+      };
+      
+      console.log('Request body:', requestBody);
+
+      // Use absolute URL to avoid any routing issues
+      const baseUrl = window.location.origin;
+      const fullUrl = `${baseUrl}/api/bookings/clients-list`;
+      console.log('Full URL:', fullUrl);
+
+      const response = await fetch(fullUrl, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(requestBody),
+      });
+
+      console.log('Response status:', response.status);
+      console.log('Response ok:', response.ok);
+
+      if (response.ok) {
+        const blob = await response.blob();
+        console.log('Blob size:', blob.size);
+        
+        // Create unique filename with timestamp
+        const timestamp = new Date().toISOString().slice(0, 19).replace(/:/g, '-');
+        const filename = `liste-clients-${includeFullInfo ? 'complet' : 'simple'}-${timestamp}.pdf`;
+        
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = filename;
+        document.body.appendChild(a);
+        a.click();
+        window.URL.revokeObjectURL(url);
+        document.body.removeChild(a);
+        
+        console.log(`PDF downloaded successfully: ${filename}`);
+        console.log(`PDF size: ${blob.size} bytes`);
+      } else {
+        const errorText = await response.text();
+        console.error('API Error:', errorText);
+        let error;
+        try {
+          error = JSON.parse(errorText);
+        } catch {
+          error = { error: errorText || 'Erreur lors de la génération' };
+        }
+        alert(error.error || 'Erreur lors de la génération');
+      }
+    } catch (error) {
+      console.error('=== CATCH BLOCK ===');
+      console.error('Error type:', typeof error);
+      console.error('Error name:', (error as any)?.name);
+      console.error('Error message:', (error as any)?.message);
+      console.error('Full error:', error);
+      
+      if (error instanceof Error && error.message.includes('fetch')) {
+        alert('Erreur de connexion au serveur. Détails: ' + error.message);
+      } else {
+        alert('Erreur lors de la génération de la liste des clients: ' + (error instanceof Error ? error.message : 'Erreur inconnue'));
+      }
+    }
+  };
+
   return (
     <div className="min-h-screen">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
@@ -109,15 +248,6 @@ export default function BookingsPage() {
             </div>
             <div className="flex flex-col sm:flex-row gap-2 sm:gap-3">
               <button
-                onClick={() => router.push('/admin/bookings/walkin')}
-                className="px-4 py-2.5  text-luxury-gold rounded-lg border border-luxury-gold transition-all shadow-md hover:shadow-lg font-medium flex items-center justify-center"
-              >
-                <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                </svg>
-                Client de Passage
-              </button>
-              <button
                 onClick={() => router.push('/admin/bookings/create')}
                 className="px-4 py-2.5 bg-luxury-gold text-luxury-cream rounded-lg hover:from-blue-700 hover:to-blue-800 transition-all shadow-md hover:shadow-lg font-medium flex items-center justify-center"
               >
@@ -126,6 +256,26 @@ export default function BookingsPage() {
                 </svg>
                 Nouvelle Réservation
               </button>
+              <div className="flex gap-2">
+                <button
+                  onClick={() => handleGenerateClientsList(true)}
+                  className="px-4 py-2.5 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-all shadow-md hover:shadow-lg font-medium flex items-center justify-center"
+                >
+                  <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                  </svg>
+                  Liste Clients (Complet)
+                </button>
+                <button
+                  onClick={() => handleGenerateClientsList(false)}
+                  className="px-4 py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-all shadow-md hover:shadow-lg font-medium flex items-center justify-center"
+                >
+                  <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                  </svg>
+                  Liste Clients (Simple)
+                </button>
+              </div>
             </div>
           </div>
         </div>
@@ -195,6 +345,7 @@ export default function BookingsPage() {
                   >
                     <option value="">Tous</option>
                     <option value="pending">En attente</option>
+                    <option value="accepted">Acceptée</option>
                     <option value="confirmed">Confirmée</option>
                     <option value="cancelled">Annulée</option>
                     <option value="completed">Terminée</option>
@@ -385,13 +536,31 @@ export default function BookingsPage() {
                             </span>
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap text-sm">
-                            <button
-                              onClick={() => booking.id && router.push(`/admin/bookings/${booking.id}`)}
-                              className="text-luxury-gold hover:text-blue-900 font-medium"
-                              disabled={!booking.id}
-                            >
-                              Détails
-                            </button>
+                            <div className="flex gap-2">
+                              {booking.status === 'pending' && (
+                                <button
+                                  onClick={() => booking.id && handleAcceptBooking(booking.id)}
+                                  className="px-2 py-1 bg-blue-600 text-white rounded hover:bg-blue-700 transition font-medium text-xs"
+                                  disabled={!booking.id}
+                                >
+                                  Accepter
+                                </button>
+                              )}
+                              <button
+                                onClick={() => booking.id && handleGenerateInvoice(booking.id)}
+                                className="px-2 py-1 bg-green-600 text-white rounded hover:bg-green-700 transition font-medium text-xs"
+                                disabled={!booking.id}
+                              >
+                                Facture
+                              </button>
+                              <button
+                                onClick={() => booking.id && router.push(`/admin/bookings/${booking.id}`)}
+                                className="px-2 py-1 bg-luxury-gold text-luxury-cream rounded hover:bg-blue-900 transition font-medium text-xs"
+                                disabled={!booking.id}
+                              >
+                                Détails
+                              </button>
+                            </div>
                           </td>
                         </tr>
                       ))}
@@ -471,13 +640,31 @@ export default function BookingsPage() {
                         {booking.pricingDetails.total.toLocaleString()} <span className="text-sm">BIF</span>
                       </p>
                     </div>
-                    <button
-                      onClick={() => booking.id && router.push(`/admin/bookings/${booking.id}`)}
-                      className="px-4 py-2 bg-luxury-gold text-luxury-cream rounded-lg  transition font-medium text-sm"
-                      disabled={!booking.id}
-                    >
-                      Détails
-                    </button>
+                    <div className="flex gap-2">
+                      {booking.status === 'pending' && (
+                        <button
+                          onClick={() => booking.id && handleAcceptBooking(booking.id)}
+                          className="px-3 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition font-medium text-sm"
+                          disabled={!booking.id}
+                        >
+                          Accepter
+                        </button>
+                      )}
+                      <button
+                        onClick={() => booking.id && handleGenerateInvoice(booking.id)}
+                        className="px-3 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition font-medium text-sm"
+                        disabled={!booking.id}
+                      >
+                        Facture
+                      </button>
+                      <button
+                        onClick={() => booking.id && router.push(`/admin/bookings/${booking.id}`)}
+                        className="px-3 py-2 bg-luxury-gold text-luxury-cream rounded-lg  transition font-medium text-sm"
+                        disabled={!booking.id}
+                      >
+                        Détails
+                      </button>
+                    </div>
                   </div>
                 </div>
               </div>

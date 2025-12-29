@@ -10,6 +10,16 @@ interface RateLimitStore {
 
 const store: RateLimitStore = {};
 
+// Function to clear rate limit cache (for development/testing)
+export function clearRateLimitCache(): void {
+  Object.keys(store).forEach(key => delete store[key]);
+}
+
+// Auto-clear cache every 5 minutes in development
+if (process.env.NODE_ENV === 'development') {
+  setInterval(clearRateLimitCache, 5 * 60 * 1000);
+}
+
 export function rateLimit(
   identifier: string,
   maxRequests: number = 100,
