@@ -1,6 +1,6 @@
 import mongoose, { Schema, Document, Model } from 'mongoose';
 
-export interface IPayroll extends Document {
+export interface IPayroll extends Document<mongoose.Types.ObjectId> {
   employeeId: mongoose.Types.ObjectId;
   period: {
     month: number;
@@ -113,17 +113,17 @@ const PayrollSchema = new Schema<IPayroll, IPayrollModel>(
     },
     totalGross: {
       type: Number,
-      required: true,
+      default: 0,
       min: 0,
     },
     totalDeductions: {
       type: Number,
-      required: true,
+      default: 0,
       min: 0,
     },
     netSalary: {
       type: Number,
-      required: true,
+      default: 0,
       min: 0,
     },
     status: {
@@ -157,7 +157,7 @@ const PayrollSchema = new Schema<IPayroll, IPayrollModel>(
 PayrollSchema.index({ employeeId: 1, 'period.year': 1, 'period.month': 1 }, { unique: true });
 PayrollSchema.index({ 'period.year': 1, 'period.month': 1, status: 1 });
 
-PayrollSchema.pre('save', function (next) {
+PayrollSchema.pre('validate', function (next) {
   let gross = this.baseSalary;
 
   this.allowances.forEach((allowance) => {

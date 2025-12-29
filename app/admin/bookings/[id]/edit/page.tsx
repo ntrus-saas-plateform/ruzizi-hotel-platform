@@ -31,7 +31,7 @@ export default function EditBookingPage() {
 
   const fetchBooking = async () => {
     try {
-      const token = localStorage.getItem('accessToken');
+      const token = localStorage.getItem('ruzizi_access_token');
       const response = await fetch(`/api/bookings/${id}`, {
         headers: { 'Authorization': `Bearer ${token}` },
       });
@@ -72,7 +72,7 @@ export default function EditBookingPage() {
     }
 
     // Validate establishment permissions for non-admin users
-    if (user && user.role !== 'root' && user.role !== 'super_admin') {
+    if (user && user.role !== 'root' && user.role !== 'super_admin' && user.role !== 'admin') {
       if (formData.establishmentId !== user.establishmentId) {
         setError('Vous ne pouvez modifier que les réservations de votre établissement assigné');
         setSaving(false);
@@ -81,7 +81,7 @@ export default function EditBookingPage() {
     }
 
     try {
-      const token = localStorage.getItem('accessToken');
+      const token = localStorage.getItem('ruzizi_access_token');
       const response = await fetch(`/api/bookings/${id}`, {
         method: 'PUT',
         headers: {
@@ -142,8 +142,6 @@ export default function EditBookingPage() {
             value={formData.establishmentId}
             onChange={(establishmentId) => setFormData({ ...formData, establishmentId })}
             required
-            userRole={user?.role}
-            userEstablishmentId={user?.establishmentId}
             label="Établissement"
           />
         </div>

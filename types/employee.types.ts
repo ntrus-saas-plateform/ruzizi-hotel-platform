@@ -19,6 +19,11 @@ export interface EmployeeEmploymentInfo {
   contractType: 'permanent' | 'temporary' | 'contract';
   salary: number;
   status: 'active' | 'inactive' | 'terminated';
+  emergencyContact: {
+    name: string;
+    relationship: string;
+    phone: string;
+  };
 }
 
 export interface Employee {

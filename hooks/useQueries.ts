@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { apiClient } from '@/lib/utils/api-client';
+import { apiClient } from '@/lib/api/client';
 import type { BookingResponse } from '@/types/booking.types';
 import type { AccommodationResponse } from '@/types/accommodation.types';
 import type { EstablishmentResponse } from '@/types/establishment.types';
@@ -27,8 +27,9 @@ export function useBookings(filters?: Record<string, any>) {
           }
         });
       }
-      const response = await apiClient.get(`/api/bookings?${params}`);
-      return response.data;
+      const response = await apiClient.get(`/api/bookings?${params}`) as any;
+      // Handle both old and new response formats for backward compatibility
+      return response.data || response;
     },
     staleTime: 1000 * 60 * 5, // 5 minutes
     refetchOnWindowFocus: true,
@@ -39,8 +40,9 @@ export function useBooking(id: string) {
   return useQuery({
     queryKey: queryKeys.booking(id),
     queryFn: async () => {
-      const response = await apiClient.get(`/api/bookings/${id}`);
-      return response.data;
+      const response = await apiClient.get(`/api/bookings/${id}`) as any;
+      // Handle both old and new response formats for backward compatibility
+      return response.data || response;
     },
     enabled: !!id,
     staleTime: 1000 * 60 * 5,
@@ -52,22 +54,7 @@ export function useCreateBooking() {
 
   return useMutation({
     mutationFn: async (bookingData: any) => {
-      const token = localStorage.getItem('accessToken');
-      const response = await fetch('/api/bookings', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`,
-        },
-        body: JSON.stringify(bookingData),
-      });
-
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error?.message || 'Failed to create booking');
-      }
-
-      return response.json();
+      return await apiClient.post('/api/bookings', bookingData);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.bookings });
@@ -88,8 +75,9 @@ export function useAccommodations(filters?: Record<string, any>) {
           }
         });
       }
-      const response = await apiClient.get(`/api/accommodations?${params}`);
-      return response.data;
+      const response = await apiClient.get(`/api/accommodations?${params}`) as any;
+      // Handle both old and new response formats for backward compatibility
+      return response.data || response;
     },
     staleTime: 1000 * 60 * 10, // 10 minutes
     refetchOnWindowFocus: true,
@@ -100,8 +88,9 @@ export function useAccommodation(id: string) {
   return useQuery({
     queryKey: queryKeys.accommodation(id),
     queryFn: async () => {
-      const response = await apiClient.get(`/api/accommodations/${id}`);
-      return response.data;
+      const response = await apiClient.get(`/api/accommodations/${id}`) as any;
+      // Handle both old and new response formats for backward compatibility
+      return response.data || response;
     },
     enabled: !!id,
     staleTime: 1000 * 60 * 10,
@@ -121,8 +110,9 @@ export function useEstablishments(filters?: Record<string, any>) {
           }
         });
       }
-      const response = await apiClient.get(`/api/establishments?${params}`);
-      return response.data;
+      const response = await apiClient.get(`/api/establishments?${params}`) as any;
+      // Handle both old and new response formats for backward compatibility
+      return response.data || response;
     },
     staleTime: 1000 * 60 * 15, // 15 minutes
     refetchOnWindowFocus: true,
@@ -133,8 +123,9 @@ export function useEstablishment(id: string) {
   return useQuery({
     queryKey: queryKeys.establishment(id),
     queryFn: async () => {
-      const response = await apiClient.get(`/api/establishments/${id}`);
-      return response.data;
+      const response = await apiClient.get(`/api/establishments/${id}`) as any;
+      // Handle both old and new response formats for backward compatibility
+      return response.data || response;
     },
     enabled: !!id,
     staleTime: 1000 * 60 * 15,
@@ -147,15 +138,7 @@ export function useDeleteAccommodation() {
 
   return useMutation({
     mutationFn: async (id: string) => {
-      const response = await fetch(`/api/accommodations/${id}`, {
-        method: 'DELETE',
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to delete accommodation');
-      }
-
-      return response.json();
+      return await apiClient.delete(`/api/accommodations/${id}`);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.accommodations });

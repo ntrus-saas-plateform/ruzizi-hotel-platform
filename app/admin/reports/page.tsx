@@ -1,8 +1,14 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useAuth } from '@/lib/auth/AuthContext';
+import { apiClient } from '@/lib/api/client';
+import { useRouter } from 'next/navigation';
+import SafeRender from '@/components/SafeRender';
 
 export default function ReportsPage() {
+  const { user, isLoading } = useAuth();
+  const router = useRouter();
   const [reportType, setReportType] = useState<'financial' | 'occupancy' | 'hr' | 'comparison'>('financial');
   const [establishments, setEstablishments] = useState<any[]>([]);
   const [selectedEstablishment, setSelectedEstablishment] = useState('');
@@ -16,21 +22,29 @@ export default function ReportsPage() {
   const [showFilters, setShowFilters] = useState(false);
 
   useEffect(() => {
+    if (isLoading) return;
+    
+    if (!user) {
+      router.push('/backoffice/login');
+      return;
+    }
+    
     fetchEstablishments();
     const today = new Date();
     const firstDay = new Date(today.getFullYear(), today.getMonth(), 1);
     setStartDate(firstDay.toISOString().split('T')[0]);
     setEndDate(today.toISOString().split('T')[0]);
-  }, []);
+  }, [user, isLoading, router]);
 
   const fetchEstablishments = async () => {
     try {
-      const response = await fetch('/api/establishments?limit=100');
-      const data = await response.json();
-      if (data.success) {
-        setEstablishments(data.data.data || []);
-        if (data.data.data.length > 0) {
-          setSelectedEstablishment(data.data.data[0].id);
+      const response = await apiClient.get('/api/establishments?limit=100') as any;
+      if (response.success) {
+        setEstablishments(response.data?.data || []);
+        if (response.data?.data.length > 0) {
+          const firstEst = response.data.data[0];
+          const establishment = firstEst.establishment || firstEst;
+          setSelectedEstablishment(establishment.id);
         }
       }
     } catch (err) {
@@ -67,10 +81,9 @@ export default function ReportsPage() {
           break;
       }
 
-      const response = await fetch(url);
-      const data = await response.json();
-      if (data.success) {
-        setReport(data.data);
+      const response = await apiClient.get(url) as any;
+      if (response.success) {
+        setReport(response.data);
       }
     } catch (err) {
       console.error(err);
@@ -100,9 +113,30 @@ export default function ReportsPage() {
     ),
   };
 
+  // Helper function pour logger les objets potentiellement problématiques
+  const logObjectIfNeeded = (value: any, context: string) => {
+    if (typeof value === 'object' && value !== null && !Array.isArray(value)) {
+      console.log(`🔍 Object found in ${context}:`, value);
+      console.trace(`📍 Stack trace for ${context}`);
+      return String(value);
+    }
+    return value;
+  };
+
+  // Wrapper global pour logger tous les rendus
+  const safeRender = (value: any, context: string) => {
+    if (typeof value === 'object' && value !== null && !Array.isArray(value)) {
+      console.error(`🚨 CRITICAL: Object being rendered in ${context}:`, value);
+      console.trace(`📍 Stack trace for ${context}`);
+      return `[Object: ${JSON.stringify(value)}]`;
+    }
+    return value;
+  };
+
   return (
-    <div className="min-h-screen p-4 md:p-6">
-      <div className="max-w-7xl mx-auto">
+    <SafeRender context="reports-page">
+      <div className="min-h-screen p-4 md:p-6">
+        <div className="max-w-7xl mx-auto">
         {/* Header */}
         <div className="mb-8">
           <h1 className="text-3xl md:text-4xl font-bold text-luxury-dark mb-2">
@@ -162,9 +196,15 @@ export default function ReportsPage() {
                   onChange={(e) => setSelectedEstablishment(e.target.value)}
                   className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all duration-200 bg-white shadow-sm appearance-none"
                 >
-                  {establishments.map((est) => (
-                    <option key={est.id} value={est.id}>{est.name}</option>
-                  ))}
+                  {establishments.map((est) => {
+                    const establishment = est.establishment || est;
+                    const safeName = safeRender(establishment.name, 'establishment.name');
+                    return (
+                      <option key={establishment.id} value={establishment.id}>
+                        {safeName || 'Établissement sans nom'}
+                      </option>
+                    );
+                  })}
                 </select>
               </div>
             )}
@@ -175,17 +215,23 @@ export default function ReportsPage() {
                   Sélectionner les établissements à comparer
                 </label>
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 p-4 bg-gray-50 rounded-xl">
-                  {establishments.map((est) => (
-                    <label key={est.id} className="flex items-center space-x-3 p-3 bg-white rounded-lg hover:bg-green-50 transition-colors cursor-pointer">
-                      <input
-                        type="checkbox"
-                        checked={selectedEstablishments.includes(est.id)}
-                        onChange={() => toggleEstablishment(est.id)}
-                        className="w-5 h-5 text-luxury-gold border-gray-300 rounded focus:ring-green-500"
-                      />
-                      <span className="text-sm font-medium text-gray-700">{est.name}</span>
-                    </label>
-                  ))}
+                  {establishments.map((est) => {
+                    const establishment = est.establishment || est;
+                    const safeName = safeRender(establishment.name, 'establishment.checkbox.name');
+                    return (
+                      <label key={establishment.id} className="flex items-center space-x-3 p-3 bg-white rounded-lg hover:bg-green-50 transition-colors cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={selectedEstablishments.includes(establishment.id)}
+                          onChange={() => toggleEstablishment(establishment.id)}
+                          className="w-5 h-5 text-luxury-gold border-gray-300 rounded focus:ring-green-500"
+                        />
+                        <span className="text-sm font-medium text-gray-700">
+                          {safeName || 'Établissement sans nom'}
+                        </span>
+                      </label>
+                    );
+                  })}
                 </div>
               </div>
             )}
@@ -270,7 +316,9 @@ export default function ReportsPage() {
         {report && (
           <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg border border-white/20 p-6 md:p-8">
             <div className="mb-8 pb-6 border-b border-gray-200">
-              <h2 className="text-3xl font-bold text-luxury-dark mb-2">{report.title}</h2>
+              <h2 className="text-3xl font-bold text-luxury-dark mb-2">
+  {safeRender(report.title, 'report.title') || 'Rapport généré'}
+</h2>
               <p className="text-sm text-luxury-text flex items-center">
                 <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
@@ -283,22 +331,25 @@ export default function ReportsPage() {
               <div className="mb-8">
                 <h3 className="text-xl font-bold text-luxury-dark mb-6">Résumé</h3>
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                  {Object.entries(report.summary).map(([key, value]) => (
+                  {Object.entries(report.summary).map(([key, value]) => {
+                    const safeValue = safeRender(value, `summary.${key}`);
+                    return (
                     <div key={key} className="bg-gradient-to-br from-gray-50 to-green-50 rounded-xl p-6 border border-gray-200">
                       <p className="text-sm text-luxury-text capitalize mb-2">
                         {key.replace(/([A-Z])/g, ' $1').trim()}
                       </p>
                       <p className="text-2xl font-bold text-luxury-dark">
-                        {typeof value === 'number'
+                        {typeof safeValue === 'number'
                           ? key.includes('rate') || key.includes('margin')
-                            ? `${value.toFixed(2)}%`
+                            ? `${safeValue.toFixed(2)}%`
                             : key.includes('revenue') || key.includes('expense') || key.includes('profit') || key.includes('salary')
-                              ? `${value.toLocaleString()} BIF`
-                              : value
-                          : String(value)}
+                              ? `${safeValue.toLocaleString()} BIF`
+                              : safeValue
+                          : String(safeValue)}
                       </p>
                     </div>
-                  ))}
+                  );
+                  })}
                 </div>
               </div>
             )}
@@ -347,14 +398,25 @@ export default function ReportsPage() {
                           </tr>
                         </thead>
                         <tbody className="bg-white divide-y divide-gray-200">
-                          {report.details.topAccommodations.map((item: any, idx: number) => (
-                            <tr key={idx} className="hover:bg-green-50 transition-colors">
-                              <td className="px-6 py-4 text-sm font-medium text-luxury-dark">{item.name}</td>
-                              <td className="px-6 py-4 text-sm text-luxury-dark">{item.type}</td>
-                              <td className="px-6 py-4 text-sm text-luxury-dark">{item.bookings}</td>
-                              <td className="px-6 py-4 text-sm font-bold text-luxury-gold">{item.revenue.toLocaleString()} BIF</td>
-                            </tr>
-                          ))}
+                          {report.details.topAccommodations.map((item: any, idx: number) => {
+                            const accommodation = item.accommodation || item;
+                            return (
+                              <tr key={idx} className="hover:bg-green-50 transition-colors">
+                                <td className="px-6 py-4 text-sm font-medium text-luxury-dark">
+                                  {accommodation.name || item.name || 'Hébergement sans nom'}
+                                </td>
+                                <td className="px-6 py-4 text-sm text-luxury-dark">
+                                  {accommodation.type || item.type || 'Non spécifié'}
+                                </td>
+                                <td className="px-6 py-4 text-sm text-luxury-dark">
+                                  {item.bookings || 0}
+                                </td>
+                                <td className="px-6 py-4 text-sm font-bold text-luxury-gold">
+                                  {(item.revenue || 0).toLocaleString()} BIF
+                                </td>
+                              </tr>
+                            );
+                          })}
                         </tbody>
                       </table>
                     </div>
@@ -379,16 +441,21 @@ export default function ReportsPage() {
                       </tr>
                     </thead>
                     <tbody className="bg-white divide-y divide-gray-200">
-                      {report.establishments.map((est: any, idx: number) => (
-                        <tr key={idx} className="hover:bg-green-50 transition-colors">
-                          <td className="px-6 py-4 text-sm font-bold text-luxury-dark">{est.name}</td>
-                          <td className="px-6 py-4 text-sm text-luxury-dark">{est.revenue.toLocaleString()} BIF</td>
-                          <td className="px-6 py-4 text-sm text-luxury-dark">{est.expenses.toLocaleString()} BIF</td>
-                          <td className="px-6 py-4 text-sm font-bold text-luxury-gold">{est.netProfit.toLocaleString()} BIF</td>
-                          <td className="px-6 py-4 text-sm text-luxury-dark">{est.profitMargin.toFixed(2)}%</td>
-                          <td className="px-6 py-4 text-sm text-luxury-dark">{est.occupancyRate.toFixed(2)}%</td>
-                        </tr>
-                      ))}
+                      {report.establishments.map((est: any, idx: number) => {
+                        const establishment = est.establishment || est;
+                        return (
+                          <tr key={idx} className="hover:bg-green-50 transition-colors">
+                            <td className="px-6 py-4 text-sm font-bold text-luxury-dark">
+                              {establishment.name || 'Établissement sans nom'}
+                            </td>
+                            <td className="px-6 py-4 text-sm text-luxury-dark">{est.revenue?.toLocaleString() || 0} BIF</td>
+                            <td className="px-6 py-4 text-sm text-luxury-dark">{est.expenses?.toLocaleString() || 0} BIF</td>
+                            <td className="px-6 py-4 text-sm font-bold text-luxury-gold">{est.netProfit?.toLocaleString() || 0} BIF</td>
+                            <td className="px-6 py-4 text-sm text-luxury-dark">{est.profitMargin?.toFixed(2) || '0.00'}%</td>
+                            <td className="px-6 py-4 text-sm text-luxury-dark">{est.occupancyRate?.toFixed(2) || '0.00'}%</td>
+                          </tr>
+                        );
+                      })}
                     </tbody>
                   </table>
                 </div>
@@ -398,5 +465,6 @@ export default function ReportsPage() {
         )}
       </div>
     </div>
+    </SafeRender>
   );
 }

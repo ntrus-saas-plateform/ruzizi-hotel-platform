@@ -2,15 +2,18 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import { apiClient, ApiResponse } from '@/lib/api/client';
+import type { UserResponse } from '@/types/user.types';
 
 interface User {
   userId: string;
+  id: string;
   name: string;
   email: string;
   role: string;
   establishmentId?: {
-    establishmentId: string;
     name: string;
+    id: string;
   };
   isActive: boolean;
   lastLogin?: string;
@@ -36,12 +39,9 @@ export default function UsersPage() {
       if (filter.isActive) params.append('isActive', filter.isActive);
       if (filter.search) params.append('search', filter.search);
 
-      const response = await fetch(`/api/users?${params}`);
-      if (response.ok) {
-        const data = await response.json();
-        console.log(data);
-        
-        setUsers(data.data.users);
+      const response = await apiClient.get(`/api/users?${params}`) as ApiResponse<{ users: User[]; pagination: any }>;
+      if (response.success && response.data) {
+        setUsers(response.data.users || []);
       }
     } catch (error) {
       console.error('Erreur:', error);
@@ -57,15 +57,11 @@ export default function UsersPage() {
   const handleToggleActive = async (userId: string, isActive: boolean) => {
     try {
       const endpoint = isActive ? 'deactivate' : 'activate';
-      const response = await fetch(`/api/users/${userId}/${endpoint}`, {
-        method: 'POST',
-      });
-
-      if (response.ok) {
+      const response = await apiClient.post(`/api/users/${userId}/${endpoint}`) as ApiResponse<null>;
+      if (response.success) {
         fetchUsers();
       } else {
-        const error = await response.json();
-        alert(error.error || 'Erreur');
+        alert(response.error?.message || 'Erreur');
       }
     } catch (error) {
       console.error('Erreur:', error);
@@ -78,15 +74,12 @@ export default function UsersPage() {
     }
 
     try {
-      const response = await fetch(`/api/users/${userId}`, {
-        method: 'DELETE',
-      });
+      const response = await apiClient.delete(`/api/users/${userId}`) as ApiResponse<null>;
 
-      if (response.ok) {
+      if (response.success) {
         fetchUsers();
       } else {
-        const error = await response.json();
-        alert(error.error || 'Erreur lors de la suppression');
+        alert(response.error?.message || 'Erreur lors de la suppression');
       }
     } catch (error) {
       console.error('Erreur:', error);

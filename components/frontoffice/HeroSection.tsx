@@ -66,7 +66,7 @@ const HeroSection = memo(function HeroSection() {
         { number: '150+', label: 'Chambres luxueuses' },
         { number: '24/7', label: 'Service client' },
         { number: '5★', label: 'Évaluation moyenne' },
-        { number: '10+', label: "Années d'expérience" },
+        { number: '4+', label: "Années d'expérience" },
       ],
     },
     en: {
@@ -87,7 +87,7 @@ const HeroSection = memo(function HeroSection() {
         { number: '150+', label: 'Luxury rooms' },
         { number: '24/7', label: 'Customer service' },
         { number: '5★', label: 'Average rating' },
-        { number: '10+', label: 'Years of experience' },
+        { number: '4+', label: 'Years of experience' },
       ],
     },
   };

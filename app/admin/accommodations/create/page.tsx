@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { apiClient } from '@/lib/utils/api-client';
+import { apiClient } from '@/lib/api/client';
 import ImageUpload from '@/components/admin/ImageUpload';
 import EstablishmentSelector from '@/components/admin/EstablishmentSelector';
 import { useAuth } from '@/lib/auth/AuthContext';
@@ -18,6 +18,14 @@ export default function CreateAccommodationPage() {
 
   // Debug: Log user data from context
   console.log('🔍 User from auth context:', user);
+  
+  // Auto-select establishment for non-admin users
+  useEffect(() => {
+    if (user && user.role !== 'root' && user.role !== 'super_admin' && user.role !== 'admin' && user.establishmentId) {
+      console.log('🏢 Auto-selecting establishment for accommodation creation:', user.establishmentId);
+      setFormData(prev => ({ ...prev, establishmentId: user.establishmentId || '' }));
+    }
+  }, [user]);
   
   const [formData, setFormData] = useState({
     // Basic
@@ -179,8 +187,6 @@ export default function CreateAccommodationPage() {
                   value={formData.establishmentId}
                   onChange={handleEstablishmentChange}
                   required={true}
-                  userRole={user?.role as any}
-                  userEstablishmentId={user?.establishmentId}
                   label="Établissement"
                 />
 

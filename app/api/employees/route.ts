@@ -26,6 +26,11 @@ const CreateEmployeeSchema = z.object({
     contractType: z.enum(['permanent', 'temporary', 'contract']),
     salary: z.number().min(0),
     status: z.enum(['active', 'inactive', 'terminated']).default('active'),
+    emergencyContact: z.object({
+      name: z.string().min(1),
+      relationship: z.string().min(1),
+      phone: z.string().min(1),
+    }),
   }),
   documents: z.array(z.string()).optional(),
   userId: z.string().optional(),

@@ -3,7 +3,7 @@ import { Types } from 'mongoose';
 /**
  * User roles in the system
  */
-export type UserRole = 'root' | 'super_admin' | 'manager' | 'staff';
+export type UserRole = 'root' | 'super_admin' | 'admin' | 'manager' | 'staff';
 
 /**
  * System permissions
@@ -129,11 +129,19 @@ export interface AuthTokens {
 }
 
 /**
- * JWT payload
+ * JWT payload with standard JWT claims
  */
 export interface JWTPayload {
   userId: string;
   email: string;
   role: UserRole;
   establishmentId?: string;
+  // Standard JWT claims
+  exp?: number; // Expiration time (seconds since Unix epoch)
+  iat?: number; // Issued at time (seconds since Unix epoch)
+  nbf?: number; // Not before time (seconds since Unix epoch)
+  iss?: string; // Issuer
+  aud?: string; // Audience
+  sub?: string; // Subject
+  jti?: string; // JWT ID
 }

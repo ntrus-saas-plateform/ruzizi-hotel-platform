@@ -1,10 +1,8 @@
-import { NextRequest } from 'next/server';
-import { BookingService } from '@/services/Booking.service';
-import {
-  requireAuth,
-  createErrorResponse,
-  createSuccessResponse,
-} from '@/lib/auth/middleware';
+import { NextRequest, NextResponse } from 'next/server';
+import { connectDB } from '@/lib/db';
+import Booking from '@/models/Booking.model';
+import { withEstablishmentIsolation } from '@/lib/auth/establishment-isolation.middleware';
+import { EstablishmentAccessDeniedError } from '@/lib/errors/establishment-errors';
 
 /**
  * POST /api/bookings/[id]/checkout
@@ -12,34 +10,62 @@ import {
  */
 export async function POST(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const resolvedParams = await params;
-  return requireAuth(async (req, user) => {
+  return withEstablishmentIsolation(async (req, context) => {
     try {
-      const booking = await BookingService.complete(resolvedParams.id);
-
+      await connectDB();
+      
+      // Find booking
+      const booking = await Booking.findById(resolvedParams.id);
       if (!booking) {
-        return createErrorResponse('NOT_FOUND', 'Booking not found', 404);
-      }
-
-      // Check if user has access to this booking
-      if (
-        (user as any).role === 'manager' &&
-        (user as any).establishmentId &&
-        booking.establishmentId !== (user as any).establishmentId
-      ) {
-        return createErrorResponse(
-          'FORBIDDEN',
-          'You do not have access to this booking',
-          403
+        return NextResponse.json(
+          { error: 'Réservation non trouvée' },
+          { status: 404 }
         );
       }
 
-      return createSuccessResponse(booking, 'Booking completed successfully');
-    } catch (error) {
-      if (error instanceof Error) {
-        return createErrorResponse('SERVER_ERROR', error.message, 500);
+      // Check if user can access this booking's establishment
+      if (!context.serviceContext.canAccessAll() && 
+          booking.establishmentId.toString() !== context.establishmentId) {
+        return NextResponse.json(
+          { error: 'Accès à cet établissement refusé' },
+          { status: 403 }
+        );
       }
 
-      return createErrorResponse('SERVER_ERROR', 'An unexpected error occurred', 500);
+      // Check if booking can be checked out
+      if (booking.status !== 'confirmed') {
+        return NextResponse.json(
+          { error: 'Cette réservation ne peut pas faire l\'objet d\'un check-out' },
+          { status: 400 }
+        );
+      }
+
+      // Update booking status to completed
+      booking.status = 'completed';
+      await booking.save();
+
+      console.log('Booking completed:', booking._id);
+
+      return NextResponse.json({
+        success: true,
+        message: 'Check-out effectué avec succès',
+        data: booking
+      });
+
+    } catch (error: any) {
+      console.error('Error completing booking:', error);
+      
+      if (error instanceof EstablishmentAccessDeniedError) {
+        return NextResponse.json(
+          { error: error.message },
+          { status: 403 }
+        );
+      }
+      
+      return NextResponse.json(
+        { error: 'Erreur lors du check-out' },
+        { status: 500 }
+      );
     }
   })(request);
 }

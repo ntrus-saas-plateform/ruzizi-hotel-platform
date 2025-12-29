@@ -23,6 +23,14 @@ export default function CreateUserPage() {
         isActive: true,
     });
 
+    // Auto-select establishment for non-admin users
+    useEffect(() => {
+        if (user && user.role !== 'root' && user.role !== 'super_admin' && user.role !== 'admin' && user.establishmentId) {
+            console.log('🏢 Auto-selecting establishment for user creation:', user.establishmentId);
+            setFormData(prev => ({ ...prev, establishmentId: user.establishmentId || '' }));
+        }
+    }, [user]);
+
 
 
     const handleSubmit = async (e: React.FormEvent) => {
@@ -31,14 +39,14 @@ export default function CreateUserPage() {
         setError('');
 
         // Client-side validation for establishment (required for non-admin users)
-        if (!formData.establishmentId && formData.role !== 'super_admin' && formData.role !== 'root') {
+        if (!formData.establishmentId && formData.role !== 'super_admin' && formData.role !== 'root' && formData.role !== 'admin') {
             setError('Veuillez sélectionner un établissement pour ce rôle');
             setLoading(false);
             return;
         }
 
         // Validate establishment permissions for non-admin users
-        if (user && user.role !== 'root' && user.role !== 'super_admin') {
+        if (user && user.role !== 'root' && user.role !== 'super_admin' && user.role !== 'admin') {
             if (formData.establishmentId !== user.establishmentId) {
                 setError('Vous ne pouvez créer des utilisateurs que pour votre établissement assigné');
                 setLoading(false);
@@ -177,12 +185,13 @@ export default function CreateUserPage() {
                         <select
                             value={formData.role}
                             onChange={(e) => setFormData({ ...formData, role: e.target.value })}
-                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                             required
+                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                         >
-                            <option value="staff">Personnel</option>
+                            <option value="staff">Staff</option>
                             <option value="receptionist">Réceptionniste</option>
                             <option value="manager">Manager</option>
+                            <option value="admin">Admin</option>
                             <option value="super_admin">Super Admin</option>
                         </select>
                     </div>
@@ -191,9 +200,7 @@ export default function CreateUserPage() {
                         <EstablishmentSelector
                             value={formData.establishmentId}
                             onChange={(establishmentId) => setFormData({ ...formData, establishmentId })}
-                            required={formData.role !== 'super_admin' && formData.role !== 'root'}
-                            userRole={user?.role}
-                            userEstablishmentId={user?.establishmentId}
+                            required={formData.role !== 'super_admin' && formData.role !== 'root' && formData.role !== 'admin'}
                             label="Établissement"
                         />
                         <p className="text-xs text-gray-500 mt-1">

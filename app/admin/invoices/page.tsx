@@ -2,9 +2,12 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import { useAuth } from '@/lib/auth/AuthContext';
+import { apiClient } from '@/lib/api/client';
 
 export default function InvoicesPage() {
   const router = useRouter();
+  const { user, getAccessToken, isLoading: authLoading } = useAuth();
   const [invoices, setInvoices] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -28,15 +31,23 @@ export default function InvoicesPage() {
   }, []);
 
   useEffect(() => {
-    fetchInvoices();
-  }, [currentPage, filters]);
+    // Check if user is authenticated
+    if (!authLoading) {
+      if (!user) {
+        console.warn('Utilisateur non authentifié, redirection vers login...');
+        router.push('/backoffice/login');
+        return;
+      }
+      
+      fetchInvoices();
+    }
+  }, [currentPage, filters, user, authLoading]);
 
   const fetchEstablishments = async () => {
     try {
-      const response = await fetch('/api/establishments');
-      const data = await response.json();
-      if (data.success) {
-        setEstablishments(data.data.data || []);
+      const response = await apiClient.get('/api/establishments') as any;
+      if (response.success) {
+        setEstablishments(response.data?.data || []);
       }
     } catch (err) {
       console.error('Failed to fetch establishments:', err);
@@ -54,15 +65,12 @@ export default function InvoicesPage() {
         ...Object.fromEntries(Object.entries(filters).filter(([_, value]) => value !== '')),
       });
 
-      const response = await fetch(`/api/invoices?${params}`);
-      const data = await response.json();
+      const response = await apiClient.get(`/api/invoices?${params}`) as any;
 
-      if (!response.ok) {
-        throw new Error(data.error?.message || 'Failed to fetch invoices');
+      if (response.success) {
+        setInvoices(response.data?.data || []);
+        setTotalPages(response.data?.pagination?.totalPages || 1);
       }
-
-      setInvoices(data.data.data || []);
-      setTotalPages(data.data.pagination?.totalPages || 1);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'An error occurred');
     } finally {

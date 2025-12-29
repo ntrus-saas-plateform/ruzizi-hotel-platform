@@ -65,14 +65,14 @@ export default function EditUserPage() {
     setError('');
 
     // Client-side validation for establishment (required for non-admin users)
-    if (!formData.establishmentId && formData.role !== 'super_admin' && formData.role !== 'root') {
+    if (!formData.establishmentId && formData.role !== 'super_admin' && formData.role !== 'root' && formData.role !== 'admin') {
       setError('Veuillez sélectionner un établissement pour ce rôle');
       setSaving(false);
       return;
     }
 
     // Validate establishment permissions for non-admin users
-    if (user && user.role !== 'root' && user.role !== 'super_admin') {
+    if (user && user.role !== 'root' && user.role !== 'super_admin' && user.role !== 'admin') {
       if (formData.establishmentId !== user.establishmentId) {
         setError('Vous ne pouvez modifier des utilisateurs que pour votre établissement assigné');
         setSaving(false);
@@ -210,8 +210,6 @@ export default function EditUserPage() {
               value={formData.establishmentId}
               onChange={(establishmentId) => setFormData({ ...formData, establishmentId })}
               required={formData.role !== 'super_admin' && formData.role !== 'root'}
-              userRole={user?.role}
-              userEstablishmentId={user?.establishmentId}
               label="Établissement"
             />
             <p className="text-xs text-gray-500 mt-1">

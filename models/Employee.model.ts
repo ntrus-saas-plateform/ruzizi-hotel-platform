@@ -22,6 +22,30 @@ export interface IEmployeeEmploymentInfo {
   contractType: 'permanent' | 'temporary' | 'contract';
   salary: number;
   status: 'active' | 'inactive' | 'terminated';
+  managerId?: mongoose.Types.ObjectId; // Référence au manager
+  probationEndDate?: Date; // Date de fin de période d'essai
+  noticePeriod: number; // Période de préavis en jours
+  workSchedule: {
+    type: 'full_time' | 'part_time' | 'shift';
+    hoursPerWeek: number;
+    shiftPattern?: string;
+  };
+  benefits: {
+    healthInsurance: boolean;
+    retirementPlan: boolean;
+    paidLeaveDays: number;
+    sickLeaveDays: number;
+  };
+  emergencyContact: {
+    name: string;
+    relationship: string;
+    phone: string;
+  };
+  bankDetails?: {
+    bankName: string;
+    accountNumber: string;
+    iban?: string;
+  };
 }
 
 export interface IEmployee extends Document {
@@ -63,6 +87,34 @@ const EmployeeEmploymentInfoSchema = new Schema<IEmployeeEmploymentInfo>(
     contractType: { type: String, required: true, enum: ['permanent', 'temporary', 'contract'] },
     salary: { type: Number, required: true, min: 0 },
     status: { type: String, required: true, enum: ['active', 'inactive', 'terminated'], default: 'active' },
+    managerId: { type: Schema.Types.ObjectId, ref: 'Employee' },
+    probationEndDate: { type: Date },
+    noticePeriod: { type: Number, default: 30 },
+    workSchedule: {
+      type: {
+        type: String,
+        enum: ['full_time', 'part_time', 'shift'],
+        default: 'full_time'
+      },
+      hoursPerWeek: { type: Number, default: 40 },
+      shiftPattern: { type: String }
+    },
+    benefits: {
+      healthInsurance: { type: Boolean, default: false },
+      retirementPlan: { type: Boolean, default: false },
+      paidLeaveDays: { type: Number, default: 25 },
+      sickLeaveDays: { type: Number, default: 10 }
+    },
+    emergencyContact: {
+      name: { type: String, required: true },
+      relationship: { type: String, required: true },
+      phone: { type: String, required: true }
+    },
+    bankDetails: {
+      bankName: { type: String },
+      accountNumber: { type: String },
+      iban: { type: String }
+    }
   },
   { _id: false }
 );

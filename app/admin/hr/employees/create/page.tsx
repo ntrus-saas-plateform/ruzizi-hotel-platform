@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/auth/AuthContext';
 import EstablishmentSelector from '@/components/admin/EstablishmentSelector';
@@ -11,6 +11,14 @@ export default function CreateEmployeePage() {
     const { user } = useAuth();
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
+
+    // Auto-select establishment for non-admin users
+    useEffect(() => {
+        if (user && user.role !== 'root' && user.role !== 'super_admin' && user.role !== 'admin' && user.establishmentId) {
+            console.log('🏢 Auto-selecting establishment for employee creation:', user.establishmentId);
+            setFormData(prev => ({ ...prev, establishmentId: user.establishmentId || '' }));
+        }
+    }, [user]);
 
     const [formData, setFormData] = useState({
         // Personal Info
@@ -31,6 +39,10 @@ export default function CreateEmployeePage() {
         contractType: 'permanent' as 'permanent' | 'temporary' | 'contract',
         salary: '',
         status: 'active' as 'active' | 'inactive' | 'terminated',
+        // Emergency contact
+        emergencyContactName: '',
+        emergencyContactRelationship: '',
+        emergencyContactPhone: '',
     });
 
     const handleSubmit = async (e: React.FormEvent) => {
@@ -46,7 +58,7 @@ export default function CreateEmployeePage() {
         }
 
         // Validate establishment permissions for non-admin users
-        if (user && user.role !== 'root' && user.role !== 'super_admin') {
+        if (user && user.role !== 'root' && user.role !== 'super_admin' && user.role !== 'admin') {
             if (formData.establishmentId !== user.establishmentId) {
                 setError('Vous ne pouvez créer des employés que pour votre établissement assigné');
                 setLoading(false);
@@ -76,6 +88,11 @@ export default function CreateEmployeePage() {
                     contractType: formData.contractType,
                     salary: parseFloat(formData.salary),
                     status: formData.status,
+                    emergencyContact: {
+                        name: formData.emergencyContactName,
+                        relationship: formData.emergencyContactRelationship,
+                        phone: formData.emergencyContactPhone,
+                    },
                 },
             };
 
@@ -293,8 +310,6 @@ export default function CreateEmployeePage() {
                                 value={formData.establishmentId}
                                 onChange={(establishmentId) => setFormData({ ...formData, establishmentId })}
                                 required={true}
-                                userRole={user?.role}
-                                userEstablishmentId={user?.establishmentId}
                                 label="Établissement"
                             />
                         </div>
@@ -357,6 +372,51 @@ export default function CreateEmployeePage() {
                                 <option value="inactive">Inactif</option>
                                 <option value="terminated">Terminé</option>
                             </select>
+                        </div>
+                    </div>
+                </div>
+
+                {/* Emergency Contact Section */}
+                <div>
+                    <h2 className="text-xl font-semibold text-gray-800 mb-4 border-b pb-2">
+                        Contact d'urgence
+                    </h2>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                        <div>
+                            <label className="block text-sm font-semibold text-gray-700 mb-2">
+                                Nom du contact *
+                            </label>
+                            <input
+                                type="text"
+                                value={formData.emergencyContactName}
+                                onChange={(e) => setFormData({ ...formData, emergencyContactName: e.target.value })}
+                                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-luxury-gold focus:border-luxury-gold"
+                                required
+                            />
+                        </div>
+                        <div>
+                            <label className="block text-sm font-semibold text-gray-700 mb-2">
+                                Relation *
+                            </label>
+                            <input
+                                type="text"
+                                value={formData.emergencyContactRelationship}
+                                onChange={(e) => setFormData({ ...formData, emergencyContactRelationship: e.target.value })}
+                                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-luxury-gold focus:border-luxury-gold"
+                                required
+                            />
+                        </div>
+                        <div>
+                            <label className="block text-sm font-semibold text-gray-700 mb-2">
+                                Téléphone du contact *
+                            </label>
+                            <input
+                                type="tel"
+                                value={formData.emergencyContactPhone}
+                                onChange={(e) => setFormData({ ...formData, emergencyContactPhone: e.target.value })}
+                                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-luxury-gold focus:border-luxury-gold"
+                                required
+                            />
                         </div>
                     </div>
                 </div>

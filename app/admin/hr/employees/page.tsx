@@ -2,10 +2,13 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import { useAuth } from '@/lib/auth/AuthContext';
+import { apiClient } from '@/lib/api/client';
 import type { EmployeeResponse } from '@/types/employee.types';
 
 export default function EmployeesPage() {
   const router = useRouter();
+  const { user, isLoading: authLoading } = useAuth();
   const [employees, setEmployees] = useState<EmployeeResponse[]>([]);
   const [loading, setLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
@@ -19,19 +22,29 @@ export default function EmployeesPage() {
   const [establishments, setEstablishments] = useState<any[]>([]);
 
   useEffect(() => {
-    fetchEstablishments();
-  }, []);
+    // Check if user is authenticated
+    if (!authLoading) {
+      if (!user) {
+        console.warn('Utilisateur non authentifié, redirection vers login...');
+        router.push('/backoffice/login');
+        return;
+      }
+      
+      fetchEstablishments();
+    }
+  }, [authLoading, user]);
 
   useEffect(() => {
-    fetchEmployees();
-  }, [currentPage, filters]);
+    if (user) {
+      fetchEmployees();
+    }
+  }, [currentPage, filters, user]);
 
   const fetchEstablishments = async () => {
     try {
-      const response = await fetch('/api/establishments');
-      const data = await response.json();
-      if (data.success) {
-        setEstablishments(data.data.data || []);
+      const response = await apiClient.get('/api/establishments') as any;
+      if (response.success) {
+        setEstablishments(response.data?.data || []);
       }
     } catch (err) {
       console.error(err);
@@ -41,16 +54,17 @@ export default function EmployeesPage() {
   const fetchEmployees = async () => {
     try {
       setLoading(true);
+      
       const params = new URLSearchParams({
         page: currentPage.toString(),
         limit: '10',
         ...Object.fromEntries(Object.entries(filters).filter(([_, v]) => v !== '')),
       });
-      const response = await fetch(`/api/employees?${params}`);
-      const data = await response.json();
-      if (data.success) {
-        setEmployees(data.data.data || []);
-        setTotalPages(data.data.pagination?.totalPages || 1);
+      
+      const response = await apiClient.get(`/api/employees?${params}`) as any;
+      if (response.success) {
+        setEmployees(response.data?.data || []);
+        setTotalPages(response.data?.pagination?.totalPages || 1);
       }
     } catch (err) {
       console.error(err);
@@ -81,6 +95,25 @@ export default function EmployeesPage() {
             </svg>
             Nouvel Employé
           </button>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+          <div className="bg-white rounded-lg shadow p-4">
+            <p className="text-sm text-luxury-text">Total employés</p>
+            <p className="mt-1 text-2xl font-bold text-luxury-dark">{employees.length}</p>
+          </div>
+          <div className="bg-white rounded-lg shadow p-4">
+            <p className="text-sm text-luxury-text">Employés actifs</p>
+            <p className="mt-1 text-2xl font-bold text-green-600">
+              {employees.filter((e) => e.employmentInfo.status === 'active').length}
+            </p>
+          </div>
+          <div className="bg-white rounded-lg shadow p-4">
+            <p className="text-sm text-luxury-text">Inactifs / Terminés</p>
+            <p className="mt-1 text-2xl font-bold text-amber-600">
+              {employees.filter((e) => e.employmentInfo.status !== 'active').length}
+            </p>
+          </div>
         </div>
 
         <div className="bg-white rounded-lg shadow p-6 mb-6">

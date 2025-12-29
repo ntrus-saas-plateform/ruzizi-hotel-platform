@@ -2,10 +2,13 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import { useAuth } from '@/lib/auth/AuthContext';
+import { apiClient } from '@/lib/api/client';
 import type { ExpenseResponse } from '@/types/expense.types';
 
 export default function ExpensesPage() {
   const router = useRouter();
+  const { user, isLoading: authLoading } = useAuth();
   const [expenses, setExpenses] = useState<ExpenseResponse[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -24,19 +27,29 @@ export default function ExpensesPage() {
   const [showFilters, setShowFilters] = useState(false);
 
   useEffect(() => {
-    fetchEstablishments();
-  }, []);
+    // Check if user is authenticated
+    if (!authLoading) {
+      if (!user) {
+        console.warn('Utilisateur non authentifié, redirection vers login...');
+        router.push('/backoffice/login');
+        return;
+      }
+      
+      fetchEstablishments();
+    }
+  }, [authLoading, user]);
 
   useEffect(() => {
-    fetchExpenses();
-  }, [currentPage, filters]);
+    if (user) {
+      fetchExpenses();
+    }
+  }, [currentPage, filters, user]);
 
   const fetchEstablishments = async () => {
     try {
-      const response = await fetch('/api/establishments');
-      const data = await response.json();
-      if (data.success) {
-        setEstablishments(data.data.data || []);
+      const response = await apiClient.get('/api/establishments') as any;
+      if (response.success) {
+        setEstablishments(response.data?.data || []);
       }
     } catch (err) {
       console.error('Failed to fetch establishments:', err);
@@ -47,17 +60,20 @@ export default function ExpensesPage() {
     try {
       setLoading(true);
       setError('');
+
       const params = new URLSearchParams({
         page: currentPage.toString(),
         limit: '10',
         ...Object.fromEntries(Object.entries(filters).filter(([_, value]) => value !== '')),
       });
-      const response = await fetch(`/api/expenses?${params}`);
-      const data = await response.json();
-      if (!response.ok) throw new Error(data.error?.message || 'Failed to fetch expenses');
-      setExpenses(data.data.data || []);
-      setTotalPages(data.data.pagination?.totalPages || 1);
-      setTotalExpenses(data.data.pagination?.total || 0);
+      
+      const response = await apiClient.get(`/api/expenses?${params}`) as any;
+      
+      if (response.success) {
+        setExpenses(response.data?.data || []);
+        setTotalPages(response.data?.pagination?.totalPages || 1);
+        setTotalExpenses(response.data?.pagination?.total || 0);
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'An error occurred');
     } finally {

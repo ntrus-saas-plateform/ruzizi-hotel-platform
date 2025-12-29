@@ -120,17 +120,19 @@ export async function POST(request: NextRequest) {
 
             return createSuccessResponse(booking, 'Réservation créée avec succès', 201);
         } catch (error: any) {
-            console.error('Error creating booking:', error);
+            console.error('Error creating booking:', error.message);
+            console.error('Full error details:', error);
             
             if (error instanceof EstablishmentAccessDeniedError) {
                 return createErrorResponse('ESTABLISHMENT_ACCESS_DENIED', error.message, 403);
             }
             
             if (error instanceof CrossEstablishmentRelationshipError) {
-                return createErrorResponse('CROSS_ESTABLISHMENT_RELATIONSHIP', error.message, 400);
+                return createErrorResponse('CROSS_ESTABLISHMENT_RELATIONSHIP', error.message, 403);
             }
             
-            return createErrorResponse('DATABASE_ERROR', error.message || 'Erreur lors de la création de la réservation', 500);
+            // Return the actual error message for better debugging
+            return createErrorResponse('BOOKING_CREATION_FAILED', error.message || 'Erreur lors de la création de la réservation', 500);
         }
     })(request);
 }

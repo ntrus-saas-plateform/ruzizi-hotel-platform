@@ -1,20 +1,17 @@
-import { NextRequest } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { BookingModel } from '@/models/Booking.model';
 import { AccommodationModel } from '@/models/Accommodation.model';
 import { connectDB } from '@/lib/db';
 import { toObjectId } from '@/lib/db/utils';
-import {
-  requireAuth,
-  createErrorResponse,
-  createSuccessResponse,
-} from '@/lib/auth/middleware';
+import { withEstablishmentIsolation } from '@/lib/auth/establishment-isolation.middleware';
+import { EstablishmentAccessDeniedError } from '@/lib/errors/establishment-errors';
 
 /**
  * GET /api/bookings/occupancy
  * Get occupancy rate statistics
  */
 export async function GET(request: NextRequest) {
-  return requireAuth(async (req, user) => {
+  return withEstablishmentIsolation(async (req, context) => {
     try {
       const { searchParams } = new URL(req.url);
       const establishmentId = searchParams.get('establishmentId');
@@ -22,14 +19,20 @@ export async function GET(request: NextRequest) {
       const endDateStr = searchParams.get('endDate');
 
       if (!startDateStr || !endDateStr) {
-        return createErrorResponse('VALIDATION_ERROR', 'Start and end dates are required', 400);
+        return NextResponse.json(
+          { error: 'Start and end dates are required' },
+          { status: 400 }
+        );
       }
 
       const startDate = new Date(startDateStr);
       const endDate = new Date(endDateStr);
 
       if (isNaN(startDate.getTime()) || isNaN(endDate.getTime())) {
-        return createErrorResponse('VALIDATION_ERROR', 'Invalid date format', 400);
+        return NextResponse.json(
+          { error: 'Invalid date format' },
+          { status: 400 }
+        );
       }
 
       await connectDB();
@@ -37,9 +40,24 @@ export async function GET(request: NextRequest) {
       // Build query
       const query: any = {};
       if (establishmentId) {
+        // For non-admin users, validate they can access the requested establishment
+        if (!context.serviceContext.canAccessAll() && establishmentId !== context.establishmentId) {
+          return NextResponse.json(
+            { error: 'Accès à cet établissement refusé' },
+            { status: 403 }
+          );
+        }
         query.establishmentId = toObjectId(establishmentId);
-      } else if ((user as any).role === 'manager' && (user as any).establishmentId) {
-        query.establishmentId = toObjectId((user as any).establishmentId);
+      } else if (!context.serviceContext.canAccessAll()) {
+        // Non-admin users can only see their own establishment
+        if (context.establishmentId) {
+          query.establishmentId = toObjectId(context.establishmentId);
+        } else {
+          return NextResponse.json(
+            { error: 'ID établissement manquant' },
+            { status: 400 }
+          );
+        }
       }
 
       // Get total accommodations
@@ -137,22 +155,34 @@ export async function GET(request: NextRequest) {
         })
       );
 
-      return createSuccessResponse({
-        totalAccommodations,
-        totalDays,
-        totalPossibleNights,
-        totalOccupiedNights,
-        occupancyRate: Math.round(occupancyRate * 100) / 100,
-        occupancyByType,
-        startDate: startDateStr,
-        endDate: endDateStr,
+      return NextResponse.json({
+        success: true,
+        data: {
+          totalAccommodations,
+          totalDays,
+          totalPossibleNights,
+          totalOccupiedNights,
+          occupancyRate: Math.round(occupancyRate * 100) / 100,
+          occupancyByType,
+          startDate: startDateStr,
+          endDate: endDateStr,
+        }
       });
-    } catch (error) {
-      if (error instanceof Error) {
-        return createErrorResponse('SERVER_ERROR', error.message, 500);
-      }
 
-      return createErrorResponse('SERVER_ERROR', 'An unexpected error occurred', 500);
+    } catch (error: any) {
+      console.error('Error calculating occupancy:', error);
+      
+      if (error instanceof EstablishmentAccessDeniedError) {
+        return NextResponse.json(
+          { error: error.message },
+          { status: 403 }
+        );
+      }
+      
+      return NextResponse.json(
+        { error: 'Erreur lors du calcul du taux d\'occupation' },
+        { status: 500 }
+      );
     }
   })(request);
 }

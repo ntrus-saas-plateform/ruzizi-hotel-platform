@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { apiClient } from '@/lib/utils/api-client';
+import { apiClient } from '@/lib/api/client';
 import type { EstablishmentResponse } from '@/types/establishment.types';
 
 export default function EstablishmentsPage() {
@@ -36,8 +36,8 @@ export default function EstablishmentsPage() {
         )
       );
 
-      const data = await apiClient.get(`/api/establishments?${params}`);
-      setEstablishments(data.data.data || []);
+      const data = await apiClient.get(`/api/establishments?${params}`) as any;
+      setEstablishments(data.data?.data || data.data || data || []);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'An error occurred');
     } finally {

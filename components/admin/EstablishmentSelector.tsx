@@ -1,16 +1,30 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { UserRole } from '@/types/user.types';
+import { useState, useEffect, useMemo, useCallback } from 'react';
+import { useAuth } from '@/lib/auth/AuthContext';
 import { EstablishmentResponse } from '@/types/establishment.types';
+import { unifiedTokenManager } from '@/lib/auth/unified-token-manager';
+import { useErrorHandler } from '@/hooks/useErrorHandler';
+import { useRenderMonitor } from '@/lib/performance/render-monitor';
+import { CompactErrorDisplay } from '@/components/ui/ErrorDisplay';
+import { apiClient, ApiResponse } from '@/lib/api/client';
+
+// Cache for establishment data to avoid repeated API calls
+interface EstablishmentCache {
+  data: EstablishmentResponse[];
+  timestamp: number;
+  userRole: string;
+  userId: string;
+}
+
+const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
+let establishmentCache: EstablishmentCache | null = null;
 
 interface EstablishmentSelectorProps {
   value?: string;
   onChange: (establishmentId: string) => void;
   disabled?: boolean;
   required?: boolean;
-  userRole?: UserRole;
-  userEstablishmentId?: string;
   className?: string;
   label?: string;
 }
@@ -20,186 +34,182 @@ export default function EstablishmentSelector({
   onChange,
   disabled = false,
   required = false,
-  userRole,
-  userEstablishmentId,
   className = '',
   label = 'Établissement'
 }: EstablishmentSelectorProps) {
+  // Monitor render performance in development
+  useRenderMonitor('EstablishmentSelector');
+
+  const { user, isLoading: authLoading } = useAuth();
   const [establishments, setEstablishments] = useState<EstablishmentResponse[]>([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-
-  // Debug: Log received props
-  console.log('🔍 EstablishmentSelector props:', {
-    userRole,
-    userEstablishmentId,
-    userEstablishmentIdType: typeof userEstablishmentId
+  const { error, handleError, clearError, retry, canRetry, isRetrying } = useErrorHandler({
+    onRetry: () => fetchEstablishments()
   });
 
-  // State for fresh user data from API
-  const [freshUserData, setFreshUserData] = useState<{role?: UserRole, establishmentId?: string}>({});
+  // Memoize loading state to prevent unnecessary re-renders
+  const isLoading = useMemo(() => !!(loading || authLoading), [loading, authLoading]);
 
-  // Fetch fresh user data from API
-  useEffect(() => {
-    fetch('/api/auth/me')
-      .then(res => res.json())
-      .then(data => {
-        if (data.success && data.user) {
-          console.log('🔄 Fresh user data from API:', data.user);
-          setFreshUserData({
-            role: data.user.role,
-            establishmentId: data.user.establishmentId
-          });
-        }
-      })
-      .catch(err => {
-        console.error('Failed to fetch fresh user data:', err);
-      });
-  }, []);
+  // Memoize user role and admin status to prevent unnecessary re-renders
+  const isAdmin = useMemo(() => {
+    if (!user) return false;
+    const userRole = user.role;
+    const adminStatus = userRole === 'root' || userRole === 'super_admin' || userRole === 'admin';
+    console.log('🔐 User role check:', {
+      userRole,
+      email: user.email,
+      isAdmin: adminStatus,
+      establishmentId: user.establishmentId
+    });
+    return adminStatus;
+  }, [user]);
 
-  // Use fresh data if available, fallback to props
-  const actualUserRole = freshUserData.role || userRole;
-  const actualUserEstablishmentId = freshUserData.establishmentId || userEstablishmentId;
+  // Memoize disabled state to prevent unnecessary re-renders
+  const isDisabled = useMemo(() => {
+    // For admins, never disable unless explicitly disabled via props
+    if (isAdmin) return !!disabled;
+    // For non-admins, disable if they have an assigned establishment
+    return !!disabled || (!isAdmin && user && !!user.establishmentId);
+  }, [disabled, isAdmin, user]);
 
-  // Debug: Log actual data being used
-  console.log('🎯 Actual data being used:', {
-    actualUserRole,
-    actualUserEstablishmentId,
-    freshUserData
-  });
+  // Check if cached data is valid for current user
+  const isCacheValid = useCallback(() => {
+    if (!establishmentCache || !user) return false;
+    
+    const now = Date.now();
+    const isExpired = (now - establishmentCache.timestamp) > CACHE_DURATION;
+    const isSameUser = establishmentCache.userId === user.id && establishmentCache.userRole === user.role;
+    
+    return !isExpired && isSameUser;
+  }, [user]);
 
-  // Determine if user is admin (can access all establishments)
-  const isAdmin = actualUserRole === 'root' || actualUserRole === 'super_admin';
-  
-  // Auto-disable for non-admin users
-  const isDisabled = disabled || !isAdmin;
-
-  useEffect(() => {
-    fetchEstablishments();
-  }, [actualUserRole, actualUserEstablishmentId]); // Re-fetch when user data changes
-
-  useEffect(() => {
-    // Auto-select user's establishment for non-admin users
-    if (!isAdmin && actualUserEstablishmentId && !value) {
-      onChange(actualUserEstablishmentId);
-    }
-  }, [isAdmin, actualUserEstablishmentId, value, onChange]);
-
-  const fetchEstablishments = async () => {
+  // Optimized fetch function with caching
+  const fetchEstablishments = useCallback(async () => {
     try {
       setLoading(true);
-      setError(null);
+      clearError();
 
-      const response = await fetch('/api/establishments');
-      
-      if (!response.ok) {
-        throw new Error('Failed to fetch establishments');
+      // Check cache first
+      if (isCacheValid() && establishmentCache) {
+        console.log('📦 Using cached establishment data');
+        setEstablishments(establishmentCache.data);
+        setLoading(false);
+        return;
       }
 
-      const data = await response.json();
-      
-      // Ensure we have a valid data structure
-      if (!data.success) {
-        throw new Error(data.error?.message || 'API returned error');
+      // Get token from UnifiedTokenManager instead of direct localStorage access
+      const token = unifiedTokenManager.getAccessToken();
+      if (!token) {
+        throw new Error('Token d\'authentification manquant');
       }
-      
-      // Handle paginated response structure: { data: { data: [...], pagination: {...} } }
-      let establishmentsList = [];
-      
-      if (data.data && typeof data.data === 'object') {
-        // If data.data has a 'data' property (paginated response)
-        if (Array.isArray(data.data.data)) {
-          establishmentsList = data.data.data;
-        }
-        // If data.data is directly an array
-        else if (Array.isArray(data.data)) {
-          establishmentsList = data.data;
-        }
-        // If data.data is an object but not the expected structure
-        else {
-          console.warn('Unexpected data structure from establishments API:', data.data);
-          establishmentsList = [];
+
+      // Validate token before making API call
+      if (!unifiedTokenManager.isTokenValid(token)) {
+        throw new Error('Token d\'authentification invalide');
+      }
+
+      // Check if token is expired and attempt refresh if needed
+      if (unifiedTokenManager.isTokenExpired(token)) {
+        console.log('Token expired, attempting refresh...');
+        const refreshedToken = await unifiedTokenManager.refreshTokenIfNeeded();
+        if (!refreshedToken) {
+          throw new Error('Impossible de renouveler le token d\'authentification');
         }
       }
-      
-      // Final safety check
-      if (!Array.isArray(establishmentsList)) {
-        console.error('Establishments data is not an array:', establishmentsList);
-        establishmentsList = [];
+
+      // Get the current (possibly refreshed) token
+      const currentToken = unifiedTokenManager.getAccessToken();
+      if (!currentToken) {
+        throw new Error('Token d\'authentification manquant après tentative de renouvellement');
       }
-      
-      // Apply role-based filtering
-      if (isAdmin) {
-        // Admins see ALL establishments
-        console.log('👑 Admin user - showing all establishments:', establishmentsList.length);
-        setEstablishments(establishmentsList);
-        setError(null);
-      } else if (actualUserEstablishmentId) {
-        // Non-admin users only see their assigned establishment
-        console.log('👤 Non-admin user - looking for establishment:', actualUserEstablishmentId);
-        console.log('📋 Available establishments:', establishmentsList.map(est => ({ id: est.id, name: est.name })));
-        
-        // Try to find the establishment with detailed logging
-        console.log('🔍 Searching for establishment with ID:', actualUserEstablishmentId);
-        console.log('🔍 Establishment IDs in list:', establishmentsList.map(est => est.id));
-        
-        const userEstablishment = establishmentsList.find(
-          (est: EstablishmentResponse) => {
-            console.log(`🔍 Comparing "${est.id}" === "${actualUserEstablishmentId}":`, est.id === actualUserEstablishmentId);
-            return est.id === actualUserEstablishmentId;
-          }
-        );
-        
-        console.log('🎯 Found user establishment:', userEstablishment);
-        
-        if (userEstablishment) {
-          console.log('✅ Setting user establishment:', userEstablishment.name);
-          setEstablishments([userEstablishment]);
-          setError(null);
-        } else {
-          // If user's establishment not found in the list, show empty
-          console.log('❌ User establishment not found in list');
-          setEstablishments([]);
-          setError('Votre établissement assigné n\'a pas été trouvé');
-        }
-      } else {
-        // Non-admin user without establishment assignment
-        console.log('❌ Non-admin user without establishment assignment');
-        setEstablishments([]);
-        setError('Aucun établissement assigné à votre compte');
+
+      console.log('🌐 Fetching establishment data from API');
+      const response = await apiClient.get('/api/establishments') as ApiResponse<{ data: EstablishmentResponse[]; pagination: any }>;
+
+      if (!response.success) {
+        throw new Error(response.error?.message || 'API returned error');
       }
+
+      // API returns: { success: true, data: { data: [...], pagination: {...} } }
+      const establishmentsList = response.data?.data || [];
+
+      // Update cache
+      if (user) {
+        establishmentCache = {
+          data: establishmentsList,
+          timestamp: Date.now(),
+          userRole: user.role,
+          userId: user.id
+        };
+        console.log('📦 Cached establishment data for user', user.id);
+      }
+
+      // The API already filters based on user role, so we just set what it returns
+      setEstablishments(establishmentsList);
+
     } catch (err) {
       console.error('Error fetching establishments:', err);
-      setError(err instanceof Error ? err.message : 'Failed to load establishments');
+      
+      // Use enhanced error handling
+      handleError(err, 'fetch_establishments');
     } finally {
       setLoading(false);
     }
-  };
+  }, [user, isCacheValid, clearError, handleError]);
 
-  const handleChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+  useEffect(() => {
+    // Only fetch establishments when auth is loaded
+    if (!authLoading && user) {
+      fetchEstablishments();
+    }
+  }, [user?.role, user?.establishmentId, authLoading, fetchEstablishments]);
+
+  // Optimized auto-selection effect with dependency optimization
+  useEffect(() => {
+    // Auto-select user's establishment for non-admin users who have one assigned
+    // Only when auth is loaded and user data is available
+    if (!authLoading && !isAdmin && user?.establishmentId && (!value || value === '')) {
+      console.log('🏢 Auto-selecting establishment for non-admin user:', user.establishmentId);
+      onChange(user.establishmentId);
+    }
+    
+    // For admins (root, super_admin), don't auto-select - let them choose
+    // For non-admins without establishmentId, also don't auto-select
+  }, [authLoading, isAdmin, user?.establishmentId, value, onChange]);
+
+  const handleChange = useCallback((e: React.ChangeEvent<HTMLSelectElement>) => {
     onChange(e.target.value);
-  };
+  }, [onChange]);
 
   return (
     <div className={className}>
       <label className="block text-sm font-semibold text-gray-700 mb-2">
         {label}
         {required && <span className="text-red-500 ml-1">*</span>}
-        {!isAdmin && (
-          <span className="text-xs text-gray-500 ml-2">(Pré-sélectionné)</span>
+        {!isAdmin && user?.establishmentId && (
+          <span className="text-xs text-gray-500 ml-2">(Assigné automatiquement)</span>
+        )}
+        {!isAdmin && !user?.establishmentId && (
+          <span className="text-xs text-blue-600 ml-2">(Sélection requise)</span>
         )}
       </label>
 
+      {/* Enhanced error display */}
       {error && (
-        <div className="mb-2 p-2 bg-red-50 border border-red-200 text-red-700 text-sm rounded">
-          {error}
+        <div className="mb-2">
+          <CompactErrorDisplay
+            error={error}
+            onRetry={canRetry ? retry : undefined}
+            onDismiss={clearError}
+            isRetrying={isRetrying}
+          />
         </div>
       )}
 
       <select
         value={value || ''}
         onChange={handleChange}
-        disabled={isDisabled || loading}
+        disabled={isDisabled || isLoading}
         required={required}
         className={`
           w-full px-3 py-2 border border-gray-300 rounded-lg 
@@ -209,7 +219,7 @@ export default function EstablishmentSelector({
         `}
       >
         <option value="">
-          {loading ? 'Chargement...' : 'Sélectionner un établissement'}
+          {isLoading ? 'Chargement...' : establishments.length === 0 ? 'Aucun établissement disponible' : 'Sélectionner un établissement'}
         </option>
         
         {Array.isArray(establishments) && establishments.map((establishment) => (
@@ -219,21 +229,41 @@ export default function EstablishmentSelector({
         ))}
       </select>
 
-      {!isAdmin && (
+      {!isAdmin && user?.establishmentId && (
         <p className="text-xs text-gray-500 mt-1">
           Votre accès est limité à votre établissement assigné.
         </p>
       )}
 
-      {isAdmin && establishments.length > 0 && (
-        <p className="text-xs text-gray-500 mt-1">
-          En tant qu'administrateur, vous avez accès à tous les établissements ({establishments.length} disponibles).
+      {!isAdmin && !user?.establishmentId && (
+        <p className="text-xs text-blue-600 mt-1">
+          Sélectionnez un établissement pour cet utilisateur.
         </p>
       )}
 
-      {isAdmin && establishments.length === 0 && !loading && (
+      {isAdmin && establishments.length > 0 && (
+        <p className="text-xs text-gray-500 mt-1">
+          En tant qu'administrateur, vous pouvez sélectionner parmi tous les établissements ({establishments.length} disponibles).
+        </p>
+      )}
+
+      {isAdmin && establishments.length === 0 && !isLoading && (
+        <div className="mt-2 p-3 bg-amber-50 border border-amber-200 rounded-lg">
+          <p className="text-sm text-amber-800 mb-2">
+            Aucun établissement trouvé dans le système.
+          </p>
+          <a
+            href="/admin/establishments/create"
+            className="inline-flex items-center px-3 py-1 bg-luxury-gold text-luxury-cream text-sm rounded-md hover:bg-luxury-dark transition-colors"
+          >
+            Créer le premier établissement →
+          </a>
+        </div>
+      )}
+
+      {!isAdmin && establishments.length === 0 && !isLoading && !user?.establishmentId && (
         <p className="text-xs text-amber-600 mt-1">
-          Aucun établissement trouvé dans le système.
+          Aucun établissement disponible. Contactez un administrateur pour créer des établissements.
         </p>
       )}
     </div>

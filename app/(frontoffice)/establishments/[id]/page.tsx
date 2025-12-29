@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import type { EstablishmentResponse } from '@/types/establishment.types';
 import type { AccommodationResponse } from '@/types/accommodation.types';
-import InteractiveMap from '@/components/maps/InteractiveMap';
+import RobustMap from '@/components/maps/RobustMap';
 import {
   CalendarDays,
   CircleParking,
@@ -593,12 +593,12 @@ export default function EstablishmentDetailPage() {
             {/* Map Section */}
             <div id="map-section" className="bg-luxury-cream rounded-2xl p-6">
               <h2 className="text-2xl font-bold text-luxury-dark mb-4">Localisation</h2>
-              <InteractiveMap
+              <RobustMap
                 location={{
                   lat: establishment.location.coordinates.lat,
                   lng: establishment.location.coordinates.lng,
                   name: establishment.name,
-                  address: `${establishment.location.address}, ${establishment.location.city}`
+                  address: establishment.location.address
                 }}
                 height="400px"
                 showControls={true}

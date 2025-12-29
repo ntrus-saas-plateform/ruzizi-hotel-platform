@@ -1,8 +1,10 @@
-import { PipelineStage } from 'mongoose';
+import { PipelineStage, Types } from 'mongoose';
 import { BookingModel } from '@/models/Booking.model';
 import { ClientModel } from '@/models/Client.model';
 import { AccommodationModel } from '@/models/Accommodation.model';
 import { EstablishmentModel } from '@/models/Establishment.model';
+import { InvoiceModel } from '@/models/Invoice.model';
+import { InvoiceService } from '@/services/Invoice.service';
 import { connectDB } from '@/lib/db';
 import { paginate, type PaginationResult, toObjectId } from '@/lib/db/utils';
 import { cache } from '@/lib/performance/cache';
@@ -136,11 +138,33 @@ export class BookingService {
                     status: { $in: ['confirmed', 'pending'] },
                     $or: [
                         // New booking starts during existing booking
-                        { checkIn: { $lte: checkIn }, checkOut: { $gt: checkIn } },
+                        { 
+                            $and: [
+                                { checkIn: { $lte: checkIn } },
+                                { checkOut: { $gt: checkIn } }
+                            ]
+                        },
                         // New booking ends during existing booking
-                        { checkIn: { $lt: checkOut }, checkOut: { $gte: checkOut } },
+                        { 
+                            $and: [
+                                { checkIn: { $lt: checkOut } },
+                                { checkOut: { $gte: checkOut } }
+                            ]
+                        },
                         // New booking completely contains existing booking
-                        { checkIn: { $gte: checkIn }, checkOut: { $lte: checkOut } },
+                        { 
+                            $and: [
+                                { checkIn: { $gte: checkIn } },
+                                { checkOut: { $lte: checkOut } }
+                            ]
+                        },
+                        // Existing booking completely contains new booking
+                        { 
+                            $and: [
+                                { checkIn: { $lte: checkIn } },
+                                { checkOut: { $gte: checkOut } }
+                            ]
+                        },
                     ],
                 };
 
@@ -328,12 +352,7 @@ export class BookingService {
             });
         }
 
-        // Check if accommodation is available
-        if (accommodation.status !== 'available') {
-            throw new Error('Accommodation is not available');
-        }
-
-        // Check availability for dates
+        // Check availability for dates (based on existing bookings, not accommodation status)
         const isWalkIn = data.bookingType === 'walkin';
         const isAvailable = await this.checkAvailability(
             data.accommodationId,
@@ -344,13 +363,13 @@ export class BookingService {
         );
 
         if (!isAvailable) {
-            throw new Error('Accommodation is not available for the selected dates');
+            throw new Error('Cet hébergement n\'est pas disponible pour les dates sélectionnées. Veuillez choisir d\'autres dates ou un autre hébergement.');
         }
 
         // Check capacity
         if (data.numberOfGuests > accommodation.capacity.maxGuests) {
             throw new Error(
-                `Number of guests exceeds maximum capacity of ${accommodation.capacity.maxGuests}`
+                `Le nombre de clients dépasse la capacité maximale de ${accommodation.capacity.maxGuests} personnes pour cet hébergement.`
             );
         }
 
@@ -367,6 +386,7 @@ export class BookingService {
 
         if (!client) {
             client = await ClientModel.create({
+                establishmentId: toObjectId(effectiveEstablishmentId),
                 personalInfo: data.clientInfo,
                 classification: data.bookingType === 'walkin' ? 'walkin' : 'regular',
             });
@@ -384,10 +404,6 @@ export class BookingService {
             pricingDetails,
             createdBy: data.createdBy ? toObjectId(data.createdBy) : undefined,
         });
-
-        // Update accommodation status to reserved
-        accommodation.status = 'reserved';
-        await accommodation.save();
 
         // Add booking to client history
         client.bookingHistory.push(booking._id as any);
@@ -815,6 +831,41 @@ export class BookingService {
         booking.status = 'confirmed';
         booking.paymentStatus = 'paid'; // Payment is considered complete when booking is confirmed
         await booking.save();
+
+        // Generate invoice automatically for revenue tracking
+        try {
+            console.log(`🧾 Generating invoice for confirmed booking: ${booking.bookingCode}`);
+            
+            // Create establishment context for invoice creation
+            const { EstablishmentServiceContext } = await import('@/lib/services/establishment-context');
+            const context = new EstablishmentServiceContext(
+                (booking as any).createdBy?.toString() || 'system',
+                'super_admin', // Use super_admin for auto-generated invoices
+                booking.establishmentId.toString()
+            );
+            
+            const invoice = await InvoiceService.createFromBooking((booking._id as any).toString(), context);
+            console.log(`✅ Invoice generated successfully: ${invoice.invoiceNumber}`);
+            
+            // Add payment equal to total amount to mark invoice as paid
+            // This will trigger the pre-save hook to set status to 'paid' and balance to 0
+            const invoiceDoc = await InvoiceModel.findById((invoice as any)._id);
+            if (invoiceDoc) {
+                invoiceDoc.payments.push({
+                    date: new Date(),
+                    amount: invoice.total,
+                    method: 'cash',
+                    reference: `Auto-payment for confirmed booking ${booking.bookingCode}`,
+                    receivedBy: (booking as any).createdBy || new Types.ObjectId(), // Use booking creator or system user
+                });
+                await invoiceDoc.save();
+                console.log(`💰 Invoice marked as paid for revenue tracking`);
+            }
+        } catch (invoiceError) {
+            console.error('❌ Failed to generate invoice for confirmed booking:', invoiceError);
+            // Don't fail the booking confirmation if invoice generation fails
+            // But log the error for debugging
+        }
 
         return booking.toJSON() as unknown as BookingResponse;
     }

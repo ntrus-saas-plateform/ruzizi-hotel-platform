@@ -1,7 +1,9 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { apiClient } from '@/lib/utils/api-client';
+import { apiClient } from '@/lib/api/client';
+import { useAuth } from '@/lib/auth/AuthContext';
+import EstablishmentSelector from '@/components/admin/EstablishmentSelector';
 
 interface OccupancyStats {
   totalAccommodations: number;
@@ -19,6 +21,8 @@ interface OccupancyStats {
 }
 
 export default function DashboardPage() {
+  const { user } = useAuth();
+  const [selectedEstablishment, setSelectedEstablishment] = useState('');
   const [occupancyStats, setOccupancyStats] = useState<OccupancyStats | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -27,9 +31,19 @@ export default function DashboardPage() {
     endDate: new Date().toISOString().split('T')[0],
   });
 
+  // Auto-select establishment for non-admin users
   useEffect(() => {
-    fetchOccupancyStats();
-  }, [dateRange]);
+    if (user && user.role !== 'root' && user.role !== 'super_admin' && user.role !== 'admin' && user.establishmentId) {
+      console.log('🏢 Auto-selecting establishment for dashboard:', user.establishmentId);
+      setSelectedEstablishment(user.establishmentId);
+    }
+  }, [user]);
+
+  useEffect(() => {
+    if (selectedEstablishment || (user && user.role !== 'root' && user.role !== 'super_admin' && user.role !== 'admin' && user.establishmentId)) {
+      fetchOccupancyStats();
+    }
+  }, [dateRange, selectedEstablishment, user]);
 
   const fetchOccupancyStats = async () => {
     try {
@@ -39,10 +53,11 @@ export default function DashboardPage() {
       const params = new URLSearchParams({
         startDate: dateRange.startDate,
         endDate: dateRange.endDate,
+        ...(selectedEstablishment && { establishmentId: selectedEstablishment }),
       });
 
-      const data = await apiClient.get(`/api/bookings/occupancy?${params}`);
-      setOccupancyStats(data.data);
+      const data = await apiClient.get(`/api/bookings/occupancy?${params}`) as any;
+      setOccupancyStats(data.data || data);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'An error occurred');
     } finally {
@@ -82,8 +97,18 @@ export default function DashboardPage() {
 
         {/* Date Range Filter */}
         <section className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 sm:p-6 mb-6" aria-labelledby="date-range-heading">
-          <h2 id="date-range-heading" className="text-base sm:text-lg font-semibold text-luxury-dark mb-4">Période</h2>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          <h2 id="date-range-heading" className="text-base sm:text-lg font-semibold text-luxury-dark mb-4">Filtres</h2>
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Établissement
+              </label>
+              <EstablishmentSelector
+                value={selectedEstablishment}
+                onChange={setSelectedEstablishment}
+                label=""
+              />
+            </div>
             <div>
               <label htmlFor="start-date" className="block text-sm font-medium text-gray-700 mb-1">
                 Date de début

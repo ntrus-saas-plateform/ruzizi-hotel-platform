@@ -29,14 +29,53 @@ export default function BookingConfirmationPage({ params }: { params: Promise<{ 
         throw new Error('ID de réservation invalide');
       }
 
-      const response = await fetch(`/api/public/bookings/${resolvedParams.id}`);
+      // Utiliser la route publique qui recherche par code de réservation
+      const response = await fetch(`/api/public/bookings/by-code/${resolvedParams.id}`);
       const data = await response.json();
 
       if (!response.ok) {
         throw new Error(data.error?.message || 'Erreur lors du chargement');
       }
 
-      setBooking(data.data);
+      const raw = data.data || {};
+
+      // Normaliser les champs pour la page de confirmation
+      const checkIn = raw.checkInDate || raw.checkIn || null;
+      const checkOut = raw.checkOutDate || raw.checkOut || null;
+
+      let numberOfNights = raw.numberOfNights;
+      if (!numberOfNights && checkIn && checkOut) {
+        const inDate = new Date(checkIn);
+        const outDate = new Date(checkOut);
+        const diffMs = outDate.getTime() - inDate.getTime();
+        numberOfNights = Math.max(1, Math.ceil(diffMs / (1000 * 60 * 60 * 24)));
+      }
+
+      const normalizedBooking = {
+        ...raw,
+        bookingNumber: raw.bookingNumber || raw.bookingCode,
+        checkInDate: checkIn,
+        checkOutDate: checkOut,
+        numberOfNights: numberOfNights || 1,
+        guests: raw.guests || {
+          adults: raw.numberOfGuests || 1,
+          children: 0,
+        },
+        mainGuest: raw.mainGuest || {
+          firstName: raw.clientInfo?.firstName || '',
+          lastName: raw.clientInfo?.lastName || '',
+          email: raw.clientInfo?.email || '',
+        },
+        pricing: raw.pricing || {
+          totalPrice: raw.pricingDetails?.total || 0,
+          currency: 'BIF',
+        },
+        totalAmount: raw.totalAmount || raw.pricingDetails?.total || 0,
+        status: raw.status || 'pending',
+        paymentStatus: raw.paymentStatus || 'unpaid',
+      };
+
+      setBooking(normalizedBooking);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Une erreur est survenue');
     } finally {
@@ -115,6 +154,79 @@ export default function BookingConfirmationPage({ params }: { params: Promise<{ 
 
   const t = content[language as keyof typeof content];
 
+  // Helpers pour le statut de réservation
+  const status = booking?.status || 'pending';
+
+  const getStatusTitle = () => {
+    if (!booking) return t.confirmed;
+    if (language === 'fr') {
+      if (status === 'confirmed') return 'Réservation confirmée';
+      if (status === 'accepted') return 'Réservation acceptée';
+      if (status === 'cancelled') return 'Réservation annulée';
+      return 'Réservation en attente';
+    }
+    if (status === 'confirmed') return 'Booking confirmed';
+    if (status === 'accepted') return 'Booking accepted';
+    if (status === 'cancelled') return 'Booking cancelled';
+    return 'Booking pending';
+  };
+
+  const getStatusDescription = () => {
+    if (language === 'fr') {
+      if (status === 'confirmed')
+        return 'Votre réservation est confirmée et le paiement a été enregistré.';
+      if (status === 'accepted')
+        return "Votre réservation est acceptée. Elle sera confirmée dès votre arrivée et le paiement effectué.";
+      if (status === 'cancelled')
+        return 'Cette réservation a été annulée.';
+      return 'Votre demande de réservation a été enregistrée et est en attente de confirmation.';
+    }
+    if (status === 'confirmed')
+      return 'Your booking is confirmed and payment has been recorded.';
+    if (status === 'accepted')
+      return 'Your booking is accepted. It will be confirmed upon arrival and payment.';
+    if (status === 'cancelled') return 'This booking has been cancelled.';
+    return 'Your booking request has been recorded and is pending confirmation.';
+  };
+
+  const statusColors: Record<string, string> = {
+    confirmed: 'bg-green-100 text-green-800',
+    accepted: 'bg-blue-100 text-blue-800',
+    pending: 'bg-yellow-100 text-yellow-800',
+    cancelled: 'bg-red-100 text-red-800',
+    default: 'bg-gray-100 text-gray-800',
+  };
+
+  const handleDownloadInvoice = async () => {
+    if (!booking?.bookingNumber) return;
+
+    try {
+      const response = await fetch(`/api/public/bookings/by-code/${encodeURIComponent(booking.bookingNumber)}/invoice`);
+      if (!response.ok) {
+        console.error('Erreur lors du téléchargement de la facture, status =', response.status);
+        try {
+          const errorText = await response.text();
+          console.error('Réponse erreur facture:', errorText);
+        } catch {
+          // ignore
+        }
+        return;
+      }
+
+      const blob = await response.blob();
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `facture-${booking.bookingNumber}.pdf`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+    } catch (e) {
+      console.error('Erreur lors de la génération de la facture PDF', e);
+    }
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-amber-50 pt-32 flex items-center justify-center">
@@ -167,11 +279,16 @@ export default function BookingConfirmationPage({ params }: { params: Promise<{ 
             <div className="absolute -top-2 -right-2 w-8 h-8 bg-amber-500 rounded-full animate-ping"></div>
             <div className="absolute -bottom-2 -left-2 w-6 h-6 bg-blue-500 rounded-full animate-pulse"></div>
           </div>
-          <h1 className="text-5xl font-bold bg-gradient-to-r from-green-600 via-green-700 to-green-800 bg-clip-text text-transparent mb-4">
-            {t.confirmed}
+          <h1 className="text-5xl font-bold bg-gradient-to-r from-green-600 via-green-700 to-green-800 bg-clip-text text-transparent mb-3">
+            {getStatusTitle()}
           </h1>
+          <div className="mb-4 flex justify-center">
+            <span className={`inline-flex px-4 py-1.5 rounded-full text-sm font-semibold ${statusColors[status] || statusColors.default}`}>
+              {status}
+            </span>
+          </div>
           <p className="text-xl text-luxury-text max-w-2xl mx-auto">
-            {t.confirmationDesc}
+            {getStatusDescription()}
           </p>
         </div>
 
@@ -320,17 +437,89 @@ export default function BookingConfirmationPage({ params }: { params: Promise<{ 
               </div>
             </div>
 
+            {/* Invoice Preview (for printing) */}
+            <div className="mt-10 mb-8 bg-white border border-gray-200 rounded-2xl shadow-sm p-6 lg:p-8 text-sm text-luxury-dark">
+              <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4 mb-6">
+                <div>
+                  <h2 className="text-xl font-bold text-luxury-dark">Ruzizi Hôtel</h2>
+                  <p className="text-xs text-gray-500 mt-1">
+                    Avenue de l'Université, Bujumbura, Burundi
+                  </p>
+                  <p className="text-xs text-gray-500">Tél : +257 69 65 75 54 • contact@ruzizihotel.com</p>
+                </div>
+                <div className="text-right">
+                  <p className="text-xs uppercase tracking-wide text-gray-500">Facture / Invoice</p>
+                  <p className="text-sm font-mono font-semibold text-luxury-dark">
+                    {booking.bookingNumber}
+                  </p>
+                  <p className="text-xs text-gray-500 mt-1">
+                    {new Date(booking.createdAt || booking.checkInDate).toLocaleDateString(
+                      language === 'fr' ? 'fr-FR' : 'en-US'
+                    )}
+                  </p>
+                  <span className={`inline-flex mt-2 px-2 py-0.5 rounded-full text-[11px] font-semibold ${statusColors[status] || statusColors.default}`}>
+                    {status}
+                  </span>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                <div>
+                  <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">
+                    Client / Guest
+                  </h3>
+                  <p className="text-sm font-medium">
+                    {(booking.mainGuest?.firstName || '') + ' ' + (booking.mainGuest?.lastName || '')}
+                  </p>
+                  {booking.mainGuest?.email && (
+                    <p className="text-xs text-gray-500">{booking.mainGuest.email}</p>
+                  )}
+                </div>
+                <div>
+                  <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">
+                    Séjour / Stay
+                  </h3>
+                  <p className="text-xs text-gray-500">
+                    {new Date(booking.checkInDate).toLocaleDateString(language === 'fr' ? 'fr-FR' : 'en-US')} {'→'}{' '}
+                    {new Date(booking.checkOutDate).toLocaleDateString(language === 'fr' ? 'fr-FR' : 'en-US')}
+                  </p>
+                  <p className="text-xs text-gray-500">
+                    {booking.numberOfNights} {booking.numberOfNights === 1 ? t.night : t.nights} •{' '}
+                    {booking.guests?.adults || booking.numberOfGuests || 1}{' '}
+                    {(booking.guests?.adults || booking.numberOfGuests || 1) === 1 ? t.adult : t.adults}
+                  </p>
+                </div>
+              </div>
+
+              <div className="border-t border-gray-200 pt-4 mt-2">
+                <div className="flex items-center justify-between text-sm mb-2">
+                  <span className="text-gray-700 font-medium">
+                    {language === 'fr' ? 'Hébergement' : 'Accommodation'}
+                  </span>
+                  <span className="text-gray-900 font-semibold">
+                    {(booking.pricing?.totalPrice || booking.totalAmount || 0).toLocaleString()}{' '}
+                    {booking.pricing?.currency || 'BIF'}
+                  </span>
+                </div>
+                <p className="text-[11px] text-gray-500">
+                  {language === 'fr'
+                    ? "Prix total pour le séjour (taxes et frais inclus si applicable)."
+                    : 'Total price for the stay (including taxes and fees where applicable).'}
+                </p>
+              </div>
+            </div>
+
             {/* Actions */}
-            <div className="pt-8 border-t border-gray-200">
+            <div className="pt-4 border-t border-gray-200">
               <div className="flex flex-col sm:flex-row gap-4">
                 <button
-                  onClick={() => window.print()}
+                  onClick={handleDownloadInvoice}
                   className="flex-1 px-6 py-3 border-2 border-gray-300 text-gray-700 rounded-xl hover:border-amber-500 hover:text-amber-600 transition-all duration-200 font-medium flex items-center justify-center space-x-2"
                 >
                   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
                   </svg>
-                  <span>{t.print}</span>
+                  <span>{language === 'fr' ? 'Imprimer la facture' : 'Print invoice'}</span>
                 </button>
                 <button
                   onClick={() => router.push('/track-booking')}

@@ -7,7 +7,8 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { isAuthenticated, hasRole, getAccessToken } from '@/lib/utils/auth';
+import { useAuth } from '@/lib/auth/AuthContext';
+import { unifiedTokenManager } from '@/lib/auth/unified-token-manager';
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
@@ -21,12 +22,15 @@ export default function ProtectedRoute({
   fallback,
 }: ProtectedRouteProps) {
   const router = useRouter();
+  const { user, isAuthenticated, isLoading } = useAuth();
   const [isChecking, setIsChecking] = useState(true);
   const [isAuthorized, setIsAuthorized] = useState(false);
 
   useEffect(() => {
-    checkAuth();
-  }, []);
+    if (!isLoading) {
+      checkAuth();
+    }
+  }, [isLoading, isAuthenticated, user]);
 
   const checkAuth = async () => {
     try {
@@ -37,13 +41,13 @@ export default function ProtectedRoute({
         : '/auth/login';
 
       // Check if authenticated
-      if (!isAuthenticated()) {
+      if (!isAuthenticated || !user) {
         router.push(`${loginPath}?redirect=${encodeURIComponent(currentPath)}`);
         return;
       }
 
       // Get fresh token (will refresh if needed)
-      const token = await getAccessToken();
+      const token = await unifiedTokenManager.refreshTokenIfNeeded();
 
       if (!token) {
         router.push(`${loginPath}?redirect=${encodeURIComponent(currentPath)}`);
@@ -52,7 +56,8 @@ export default function ProtectedRoute({
 
       // Check role if required
       if (requiredRole) {
-        if (!hasRole(requiredRole)) {
+        const userRoles = Array.isArray(requiredRole) ? requiredRole : [requiredRole];
+        if (!userRoles.includes(user.role)) {
           router.push('/unauthorized');
           return;
         }
@@ -71,7 +76,7 @@ export default function ProtectedRoute({
     }
   };
 
-  if (isChecking) {
+  if (isLoading || isChecking) {
     return (
       fallback || (
         <div className="min-h-screen flex items-center justify-center bg-gray-50">

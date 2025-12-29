@@ -59,18 +59,10 @@ export default function EditAccommodationPage() {
 
   const fetchAccommodation = async () => {
     try {
-      const token = localStorage.getItem('accessToken');
-      const response = await fetch(`/api/accommodations/${id}`, {
-        headers: { 'Authorization': `Bearer ${token}` },
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error?.message || 'Erreur de chargement');
-      }
-
-      const acc = data.data;
+      const { apiClient } = await import('@/lib/api/client');
+      const response = await apiClient.get(`/api/accommodations/${id}`) as any;
+      const acc = response.data || response;
+      
       setFormData({
         establishmentId: acc.establishmentId,
         name: acc.name,
@@ -139,19 +131,11 @@ export default function EditAccommodationPage() {
         images: formData.images,
       };
 
-      const response = await fetch(`/api/accommodations/${id}`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`,
-        },
-        body: JSON.stringify(payload),
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error?.message || 'Erreur lors de la mise à jour');
+      const { apiClient } = await import('@/lib/api/client');
+      const response = await apiClient.put(`/api/accommodations/${id}`, payload) as any;
+      
+      if (!response.success) {
+        throw new Error(response.error?.message || 'Erreur lors de la mise à jour');
       }
 
       router.push('/admin/accommodations');
@@ -239,8 +223,6 @@ export default function EditAccommodationPage() {
                   value={formData.establishmentId}
                   onChange={(establishmentId) => setFormData({ ...formData, establishmentId })}
                   required={true}
-                  userRole={user?.role as any}
-                  userEstablishmentId={user?.establishmentId}
                   label="Établissement"
                 />
 

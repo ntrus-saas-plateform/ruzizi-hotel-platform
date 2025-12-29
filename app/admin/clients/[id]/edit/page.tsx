@@ -80,7 +80,7 @@ export default function EditClientPage() {
     }
 
     // Validate establishment permissions for non-admin users
-    if (user && user.role !== 'root' && user.role !== 'super_admin') {
+    if (user && user.role !== 'root' && user.role !== 'super_admin' && user.role !== 'admin') {
       if (formData.establishmentId !== user.establishmentId) {
         setError('Vous ne pouvez modifier que les clients de votre établissement assigné');
         setSaving(false);
@@ -166,8 +166,6 @@ export default function EditClientPage() {
             value={formData.establishmentId}
             onChange={(establishmentId) => setFormData({ ...formData, establishmentId })}
             required
-            userRole={user?.role}
-            userEstablishmentId={user?.establishmentId}
             label="Établissement"
           />
         </div>

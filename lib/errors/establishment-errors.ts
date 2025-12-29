@@ -1,7 +1,7 @@
 /**
  * Base class for establishment-related errors
  */
-abstract class EstablishmentError extends Error {
+export abstract class EstablishmentError extends Error {
   abstract statusCode: number;
   abstract code: string;
   details?: Record<string, any>;

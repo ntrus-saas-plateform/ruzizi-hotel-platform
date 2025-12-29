@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { fetchWithAuth } from '@/lib/utils/auth';
+import { apiClient } from '@/lib/api/client';
 import type { NotificationResponse } from '@/types/notification.types';
 
 export default function NotificationBell() {
@@ -17,7 +17,7 @@ export default function NotificationBell() {
 
   const fetchNotifications = async () => {
     try {
-      const data = await fetchWithAuth('/api/notifications');
+      const data = await apiClient.get('/api/notifications') as any;
       if (data.success) {
         setNotifications(data.data.notifications || []);
         setUnreadCount(data.data.unreadCount || 0);
@@ -25,28 +25,26 @@ export default function NotificationBell() {
     } catch (err) {
       // Handle auth errors gracefully without logging
       if (err instanceof Error && err.message === 'No valid access token') {
-        // Auth error handled by fetchWithAuth (redirect), no need to log
+        // Auth error handled by apiClient (redirect), no need to log
         return;
       }
       console.error('Failed to fetch notifications:', err);
-      // If auth error, the fetchWithAuth handles redirect
+      // If auth error, the apiClient handles redirect
     }
   };
 
   const markAsRead = async (id: string) => {
     try {
-      await fetchWithAuth(`/api/notifications/${id}/read`, {
-        method: 'POST',
-      });
+      await apiClient.post(`/api/notifications/${id}/read`);
       fetchNotifications();
     } catch (err) {
       // Handle auth errors gracefully without logging
       if (err instanceof Error && err.message === 'No valid access token') {
-        // Auth error handled by fetchWithAuth (redirect), no need to log
+        // Auth error handled by apiClient (redirect), no need to log
         return;
       }
       console.error('Failed to mark as read:', err);
-      // If auth error, the fetchWithAuth handles redirect
+      // If auth error, the apiClient handles redirect
     }
   };
 

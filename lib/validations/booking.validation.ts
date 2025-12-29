@@ -138,9 +138,16 @@ export const CreateBookingSchema = z
     path: ['checkOut'],
   })
   .refine((data) => {
-    // Validate check-in is not in the past
+    // Validate check-in is not in past (sauf pour walkin)
     const today = new Date();
     today.setHours(0, 0, 0, 0);
+    // Pour les walkin, permettre le jour même même si c'est "aujourd'hui"
+    if (data.bookingType === 'walkin') {
+      const checkInDate = new Date(data.checkIn);
+      const todayDate = new Date();
+      todayDate.setHours(0, 0, 0, 0);
+      return checkInDate.toDateString() === todayDate.toDateString() || checkInDate >= today;
+    }
     return data.checkIn >= today;
   }, {
     message: 'Check-in date cannot be in the past',
@@ -222,9 +229,16 @@ export const CompleteBookingSchema = z
     path: ['checkOut'],
   })
   .refine((data) => {
-    // Validate check-in is not in the past
+    // Validate check-in is not in past (sauf pour walkin)
     const today = new Date();
     today.setHours(0, 0, 0, 0);
+    // Pour les walkin, permettre le jour même même si c'est "aujourd'hui"
+    if (data.bookingType === 'walkin') {
+      const checkInDate = new Date(data.checkIn);
+      const todayDate = new Date();
+      todayDate.setHours(0, 0, 0, 0);
+      return checkInDate.toDateString() === todayDate.toDateString() || checkInDate >= today;
+    }
     return data.checkIn >= today;
   }, {
     message: 'Check-in date cannot be in the past',

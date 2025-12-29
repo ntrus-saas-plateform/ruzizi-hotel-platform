@@ -34,7 +34,7 @@ export default function BookingDetailPage() {
       setLoading(true);
       setError('');
 
-      const token = localStorage.getItem('accessToken');
+      const token = localStorage.getItem('ruzizi_access_token');
       const response = await fetch(`/api/bookings/${bookingId}`, {
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -62,7 +62,7 @@ export default function BookingDetailPage() {
       setError('');
       setActionSuccess('');
 
-      const token = localStorage.getItem('accessToken');
+      const token = localStorage.getItem('ruzizi_access_token');
       const response = await fetch(`/api/bookings/${bookingId}/confirm`, {
         method: 'POST',
         headers: {
@@ -93,7 +93,7 @@ export default function BookingDetailPage() {
       setError('');
       setActionSuccess('');
 
-      const token = localStorage.getItem('accessToken');
+      const token = localStorage.getItem('ruzizi_access_token');
       const response = await fetch(`/api/bookings/${bookingId}/checkout`, {
         method: 'POST',
         headers: {
@@ -127,7 +127,7 @@ export default function BookingDetailPage() {
       setError('');
       setActionSuccess('');
 
-      const token = localStorage.getItem('accessToken');
+      const token = localStorage.getItem('ruzizi_access_token');
       const response = await fetch(`/api/bookings/${bookingId}`, {
         method: 'PUT',
         headers: {
@@ -300,6 +300,14 @@ export default function BookingDetailPage() {
             </div>
           )}
           
+          {booking.status === 'accepted' && (
+            <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+              <p className="text-sm text-blue-800">
+                <strong>📋 Acceptée</strong> - Cette réservation a été pré-approuvée et peut maintenant être confirmée définitivement.
+              </p>
+            </div>
+          )}
+          
           {booking.status === 'confirmed' && (
             <div className="mb-4 p-3 bg-green-50 border border-green-200 rounded-lg">
               <p className="text-sm text-green-800">
@@ -325,7 +333,7 @@ export default function BookingDetailPage() {
           )}
           
           <div className="flex flex-wrap gap-3">
-            {booking.status === 'pending' && (
+            {(booking.status === 'pending' || booking.status === 'accepted') && (
               <>
                 <button
                   onClick={handleConfirm}
@@ -375,7 +383,7 @@ export default function BookingDetailPage() {
               </>
             )}
             
-            {(booking.status === 'pending' || booking.status === 'confirmed') && (
+            {(booking.status === 'pending' || booking.status === 'accepted' || booking.status === 'confirmed') && (
               <button
                 onClick={() => router.push(`/admin/bookings/${bookingId}/edit`)}
                 disabled={actionLoading}

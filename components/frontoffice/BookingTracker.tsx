@@ -1,7 +1,7 @@
 'use client';
 
 import { ClipboardCheck } from 'lucide-react';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, type FormEvent } from 'react';
 
 interface BookingTrackerProps {
   onSearch?: (code: string) => void;
@@ -103,7 +103,7 @@ export default function BookingTracker({ onSearch }: BookingTrackerProps) {
 
   const t = content[language as keyof typeof content];
 
-  const handleSearch = async (e: React.FormEvent) => {
+  const handleSearch = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     
     if (!bookingCode.trim()) {
@@ -116,27 +116,36 @@ export default function BookingTracker({ onSearch }: BookingTrackerProps) {
     setBooking(null);
 
     try {
-      // Simuler un appel API
-      await new Promise(resolve => setTimeout(resolve, 1500));
-      
-      // Données de test
-      const mockBooking: BookingInfo = {
-        id: '1',
-        code: bookingCode.toUpperCase(),
-        status: 'confirmed',
-        establishmentName: 'Ruzizi Hôtel Bujumbura',
-        checkInDate: '2024-12-15',
-        checkOutDate: '2024-12-18',
-        guestName: 'Jean Dupont',
-        numberOfGuests: 2,
-        totalAmount: 450000,
-        specialRequests: 'Chambre avec vue sur le lac'
+      const trimmedCode = bookingCode.trim().toUpperCase();
+      const response = await fetch(`/api/public/bookings/by-code/${encodeURIComponent(trimmedCode)}`);
+      const data = await response.json();
+
+      if (!response.ok || !data?.success) {
+        throw new Error(data?.error?.message || 'Une erreur est survenue lors de la recherche');
+      }
+
+      const b = data.data;
+
+      const bookingInfo: BookingInfo = {
+        id: b.id || b._id || '',
+        code: b.bookingNumber || b.bookingCode || trimmedCode,
+        status: b.status || 'pending',
+        establishmentName: b.establishment?.name || b.establishmentName || 'Ruzizi Hôtel',
+        checkInDate: b.checkInDate || b.checkIn || '',
+        checkOutDate: b.checkOutDate || b.checkOut || '',
+        guestName:
+          (b.mainGuest && `${b.mainGuest.firstName || ''} ${b.mainGuest.lastName || ''}`.trim()) ||
+          b.guestName ||
+          '',
+        numberOfGuests: (b.guests && (b.guests.total || b.guests.adults)) || b.numberOfGuests || 1,
+        totalAmount: b.totalAmount || b.pricing?.totalPrice,
+        specialRequests: b.specialRequests || b.notes,
       };
 
-      setBooking(mockBooking);
-      
+      setBooking(bookingInfo);
+
       if (onSearch) {
-        onSearch(bookingCode);
+        onSearch(trimmedCode);
       }
     } catch (err) {
       setError('Une erreur est survenue lors de la recherche');

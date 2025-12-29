@@ -1,11 +1,13 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useAuth } from '@/lib/auth/AuthContext';
+import EstablishmentSelector from '@/components/admin/EstablishmentSelector';
 
 export default function AnalyticsPage() {
+  const { user } = useAuth();
   const [data, setData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
-  const [establishments, setEstablishments] = useState<any[]>([]);
   const [selectedEstablishment, setSelectedEstablishment] = useState('');
   const [dateRange, setDateRange] = useState({
     startDate: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
@@ -14,8 +16,11 @@ export default function AnalyticsPage() {
   const [showFilters, setShowFilters] = useState(false);
 
   useEffect(() => {
-    fetchEstablishments();
-  }, []);
+    // Auto-select establishment for non-admin users
+    if (user && user.role !== 'root' && user.role !== 'super_admin' && user.role !== 'admin' && user.establishmentId) {
+      setSelectedEstablishment(user.establishmentId);
+    }
+  }, [user]);
 
   useEffect(() => {
     if (selectedEstablishment) {
@@ -24,16 +29,7 @@ export default function AnalyticsPage() {
   }, [selectedEstablishment, dateRange]);
 
   const fetchEstablishments = async () => {
-    try {
-      const response = await fetch('/api/establishments');
-      const result = await response.json();
-      if (result.success && result.data.data.length > 0) {
-        setEstablishments(result.data.data);
-        setSelectedEstablishment(result.data.data[0].id);
-      }
-    } catch (err) {
-      console.error('Failed to fetch establishments:', err);
-    }
+    // This function is no longer needed - EstablishmentSelector handles it
   };
 
   const fetchAnalytics = async () => {
@@ -87,17 +83,11 @@ export default function AnalyticsPage() {
           <div className={`grid grid-cols-1 md:grid-cols-3 gap-4 ${showFilters ? 'block' : 'hidden md:grid'}`}>
             <div className="space-y-2">
               <label className="block text-sm font-semibold text-gray-700">Établissement</label>
-              <select
+              <EstablishmentSelector
                 value={selectedEstablishment}
-                onChange={(e) => setSelectedEstablishment(e.target.value)}
-                className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all duration-200 bg-white shadow-sm appearance-none"
-              >
-                {establishments.map((est) => (
-                  <option key={est.id} value={est.id}>
-                    {est.name}
-                  </option>
-                ))}
-              </select>
+                onChange={setSelectedEstablishment}
+                label=""
+              />
             </div>
 
             <div className="space-y-2">
